@@ -1,6 +1,7 @@
 # Setup instructions
 
-- here they are
+- [install GLFW](https://www.glfw.org/download.html)
+-
 
 ### Learning OpenGL
 
