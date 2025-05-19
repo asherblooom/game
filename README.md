@@ -4,4 +4,4 @@ Hopefully
 
 ## Setup
 
-[Link to setup instructions for developers](/setup)
+[Link to setup instructions for developers](/setup.md)
