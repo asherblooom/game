@@ -2,6 +2,6 @@
 
 Hopefully
 
-### Setup
+## Setup
 
-[Link to setup instructions for developers(./setup.md)]
+[Link to setup instructions for developers](/setup)
