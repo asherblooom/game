@@ -5,7 +5,8 @@ Hopefully
 ## Setup instructions
 
 - [Install GLFW](https://www.glfw.org/download.html)
-- Run `make linux` if on linux or `make windows` if on windows
+- Clone the repository
+- Run `make linux` if on linux or `make windows` if on windows (in the root directory)
 - Run the resulting `game.o` file
 
 ### Notes
