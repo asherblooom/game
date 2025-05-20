@@ -12,7 +12,8 @@ Hopefully
 
 - When writing OpenGL files, include `glad.h` before `glfw3.h`
 
-### Learning OpenGL
+### Learning OpenGL and c++
 
 [Here is a good website to learn OpenGL](https://www.learnopengl.com/)
+
 [Here is a good website to learn c++](https://www.learncpp.com/)
