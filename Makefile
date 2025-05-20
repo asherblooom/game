@@ -1,5 +1,5 @@
 linux: main glad
-	g++ -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -o game.o main.o glad.o
+	g++ -o game.o main.o glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl 
 
 windows: main glad
 	# add something here?
