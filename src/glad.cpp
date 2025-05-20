@@ -19,241 +19,273 @@
         https://glad.dav1d.de/#profile=compatibility&language=c&specification=gl&loader=on&api=gl%3D4.6
 */
 
+#include <glad/glad.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <glad/glad.h>
 
-static void* get_proc(const char *namez);
+static void* get_proc(const char* namez);
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-#ifndef _WINDOWS_
-#undef APIENTRY
-#endif
-#include <windows.h>
+#	ifndef _WINDOWS_
+#		undef APIENTRY
+#	endif
+#	include <windows.h>
 static HMODULE libGL;
 
-typedef void* (APIENTRYP PFNWGLGETPROCADDRESSPROC_PRIVATE)(const char*);
+typedef void*(APIENTRYP PFNWGLGETPROCADDRESSPROC_PRIVATE)(const char*);
 static PFNWGLGETPROCADDRESSPROC_PRIVATE gladGetProcAddressPtr;
 
-#ifdef _MSC_VER
-#ifdef __has_include
-  #if __has_include(<winapifamily.h>)
-    #define HAVE_WINAPIFAMILY 1
-  #endif
-#elif _MSC_VER >= 1700 && !_USING_V110_SDK71_
-  #define HAVE_WINAPIFAMILY 1
-#endif
-#endif
+#	ifdef _MSC_VER
+#		ifdef __has_include
+#			if __has_include(<winapifamily.h>)
+#				define HAVE_WINAPIFAMILY 1
+#			endif
+#		elif _MSC_VER >= 1700 && !_USING_V110_SDK71_
+#			define HAVE_WINAPIFAMILY 1
+#		endif
+#	endif
 
-#ifdef HAVE_WINAPIFAMILY
-  #include <winapifamily.h>
-  #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
-    #define IS_UWP 1
-  #endif
-#endif
+#	ifdef HAVE_WINAPIFAMILY
+#		include <winapifamily.h>
+#		if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) &&                                  \
+			WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
+#			define IS_UWP 1
+#		endif
+#	endif
 
-static
-int open_gl(void) {
-#ifndef IS_UWP
-    libGL = LoadLibraryW(L"opengl32.dll");
-    if(libGL != NULL) {
-        void (* tmp)(void);
-        tmp = (void(*)(void)) GetProcAddress(libGL, "wglGetProcAddress");
-        gladGetProcAddressPtr = (PFNWGLGETPROCADDRESSPROC_PRIVATE) tmp;
-        return gladGetProcAddressPtr != NULL;
-    }
-#endif
+static int open_gl(void)
+{
+#	ifndef IS_UWP
+	libGL = LoadLibraryW(L"opengl32.dll");
+	if(libGL != NULL)
+	{
+		void (*tmp)(void);
+		tmp = (void (*)(void))GetProcAddress(libGL, "wglGetProcAddress");
+		gladGetProcAddressPtr = (PFNWGLGETPROCADDRESSPROC_PRIVATE)tmp;
+		return gladGetProcAddressPtr != NULL;
+	}
+#	endif
 
-    return 0;
+	return 0;
 }
 
-static
-void close_gl(void) {
-    if(libGL != NULL) {
-        FreeLibrary((HMODULE) libGL);
-        libGL = NULL;
-    }
+static void close_gl(void)
+{
+	if(libGL != NULL)
+	{
+		FreeLibrary((HMODULE)libGL);
+		libGL = NULL;
+	}
 }
 #else
-#include <dlfcn.h>
+#	include <dlfcn.h>
 static void* libGL;
 
-#if !defined(__APPLE__) && !defined(__HAIKU__)
-typedef void* (APIENTRYP PFNGLXGETPROCADDRESSPROC_PRIVATE)(const char*);
+#	if !defined(__APPLE__) && !defined(__HAIKU__)
+typedef void*(APIENTRYP PFNGLXGETPROCADDRESSPROC_PRIVATE)(const char*);
 static PFNGLXGETPROCADDRESSPROC_PRIVATE gladGetProcAddressPtr;
-#endif
+#	endif
 
-static
-int open_gl(void) {
-#ifdef __APPLE__
-    static const char *NAMES[] = {
-        "../Frameworks/OpenGL.framework/OpenGL",
-        "/Library/Frameworks/OpenGL.framework/OpenGL",
-        "/System/Library/Frameworks/OpenGL.framework/OpenGL",
-        "/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL"
-    };
-#else
-    static const char *NAMES[] = {"libGL.so.1", "libGL.so"};
-#endif
+static int open_gl(void)
+{
+#	ifdef __APPLE__
+	static const char* NAMES[] = {
+		"../Frameworks/OpenGL.framework/OpenGL",
+		"/Library/Frameworks/OpenGL.framework/OpenGL",
+		"/System/Library/Frameworks/OpenGL.framework/OpenGL",
+		"/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL"};
+#	else
+	static const char* NAMES[] = {"libGL.so.1", "libGL.so"};
+#	endif
 
-    unsigned int index = 0;
-    for(index = 0; index < (sizeof(NAMES) / sizeof(NAMES[0])); index++) {
-        libGL = dlopen(NAMES[index], RTLD_NOW | RTLD_GLOBAL);
+	unsigned int index = 0;
+	for(index = 0; index < (sizeof(NAMES) / sizeof(NAMES[0])); index++)
+	{
+		libGL = dlopen(NAMES[index], RTLD_NOW | RTLD_GLOBAL);
 
-        if(libGL != NULL) {
-#if defined(__APPLE__) || defined(__HAIKU__)
-            return 1;
-#else
-            gladGetProcAddressPtr = (PFNGLXGETPROCADDRESSPROC_PRIVATE)dlsym(libGL,
-                "glXGetProcAddressARB");
-            return gladGetProcAddressPtr != NULL;
-#endif
-        }
-    }
+		if(libGL != NULL)
+		{
+#	if defined(__APPLE__) || defined(__HAIKU__)
+			return 1;
+#	else
+			gladGetProcAddressPtr =
+				(PFNGLXGETPROCADDRESSPROC_PRIVATE)dlsym(libGL, "glXGetProcAddressARB");
+			return gladGetProcAddressPtr != NULL;
+#	endif
+		}
+	}
 
-    return 0;
+	return 0;
 }
 
-static
-void close_gl(void) {
-    if(libGL != NULL) {
-        dlclose(libGL);
-        libGL = NULL;
-    }
+static void close_gl(void)
+{
+	if(libGL != NULL)
+	{
+		dlclose(libGL);
+		libGL = NULL;
+	}
 }
 #endif
 
-static
-void* get_proc(const char *namez) {
-    void* result = NULL;
-    if(libGL == NULL) return NULL;
+static void* get_proc(const char* namez)
+{
+	void* result = NULL;
+	if(libGL == NULL)
+		return NULL;
 
 #if !defined(__APPLE__) && !defined(__HAIKU__)
-    if(gladGetProcAddressPtr != NULL) {
-        result = gladGetProcAddressPtr(namez);
-    }
+	if(gladGetProcAddressPtr != NULL)
+	{
+		result = gladGetProcAddressPtr(namez);
+	}
 #endif
-    if(result == NULL) {
+	if(result == NULL)
+	{
 #if defined(_WIN32) || defined(__CYGWIN__)
-        result = (void*)GetProcAddress((HMODULE) libGL, namez);
+		result = (void*)GetProcAddress((HMODULE)libGL, namez);
 #else
-        result = dlsym(libGL, namez);
+		result = dlsym(libGL, namez);
 #endif
-    }
+	}
 
-    return result;
+	return result;
 }
 
-int gladLoadGL(void) {
-    int status = 0;
+int gladLoadGL(void)
+{
+	int status = 0;
 
-    if(open_gl()) {
-        status = gladLoadGLLoader(&get_proc);
-        close_gl();
-    }
+	if(open_gl())
+	{
+		status = gladLoadGLLoader(&get_proc);
+		close_gl();
+	}
 
-    return status;
+	return status;
 }
 
-struct gladGLversionStruct GLVersion = { 0, 0 };
+struct gladGLversionStruct GLVersion = {0, 0};
 
 #if defined(GL_ES_VERSION_3_0) || defined(GL_VERSION_3_0)
-#define _GLAD_IS_SOME_NEW_VERSION 1
+#	define _GLAD_IS_SOME_NEW_VERSION 1
 #endif
 
 static int max_loaded_major;
 static int max_loaded_minor;
 
-static const char *exts = NULL;
+static const char* exts = NULL;
 static int num_exts_i = 0;
-static char **exts_i = NULL;
+static char** exts_i = NULL;
 
-static int get_exts(void) {
+static int get_exts(void)
+{
 #ifdef _GLAD_IS_SOME_NEW_VERSION
-    if(max_loaded_major < 3) {
+	if(max_loaded_major < 3)
+	{
 #endif
-        exts = (const char *)glGetString(GL_EXTENSIONS);
+		exts = (const char*)glGetString(GL_EXTENSIONS);
 #ifdef _GLAD_IS_SOME_NEW_VERSION
-    } else {
-        int index;
+	}
+	else
+	{
+		int index;
 
-        num_exts_i = 0;
-        glGetIntegerv(GL_NUM_EXTENSIONS, &num_exts_i);
-        if (num_exts_i > 0) {
-            exts_i = (char **)malloc((size_t)num_exts_i * (sizeof *exts_i));
-        }
+		num_exts_i = 0;
+		glGetIntegerv(GL_NUM_EXTENSIONS, &num_exts_i);
+		if(num_exts_i > 0)
+		{
+			exts_i = (char**)malloc((size_t)num_exts_i * (sizeof *exts_i));
+		}
 
-        if (exts_i == NULL) {
-            return 0;
-        }
+		if(exts_i == NULL)
+		{
+			return 0;
+		}
 
-        for(index = 0; index < num_exts_i; index++) {
-            const char *gl_str_tmp = (const char*)glGetStringi(GL_EXTENSIONS, index);
-            size_t len = strlen(gl_str_tmp);
+		for(index = 0; index < num_exts_i; index++)
+		{
+			const char* gl_str_tmp = (const char*)glGetStringi(GL_EXTENSIONS, index);
+			size_t len = strlen(gl_str_tmp);
 
-            char *local_str = (char*)malloc((len+1) * sizeof(char));
-            if(local_str != NULL) {
-                memcpy(local_str, gl_str_tmp, (len+1) * sizeof(char));
-            }
-            exts_i[index] = local_str;
-        }
-    }
+			char* local_str = (char*)malloc((len + 1) * sizeof(char));
+			if(local_str != NULL)
+			{
+				memcpy(local_str, gl_str_tmp, (len + 1) * sizeof(char));
+			}
+			exts_i[index] = local_str;
+		}
+	}
 #endif
-    return 1;
+	return 1;
 }
 
-static void free_exts(void) {
-    if (exts_i != NULL) {
-        int index;
-        for(index = 0; index < num_exts_i; index++) {
-            free((char *)exts_i[index]);
-        }
-        free((void *)exts_i);
-        exts_i = NULL;
-    }
+static void free_exts(void)
+{
+	if(exts_i != NULL)
+	{
+		int index;
+		for(index = 0; index < num_exts_i; index++)
+		{
+			free((char*)exts_i[index]);
+		}
+		free((void*)exts_i);
+		exts_i = NULL;
+	}
 }
 
-static int has_ext(const char *ext) {
+static int has_ext(const char* ext)
+{
 #ifdef _GLAD_IS_SOME_NEW_VERSION
-    if(max_loaded_major < 3) {
+	if(max_loaded_major < 3)
+	{
 #endif
-        const char *extensions;
-        const char *loc;
-        const char *terminator;
-        extensions = exts;
-        if(extensions == NULL || ext == NULL) {
-            return 0;
-        }
+		const char* extensions;
+		const char* loc;
+		const char* terminator;
+		extensions = exts;
+		if(extensions == NULL || ext == NULL)
+		{
+			return 0;
+		}
 
-        while(1) {
-            loc = strstr(extensions, ext);
-            if(loc == NULL) {
-                return 0;
-            }
+		while(1)
+		{
+			loc = strstr(extensions, ext);
+			if(loc == NULL)
+			{
+				return 0;
+			}
 
-            terminator = loc + strlen(ext);
-            if((loc == extensions || *(loc - 1) == ' ') &&
-                (*terminator == ' ' || *terminator == '\0')) {
-                return 1;
-            }
-            extensions = terminator;
-        }
+			terminator = loc + strlen(ext);
+			if((loc == extensions || *(loc - 1) == ' ') &&
+			   (*terminator == ' ' || *terminator == '\0'))
+			{
+				return 1;
+			}
+			extensions = terminator;
+		}
 #ifdef _GLAD_IS_SOME_NEW_VERSION
-    } else {
-        int index;
-        if(exts_i == NULL) return 0;
-        for(index = 0; index < num_exts_i; index++) {
-            const char *e = exts_i[index];
+	}
+	else
+	{
+		int index;
+		if(exts_i == NULL)
+			return 0;
+		for(index = 0; index < num_exts_i; index++)
+		{
+			const char* e = exts_i[index];
 
-            if(exts_i[index] != NULL && strcmp(e, ext) == 0) {
-                return 1;
-            }
-        }
-    }
+			if(exts_i[index] != NULL && strcmp(e, ext) == 0)
+			{
+				return 1;
+			}
+		}
+	}
 #endif
 
-    return 0;
+	return 0;
 }
 int GLAD_GL_VERSION_1_0 = 0;
 int GLAD_GL_VERSION_1_1 = 0;
@@ -470,7 +502,8 @@ PFNGLDRAWELEMENTSINDIRECTPROC glad_glDrawElementsIndirect = NULL;
 PFNGLDRAWELEMENTSINSTANCEDPROC glad_glDrawElementsInstanced = NULL;
 PFNGLDRAWELEMENTSINSTANCEDBASEINSTANCEPROC glad_glDrawElementsInstancedBaseInstance = NULL;
 PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXPROC glad_glDrawElementsInstancedBaseVertex = NULL;
-PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXBASEINSTANCEPROC glad_glDrawElementsInstancedBaseVertexBaseInstance = NULL;
+PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXBASEINSTANCEPROC
+	glad_glDrawElementsInstancedBaseVertexBaseInstance = NULL;
 PFNGLDRAWPIXELSPROC glad_glDrawPixels = NULL;
 PFNGLDRAWRANGEELEMENTSPROC glad_glDrawRangeElements = NULL;
 PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC glad_glDrawRangeElementsBaseVertex = NULL;
@@ -591,7 +624,8 @@ PFNGLGETNAMEDBUFFERPARAMETERI64VPROC glad_glGetNamedBufferParameteri64v = NULL;
 PFNGLGETNAMEDBUFFERPARAMETERIVPROC glad_glGetNamedBufferParameteriv = NULL;
 PFNGLGETNAMEDBUFFERPOINTERVPROC glad_glGetNamedBufferPointerv = NULL;
 PFNGLGETNAMEDBUFFERSUBDATAPROC glad_glGetNamedBufferSubData = NULL;
-PFNGLGETNAMEDFRAMEBUFFERATTACHMENTPARAMETERIVPROC glad_glGetNamedFramebufferAttachmentParameteriv = NULL;
+PFNGLGETNAMEDFRAMEBUFFERATTACHMENTPARAMETERIVPROC glad_glGetNamedFramebufferAttachmentParameteriv =
+	NULL;
 PFNGLGETNAMEDFRAMEBUFFERPARAMETERIVPROC glad_glGetNamedFramebufferParameteriv = NULL;
 PFNGLGETNAMEDRENDERBUFFERPARAMETERIVPROC glad_glGetNamedRenderbufferParameteriv = NULL;
 PFNGLGETOBJECTLABELPROC glad_glGetObjectLabel = NULL;
@@ -1322,8 +1356,10 @@ PFNGLWINDOWPOS3IPROC glad_glWindowPos3i = NULL;
 PFNGLWINDOWPOS3IVPROC glad_glWindowPos3iv = NULL;
 PFNGLWINDOWPOS3SPROC glad_glWindowPos3s = NULL;
 PFNGLWINDOWPOS3SVPROC glad_glWindowPos3sv = NULL;
-static void load_GL_VERSION_1_0(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_1_0) return;
+static void load_GL_VERSION_1_0(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_1_0)
+		return;
 	glad_glCullFace = (PFNGLCULLFACEPROC)load("glCullFace");
 	glad_glFrontFace = (PFNGLFRONTFACEPROC)load("glFrontFace");
 	glad_glHint = (PFNGLHINTPROC)load("glHint");
@@ -1367,8 +1403,10 @@ static void load_GL_VERSION_1_0(GLADloadproc load) {
 	glad_glGetTexImage = (PFNGLGETTEXIMAGEPROC)load("glGetTexImage");
 	glad_glGetTexParameterfv = (PFNGLGETTEXPARAMETERFVPROC)load("glGetTexParameterfv");
 	glad_glGetTexParameteriv = (PFNGLGETTEXPARAMETERIVPROC)load("glGetTexParameteriv");
-	glad_glGetTexLevelParameterfv = (PFNGLGETTEXLEVELPARAMETERFVPROC)load("glGetTexLevelParameterfv");
-	glad_glGetTexLevelParameteriv = (PFNGLGETTEXLEVELPARAMETERIVPROC)load("glGetTexLevelParameteriv");
+	glad_glGetTexLevelParameterfv =
+		(PFNGLGETTEXLEVELPARAMETERFVPROC)load("glGetTexLevelParameterfv");
+	glad_glGetTexLevelParameteriv =
+		(PFNGLGETTEXLEVELPARAMETERIVPROC)load("glGetTexLevelParameteriv");
 	glad_glIsEnabled = (PFNGLISENABLEDPROC)load("glIsEnabled");
 	glad_glDepthRange = (PFNGLDEPTHRANGEPROC)load("glDepthRange");
 	glad_glViewport = (PFNGLVIEWPORTPROC)load("glViewport");
@@ -1631,8 +1669,10 @@ static void load_GL_VERSION_1_0(GLADloadproc load) {
 	glad_glTranslated = (PFNGLTRANSLATEDPROC)load("glTranslated");
 	glad_glTranslatef = (PFNGLTRANSLATEFPROC)load("glTranslatef");
 }
-static void load_GL_VERSION_1_1(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_1_1) return;
+static void load_GL_VERSION_1_1(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_1_1)
+		return;
 	glad_glDrawArrays = (PFNGLDRAWARRAYSPROC)load("glDrawArrays");
 	glad_glDrawElements = (PFNGLDRAWELEMENTSPROC)load("glDrawElements");
 	glad_glGetPointerv = (PFNGLGETPOINTERVPROC)load("glGetPointerv");
@@ -1664,23 +1704,30 @@ static void load_GL_VERSION_1_1(GLADloadproc load) {
 	glad_glPopClientAttrib = (PFNGLPOPCLIENTATTRIBPROC)load("glPopClientAttrib");
 	glad_glPushClientAttrib = (PFNGLPUSHCLIENTATTRIBPROC)load("glPushClientAttrib");
 }
-static void load_GL_VERSION_1_2(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_1_2) return;
+static void load_GL_VERSION_1_2(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_1_2)
+		return;
 	glad_glDrawRangeElements = (PFNGLDRAWRANGEELEMENTSPROC)load("glDrawRangeElements");
 	glad_glTexImage3D = (PFNGLTEXIMAGE3DPROC)load("glTexImage3D");
 	glad_glTexSubImage3D = (PFNGLTEXSUBIMAGE3DPROC)load("glTexSubImage3D");
 	glad_glCopyTexSubImage3D = (PFNGLCOPYTEXSUBIMAGE3DPROC)load("glCopyTexSubImage3D");
 }
-static void load_GL_VERSION_1_3(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_1_3) return;
+static void load_GL_VERSION_1_3(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_1_3)
+		return;
 	glad_glActiveTexture = (PFNGLACTIVETEXTUREPROC)load("glActiveTexture");
 	glad_glSampleCoverage = (PFNGLSAMPLECOVERAGEPROC)load("glSampleCoverage");
 	glad_glCompressedTexImage3D = (PFNGLCOMPRESSEDTEXIMAGE3DPROC)load("glCompressedTexImage3D");
 	glad_glCompressedTexImage2D = (PFNGLCOMPRESSEDTEXIMAGE2DPROC)load("glCompressedTexImage2D");
 	glad_glCompressedTexImage1D = (PFNGLCOMPRESSEDTEXIMAGE1DPROC)load("glCompressedTexImage1D");
-	glad_glCompressedTexSubImage3D = (PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC)load("glCompressedTexSubImage3D");
-	glad_glCompressedTexSubImage2D = (PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC)load("glCompressedTexSubImage2D");
-	glad_glCompressedTexSubImage1D = (PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC)load("glCompressedTexSubImage1D");
+	glad_glCompressedTexSubImage3D =
+		(PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC)load("glCompressedTexSubImage3D");
+	glad_glCompressedTexSubImage2D =
+		(PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC)load("glCompressedTexSubImage2D");
+	glad_glCompressedTexSubImage1D =
+		(PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC)load("glCompressedTexSubImage1D");
 	glad_glGetCompressedTexImage = (PFNGLGETCOMPRESSEDTEXIMAGEPROC)load("glGetCompressedTexImage");
 	glad_glClientActiveTexture = (PFNGLCLIENTACTIVETEXTUREPROC)load("glClientActiveTexture");
 	glad_glMultiTexCoord1d = (PFNGLMULTITEXCOORD1DPROC)load("glMultiTexCoord1d");
@@ -1720,8 +1767,10 @@ static void load_GL_VERSION_1_3(GLADloadproc load) {
 	glad_glMultTransposeMatrixf = (PFNGLMULTTRANSPOSEMATRIXFPROC)load("glMultTransposeMatrixf");
 	glad_glMultTransposeMatrixd = (PFNGLMULTTRANSPOSEMATRIXDPROC)load("glMultTransposeMatrixd");
 }
-static void load_GL_VERSION_1_4(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_1_4) return;
+static void load_GL_VERSION_1_4(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_1_4)
+		return;
 	glad_glBlendFuncSeparate = (PFNGLBLENDFUNCSEPARATEPROC)load("glBlendFuncSeparate");
 	glad_glMultiDrawArrays = (PFNGLMULTIDRAWARRAYSPROC)load("glMultiDrawArrays");
 	glad_glMultiDrawElements = (PFNGLMULTIDRAWELEMENTSPROC)load("glMultiDrawElements");
@@ -1770,8 +1819,10 @@ static void load_GL_VERSION_1_4(GLADloadproc load) {
 	glad_glBlendColor = (PFNGLBLENDCOLORPROC)load("glBlendColor");
 	glad_glBlendEquation = (PFNGLBLENDEQUATIONPROC)load("glBlendEquation");
 }
-static void load_GL_VERSION_1_5(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_1_5) return;
+static void load_GL_VERSION_1_5(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_1_5)
+		return;
 	glad_glGenQueries = (PFNGLGENQUERIESPROC)load("glGenQueries");
 	glad_glDeleteQueries = (PFNGLDELETEQUERIESPROC)load("glDeleteQueries");
 	glad_glIsQuery = (PFNGLISQUERYPROC)load("glIsQuery");
@@ -1792,8 +1843,10 @@ static void load_GL_VERSION_1_5(GLADloadproc load) {
 	glad_glGetBufferParameteriv = (PFNGLGETBUFFERPARAMETERIVPROC)load("glGetBufferParameteriv");
 	glad_glGetBufferPointerv = (PFNGLGETBUFFERPOINTERVPROC)load("glGetBufferPointerv");
 }
-static void load_GL_VERSION_2_0(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_2_0) return;
+static void load_GL_VERSION_2_0(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_2_0)
+		return;
 	glad_glBlendEquationSeparate = (PFNGLBLENDEQUATIONSEPARATEPROC)load("glBlendEquationSeparate");
 	glad_glDrawBuffers = (PFNGLDRAWBUFFERSPROC)load("glDrawBuffers");
 	glad_glStencilOpSeparate = (PFNGLSTENCILOPSEPARATEPROC)load("glStencilOpSeparate");
@@ -1807,8 +1860,10 @@ static void load_GL_VERSION_2_0(GLADloadproc load) {
 	glad_glDeleteProgram = (PFNGLDELETEPROGRAMPROC)load("glDeleteProgram");
 	glad_glDeleteShader = (PFNGLDELETESHADERPROC)load("glDeleteShader");
 	glad_glDetachShader = (PFNGLDETACHSHADERPROC)load("glDetachShader");
-	glad_glDisableVertexAttribArray = (PFNGLDISABLEVERTEXATTRIBARRAYPROC)load("glDisableVertexAttribArray");
-	glad_glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)load("glEnableVertexAttribArray");
+	glad_glDisableVertexAttribArray =
+		(PFNGLDISABLEVERTEXATTRIBARRAYPROC)load("glDisableVertexAttribArray");
+	glad_glEnableVertexAttribArray =
+		(PFNGLENABLEVERTEXATTRIBARRAYPROC)load("glEnableVertexAttribArray");
 	glad_glGetActiveAttrib = (PFNGLGETACTIVEATTRIBPROC)load("glGetActiveAttrib");
 	glad_glGetActiveUniform = (PFNGLGETACTIVEUNIFORMPROC)load("glGetActiveUniform");
 	glad_glGetAttachedShaders = (PFNGLGETATTACHEDSHADERSPROC)load("glGetAttachedShaders");
@@ -1824,7 +1879,8 @@ static void load_GL_VERSION_2_0(GLADloadproc load) {
 	glad_glGetVertexAttribdv = (PFNGLGETVERTEXATTRIBDVPROC)load("glGetVertexAttribdv");
 	glad_glGetVertexAttribfv = (PFNGLGETVERTEXATTRIBFVPROC)load("glGetVertexAttribfv");
 	glad_glGetVertexAttribiv = (PFNGLGETVERTEXATTRIBIVPROC)load("glGetVertexAttribiv");
-	glad_glGetVertexAttribPointerv = (PFNGLGETVERTEXATTRIBPOINTERVPROC)load("glGetVertexAttribPointerv");
+	glad_glGetVertexAttribPointerv =
+		(PFNGLGETVERTEXATTRIBPOINTERVPROC)load("glGetVertexAttribPointerv");
 	glad_glIsProgram = (PFNGLISPROGRAMPROC)load("glIsProgram");
 	glad_glIsShader = (PFNGLISSHADERPROC)load("glIsShader");
 	glad_glLinkProgram = (PFNGLLINKPROGRAMPROC)load("glLinkProgram");
@@ -1888,8 +1944,10 @@ static void load_GL_VERSION_2_0(GLADloadproc load) {
 	glad_glVertexAttrib4usv = (PFNGLVERTEXATTRIB4USVPROC)load("glVertexAttrib4usv");
 	glad_glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)load("glVertexAttribPointer");
 }
-static void load_GL_VERSION_2_1(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_2_1) return;
+static void load_GL_VERSION_2_1(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_2_1)
+		return;
 	glad_glUniformMatrix2x3fv = (PFNGLUNIFORMMATRIX2X3FVPROC)load("glUniformMatrix2x3fv");
 	glad_glUniformMatrix3x2fv = (PFNGLUNIFORMMATRIX3X2FVPROC)load("glUniformMatrix3x2fv");
 	glad_glUniformMatrix2x4fv = (PFNGLUNIFORMMATRIX2X4FVPROC)load("glUniformMatrix2x4fv");
@@ -1897,22 +1955,28 @@ static void load_GL_VERSION_2_1(GLADloadproc load) {
 	glad_glUniformMatrix3x4fv = (PFNGLUNIFORMMATRIX3X4FVPROC)load("glUniformMatrix3x4fv");
 	glad_glUniformMatrix4x3fv = (PFNGLUNIFORMMATRIX4X3FVPROC)load("glUniformMatrix4x3fv");
 }
-static void load_GL_VERSION_3_0(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_3_0) return;
+static void load_GL_VERSION_3_0(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_3_0)
+		return;
 	glad_glColorMaski = (PFNGLCOLORMASKIPROC)load("glColorMaski");
 	glad_glGetBooleani_v = (PFNGLGETBOOLEANI_VPROC)load("glGetBooleani_v");
 	glad_glGetIntegeri_v = (PFNGLGETINTEGERI_VPROC)load("glGetIntegeri_v");
 	glad_glEnablei = (PFNGLENABLEIPROC)load("glEnablei");
 	glad_glDisablei = (PFNGLDISABLEIPROC)load("glDisablei");
 	glad_glIsEnabledi = (PFNGLISENABLEDIPROC)load("glIsEnabledi");
-	glad_glBeginTransformFeedback = (PFNGLBEGINTRANSFORMFEEDBACKPROC)load("glBeginTransformFeedback");
+	glad_glBeginTransformFeedback =
+		(PFNGLBEGINTRANSFORMFEEDBACKPROC)load("glBeginTransformFeedback");
 	glad_glEndTransformFeedback = (PFNGLENDTRANSFORMFEEDBACKPROC)load("glEndTransformFeedback");
 	glad_glBindBufferRange = (PFNGLBINDBUFFERRANGEPROC)load("glBindBufferRange");
 	glad_glBindBufferBase = (PFNGLBINDBUFFERBASEPROC)load("glBindBufferBase");
-	glad_glTransformFeedbackVaryings = (PFNGLTRANSFORMFEEDBACKVARYINGSPROC)load("glTransformFeedbackVaryings");
-	glad_glGetTransformFeedbackVarying = (PFNGLGETTRANSFORMFEEDBACKVARYINGPROC)load("glGetTransformFeedbackVarying");
+	glad_glTransformFeedbackVaryings =
+		(PFNGLTRANSFORMFEEDBACKVARYINGSPROC)load("glTransformFeedbackVaryings");
+	glad_glGetTransformFeedbackVarying =
+		(PFNGLGETTRANSFORMFEEDBACKVARYINGPROC)load("glGetTransformFeedbackVarying");
 	glad_glClampColor = (PFNGLCLAMPCOLORPROC)load("glClampColor");
-	glad_glBeginConditionalRender = (PFNGLBEGINCONDITIONALRENDERPROC)load("glBeginConditionalRender");
+	glad_glBeginConditionalRender =
+		(PFNGLBEGINCONDITIONALRENDERPROC)load("glBeginConditionalRender");
 	glad_glEndConditionalRender = (PFNGLENDCONDITIONALRENDERPROC)load("glEndConditionalRender");
 	glad_glVertexAttribIPointer = (PFNGLVERTEXATTRIBIPOINTERPROC)load("glVertexAttribIPointer");
 	glad_glGetVertexAttribIiv = (PFNGLGETVERTEXATTRIBIIVPROC)load("glGetVertexAttribIiv");
@@ -1962,30 +2026,39 @@ static void load_GL_VERSION_3_0(GLADloadproc load) {
 	glad_glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERSPROC)load("glDeleteRenderbuffers");
 	glad_glGenRenderbuffers = (PFNGLGENRENDERBUFFERSPROC)load("glGenRenderbuffers");
 	glad_glRenderbufferStorage = (PFNGLRENDERBUFFERSTORAGEPROC)load("glRenderbufferStorage");
-	glad_glGetRenderbufferParameteriv = (PFNGLGETRENDERBUFFERPARAMETERIVPROC)load("glGetRenderbufferParameteriv");
+	glad_glGetRenderbufferParameteriv =
+		(PFNGLGETRENDERBUFFERPARAMETERIVPROC)load("glGetRenderbufferParameteriv");
 	glad_glIsFramebuffer = (PFNGLISFRAMEBUFFERPROC)load("glIsFramebuffer");
 	glad_glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC)load("glBindFramebuffer");
 	glad_glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC)load("glDeleteFramebuffers");
 	glad_glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC)load("glGenFramebuffers");
-	glad_glCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC)load("glCheckFramebufferStatus");
+	glad_glCheckFramebufferStatus =
+		(PFNGLCHECKFRAMEBUFFERSTATUSPROC)load("glCheckFramebufferStatus");
 	glad_glFramebufferTexture1D = (PFNGLFRAMEBUFFERTEXTURE1DPROC)load("glFramebufferTexture1D");
 	glad_glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC)load("glFramebufferTexture2D");
 	glad_glFramebufferTexture3D = (PFNGLFRAMEBUFFERTEXTURE3DPROC)load("glFramebufferTexture3D");
-	glad_glFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFERPROC)load("glFramebufferRenderbuffer");
-	glad_glGetFramebufferAttachmentParameteriv = (PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC)load("glGetFramebufferAttachmentParameteriv");
+	glad_glFramebufferRenderbuffer =
+		(PFNGLFRAMEBUFFERRENDERBUFFERPROC)load("glFramebufferRenderbuffer");
+	glad_glGetFramebufferAttachmentParameteriv =
+		(PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC)load("glGetFramebufferAttachmentParameteriv");
 	glad_glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC)load("glGenerateMipmap");
 	glad_glBlitFramebuffer = (PFNGLBLITFRAMEBUFFERPROC)load("glBlitFramebuffer");
-	glad_glRenderbufferStorageMultisample = (PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC)load("glRenderbufferStorageMultisample");
-	glad_glFramebufferTextureLayer = (PFNGLFRAMEBUFFERTEXTURELAYERPROC)load("glFramebufferTextureLayer");
+	glad_glRenderbufferStorageMultisample =
+		(PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC)load("glRenderbufferStorageMultisample");
+	glad_glFramebufferTextureLayer =
+		(PFNGLFRAMEBUFFERTEXTURELAYERPROC)load("glFramebufferTextureLayer");
 	glad_glMapBufferRange = (PFNGLMAPBUFFERRANGEPROC)load("glMapBufferRange");
-	glad_glFlushMappedBufferRange = (PFNGLFLUSHMAPPEDBUFFERRANGEPROC)load("glFlushMappedBufferRange");
+	glad_glFlushMappedBufferRange =
+		(PFNGLFLUSHMAPPEDBUFFERRANGEPROC)load("glFlushMappedBufferRange");
 	glad_glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)load("glBindVertexArray");
 	glad_glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)load("glDeleteVertexArrays");
 	glad_glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)load("glGenVertexArrays");
 	glad_glIsVertexArray = (PFNGLISVERTEXARRAYPROC)load("glIsVertexArray");
 }
-static void load_GL_VERSION_3_1(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_3_1) return;
+static void load_GL_VERSION_3_1(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_3_1)
+		return;
 	glad_glDrawArraysInstanced = (PFNGLDRAWARRAYSINSTANCEDPROC)load("glDrawArraysInstanced");
 	glad_glDrawElementsInstanced = (PFNGLDRAWELEMENTSINSTANCEDPROC)load("glDrawElementsInstanced");
 	glad_glTexBuffer = (PFNGLTEXBUFFERPROC)load("glTexBuffer");
@@ -1995,19 +2068,27 @@ static void load_GL_VERSION_3_1(GLADloadproc load) {
 	glad_glGetActiveUniformsiv = (PFNGLGETACTIVEUNIFORMSIVPROC)load("glGetActiveUniformsiv");
 	glad_glGetActiveUniformName = (PFNGLGETACTIVEUNIFORMNAMEPROC)load("glGetActiveUniformName");
 	glad_glGetUniformBlockIndex = (PFNGLGETUNIFORMBLOCKINDEXPROC)load("glGetUniformBlockIndex");
-	glad_glGetActiveUniformBlockiv = (PFNGLGETACTIVEUNIFORMBLOCKIVPROC)load("glGetActiveUniformBlockiv");
-	glad_glGetActiveUniformBlockName = (PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC)load("glGetActiveUniformBlockName");
+	glad_glGetActiveUniformBlockiv =
+		(PFNGLGETACTIVEUNIFORMBLOCKIVPROC)load("glGetActiveUniformBlockiv");
+	glad_glGetActiveUniformBlockName =
+		(PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC)load("glGetActiveUniformBlockName");
 	glad_glUniformBlockBinding = (PFNGLUNIFORMBLOCKBINDINGPROC)load("glUniformBlockBinding");
 	glad_glBindBufferRange = (PFNGLBINDBUFFERRANGEPROC)load("glBindBufferRange");
 	glad_glBindBufferBase = (PFNGLBINDBUFFERBASEPROC)load("glBindBufferBase");
 	glad_glGetIntegeri_v = (PFNGLGETINTEGERI_VPROC)load("glGetIntegeri_v");
 }
-static void load_GL_VERSION_3_2(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_3_2) return;
-	glad_glDrawElementsBaseVertex = (PFNGLDRAWELEMENTSBASEVERTEXPROC)load("glDrawElementsBaseVertex");
-	glad_glDrawRangeElementsBaseVertex = (PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC)load("glDrawRangeElementsBaseVertex");
-	glad_glDrawElementsInstancedBaseVertex = (PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXPROC)load("glDrawElementsInstancedBaseVertex");
-	glad_glMultiDrawElementsBaseVertex = (PFNGLMULTIDRAWELEMENTSBASEVERTEXPROC)load("glMultiDrawElementsBaseVertex");
+static void load_GL_VERSION_3_2(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_3_2)
+		return;
+	glad_glDrawElementsBaseVertex =
+		(PFNGLDRAWELEMENTSBASEVERTEXPROC)load("glDrawElementsBaseVertex");
+	glad_glDrawRangeElementsBaseVertex =
+		(PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC)load("glDrawRangeElementsBaseVertex");
+	glad_glDrawElementsInstancedBaseVertex =
+		(PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXPROC)load("glDrawElementsInstancedBaseVertex");
+	glad_glMultiDrawElementsBaseVertex =
+		(PFNGLMULTIDRAWELEMENTSBASEVERTEXPROC)load("glMultiDrawElementsBaseVertex");
 	glad_glProvokingVertex = (PFNGLPROVOKINGVERTEXPROC)load("glProvokingVertex");
 	glad_glFenceSync = (PFNGLFENCESYNCPROC)load("glFenceSync");
 	glad_glIsSync = (PFNGLISSYNCPROC)load("glIsSync");
@@ -2017,16 +2098,20 @@ static void load_GL_VERSION_3_2(GLADloadproc load) {
 	glad_glGetInteger64v = (PFNGLGETINTEGER64VPROC)load("glGetInteger64v");
 	glad_glGetSynciv = (PFNGLGETSYNCIVPROC)load("glGetSynciv");
 	glad_glGetInteger64i_v = (PFNGLGETINTEGER64I_VPROC)load("glGetInteger64i_v");
-	glad_glGetBufferParameteri64v = (PFNGLGETBUFFERPARAMETERI64VPROC)load("glGetBufferParameteri64v");
+	glad_glGetBufferParameteri64v =
+		(PFNGLGETBUFFERPARAMETERI64VPROC)load("glGetBufferParameteri64v");
 	glad_glFramebufferTexture = (PFNGLFRAMEBUFFERTEXTUREPROC)load("glFramebufferTexture");
 	glad_glTexImage2DMultisample = (PFNGLTEXIMAGE2DMULTISAMPLEPROC)load("glTexImage2DMultisample");
 	glad_glTexImage3DMultisample = (PFNGLTEXIMAGE3DMULTISAMPLEPROC)load("glTexImage3DMultisample");
 	glad_glGetMultisamplefv = (PFNGLGETMULTISAMPLEFVPROC)load("glGetMultisamplefv");
 	glad_glSampleMaski = (PFNGLSAMPLEMASKIPROC)load("glSampleMaski");
 }
-static void load_GL_VERSION_3_3(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_3_3) return;
-	glad_glBindFragDataLocationIndexed = (PFNGLBINDFRAGDATALOCATIONINDEXEDPROC)load("glBindFragDataLocationIndexed");
+static void load_GL_VERSION_3_3(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_3_3)
+		return;
+	glad_glBindFragDataLocationIndexed =
+		(PFNGLBINDFRAGDATALOCATIONINDEXEDPROC)load("glBindFragDataLocationIndexed");
 	glad_glGetFragDataIndex = (PFNGLGETFRAGDATAINDEXPROC)load("glGetFragDataIndex");
 	glad_glGenSamplers = (PFNGLGENSAMPLERSPROC)load("glGenSamplers");
 	glad_glDeleteSamplers = (PFNGLDELETESAMPLERSPROC)load("glDeleteSamplers");
@@ -2039,9 +2124,11 @@ static void load_GL_VERSION_3_3(GLADloadproc load) {
 	glad_glSamplerParameterIiv = (PFNGLSAMPLERPARAMETERIIVPROC)load("glSamplerParameterIiv");
 	glad_glSamplerParameterIuiv = (PFNGLSAMPLERPARAMETERIUIVPROC)load("glSamplerParameterIuiv");
 	glad_glGetSamplerParameteriv = (PFNGLGETSAMPLERPARAMETERIVPROC)load("glGetSamplerParameteriv");
-	glad_glGetSamplerParameterIiv = (PFNGLGETSAMPLERPARAMETERIIVPROC)load("glGetSamplerParameterIiv");
+	glad_glGetSamplerParameterIiv =
+		(PFNGLGETSAMPLERPARAMETERIIVPROC)load("glGetSamplerParameterIiv");
 	glad_glGetSamplerParameterfv = (PFNGLGETSAMPLERPARAMETERFVPROC)load("glGetSamplerParameterfv");
-	glad_glGetSamplerParameterIuiv = (PFNGLGETSAMPLERPARAMETERIUIVPROC)load("glGetSamplerParameterIuiv");
+	glad_glGetSamplerParameterIuiv =
+		(PFNGLGETSAMPLERPARAMETERIUIVPROC)load("glGetSamplerParameterIuiv");
 	glad_glQueryCounter = (PFNGLQUERYCOUNTERPROC)load("glQueryCounter");
 	glad_glGetQueryObjecti64v = (PFNGLGETQUERYOBJECTI64VPROC)load("glGetQueryObjecti64v");
 	glad_glGetQueryObjectui64v = (PFNGLGETQUERYOBJECTUI64VPROC)load("glGetQueryObjectui64v");
@@ -2085,11 +2172,14 @@ static void load_GL_VERSION_3_3(GLADloadproc load) {
 	glad_glSecondaryColorP3ui = (PFNGLSECONDARYCOLORP3UIPROC)load("glSecondaryColorP3ui");
 	glad_glSecondaryColorP3uiv = (PFNGLSECONDARYCOLORP3UIVPROC)load("glSecondaryColorP3uiv");
 }
-static void load_GL_VERSION_4_0(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_4_0) return;
+static void load_GL_VERSION_4_0(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_4_0)
+		return;
 	glad_glMinSampleShading = (PFNGLMINSAMPLESHADINGPROC)load("glMinSampleShading");
 	glad_glBlendEquationi = (PFNGLBLENDEQUATIONIPROC)load("glBlendEquationi");
-	glad_glBlendEquationSeparatei = (PFNGLBLENDEQUATIONSEPARATEIPROC)load("glBlendEquationSeparatei");
+	glad_glBlendEquationSeparatei =
+		(PFNGLBLENDEQUATIONSEPARATEIPROC)load("glBlendEquationSeparatei");
 	glad_glBlendFunci = (PFNGLBLENDFUNCIPROC)load("glBlendFunci");
 	glad_glBlendFuncSeparatei = (PFNGLBLENDFUNCSEPARATEIPROC)load("glBlendFuncSeparatei");
 	glad_glDrawArraysIndirect = (PFNGLDRAWARRAYSINDIRECTPROC)load("glDrawArraysIndirect");
@@ -2112,33 +2202,45 @@ static void load_GL_VERSION_4_0(GLADloadproc load) {
 	glad_glUniformMatrix4x2dv = (PFNGLUNIFORMMATRIX4X2DVPROC)load("glUniformMatrix4x2dv");
 	glad_glUniformMatrix4x3dv = (PFNGLUNIFORMMATRIX4X3DVPROC)load("glUniformMatrix4x3dv");
 	glad_glGetUniformdv = (PFNGLGETUNIFORMDVPROC)load("glGetUniformdv");
-	glad_glGetSubroutineUniformLocation = (PFNGLGETSUBROUTINEUNIFORMLOCATIONPROC)load("glGetSubroutineUniformLocation");
+	glad_glGetSubroutineUniformLocation =
+		(PFNGLGETSUBROUTINEUNIFORMLOCATIONPROC)load("glGetSubroutineUniformLocation");
 	glad_glGetSubroutineIndex = (PFNGLGETSUBROUTINEINDEXPROC)load("glGetSubroutineIndex");
-	glad_glGetActiveSubroutineUniformiv = (PFNGLGETACTIVESUBROUTINEUNIFORMIVPROC)load("glGetActiveSubroutineUniformiv");
-	glad_glGetActiveSubroutineUniformName = (PFNGLGETACTIVESUBROUTINEUNIFORMNAMEPROC)load("glGetActiveSubroutineUniformName");
-	glad_glGetActiveSubroutineName = (PFNGLGETACTIVESUBROUTINENAMEPROC)load("glGetActiveSubroutineName");
+	glad_glGetActiveSubroutineUniformiv =
+		(PFNGLGETACTIVESUBROUTINEUNIFORMIVPROC)load("glGetActiveSubroutineUniformiv");
+	glad_glGetActiveSubroutineUniformName =
+		(PFNGLGETACTIVESUBROUTINEUNIFORMNAMEPROC)load("glGetActiveSubroutineUniformName");
+	glad_glGetActiveSubroutineName =
+		(PFNGLGETACTIVESUBROUTINENAMEPROC)load("glGetActiveSubroutineName");
 	glad_glUniformSubroutinesuiv = (PFNGLUNIFORMSUBROUTINESUIVPROC)load("glUniformSubroutinesuiv");
-	glad_glGetUniformSubroutineuiv = (PFNGLGETUNIFORMSUBROUTINEUIVPROC)load("glGetUniformSubroutineuiv");
+	glad_glGetUniformSubroutineuiv =
+		(PFNGLGETUNIFORMSUBROUTINEUIVPROC)load("glGetUniformSubroutineuiv");
 	glad_glGetProgramStageiv = (PFNGLGETPROGRAMSTAGEIVPROC)load("glGetProgramStageiv");
 	glad_glPatchParameteri = (PFNGLPATCHPARAMETERIPROC)load("glPatchParameteri");
 	glad_glPatchParameterfv = (PFNGLPATCHPARAMETERFVPROC)load("glPatchParameterfv");
 	glad_glBindTransformFeedback = (PFNGLBINDTRANSFORMFEEDBACKPROC)load("glBindTransformFeedback");
-	glad_glDeleteTransformFeedbacks = (PFNGLDELETETRANSFORMFEEDBACKSPROC)load("glDeleteTransformFeedbacks");
+	glad_glDeleteTransformFeedbacks =
+		(PFNGLDELETETRANSFORMFEEDBACKSPROC)load("glDeleteTransformFeedbacks");
 	glad_glGenTransformFeedbacks = (PFNGLGENTRANSFORMFEEDBACKSPROC)load("glGenTransformFeedbacks");
 	glad_glIsTransformFeedback = (PFNGLISTRANSFORMFEEDBACKPROC)load("glIsTransformFeedback");
-	glad_glPauseTransformFeedback = (PFNGLPAUSETRANSFORMFEEDBACKPROC)load("glPauseTransformFeedback");
-	glad_glResumeTransformFeedback = (PFNGLRESUMETRANSFORMFEEDBACKPROC)load("glResumeTransformFeedback");
+	glad_glPauseTransformFeedback =
+		(PFNGLPAUSETRANSFORMFEEDBACKPROC)load("glPauseTransformFeedback");
+	glad_glResumeTransformFeedback =
+		(PFNGLRESUMETRANSFORMFEEDBACKPROC)load("glResumeTransformFeedback");
 	glad_glDrawTransformFeedback = (PFNGLDRAWTRANSFORMFEEDBACKPROC)load("glDrawTransformFeedback");
-	glad_glDrawTransformFeedbackStream = (PFNGLDRAWTRANSFORMFEEDBACKSTREAMPROC)load("glDrawTransformFeedbackStream");
+	glad_glDrawTransformFeedbackStream =
+		(PFNGLDRAWTRANSFORMFEEDBACKSTREAMPROC)load("glDrawTransformFeedbackStream");
 	glad_glBeginQueryIndexed = (PFNGLBEGINQUERYINDEXEDPROC)load("glBeginQueryIndexed");
 	glad_glEndQueryIndexed = (PFNGLENDQUERYINDEXEDPROC)load("glEndQueryIndexed");
 	glad_glGetQueryIndexediv = (PFNGLGETQUERYINDEXEDIVPROC)load("glGetQueryIndexediv");
 }
-static void load_GL_VERSION_4_1(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_4_1) return;
+static void load_GL_VERSION_4_1(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_4_1)
+		return;
 	glad_glReleaseShaderCompiler = (PFNGLRELEASESHADERCOMPILERPROC)load("glReleaseShaderCompiler");
 	glad_glShaderBinary = (PFNGLSHADERBINARYPROC)load("glShaderBinary");
-	glad_glGetShaderPrecisionFormat = (PFNGLGETSHADERPRECISIONFORMATPROC)load("glGetShaderPrecisionFormat");
+	glad_glGetShaderPrecisionFormat =
+		(PFNGLGETSHADERPRECISIONFORMATPROC)load("glGetShaderPrecisionFormat");
 	glad_glDepthRangef = (PFNGLDEPTHRANGEFPROC)load("glDepthRangef");
 	glad_glClearDepthf = (PFNGLCLEARDEPTHFPROC)load("glClearDepthf");
 	glad_glGetProgramBinary = (PFNGLGETPROGRAMBINARYPROC)load("glGetProgramBinary");
@@ -2148,7 +2250,8 @@ static void load_GL_VERSION_4_1(GLADloadproc load) {
 	glad_glActiveShaderProgram = (PFNGLACTIVESHADERPROGRAMPROC)load("glActiveShaderProgram");
 	glad_glCreateShaderProgramv = (PFNGLCREATESHADERPROGRAMVPROC)load("glCreateShaderProgramv");
 	glad_glBindProgramPipeline = (PFNGLBINDPROGRAMPIPELINEPROC)load("glBindProgramPipeline");
-	glad_glDeleteProgramPipelines = (PFNGLDELETEPROGRAMPIPELINESPROC)load("glDeleteProgramPipelines");
+	glad_glDeleteProgramPipelines =
+		(PFNGLDELETEPROGRAMPIPELINESPROC)load("glDeleteProgramPipelines");
 	glad_glGenProgramPipelines = (PFNGLGENPROGRAMPIPELINESPROC)load("glGenProgramPipelines");
 	glad_glIsProgramPipeline = (PFNGLISPROGRAMPIPELINEPROC)load("glIsProgramPipeline");
 	glad_glGetProgramPipelineiv = (PFNGLGETPROGRAMPIPELINEIVPROC)load("glGetProgramPipelineiv");
@@ -2185,26 +2288,46 @@ static void load_GL_VERSION_4_1(GLADloadproc load) {
 	glad_glProgramUniform4dv = (PFNGLPROGRAMUNIFORM4DVPROC)load("glProgramUniform4dv");
 	glad_glProgramUniform4ui = (PFNGLPROGRAMUNIFORM4UIPROC)load("glProgramUniform4ui");
 	glad_glProgramUniform4uiv = (PFNGLPROGRAMUNIFORM4UIVPROC)load("glProgramUniform4uiv");
-	glad_glProgramUniformMatrix2fv = (PFNGLPROGRAMUNIFORMMATRIX2FVPROC)load("glProgramUniformMatrix2fv");
-	glad_glProgramUniformMatrix3fv = (PFNGLPROGRAMUNIFORMMATRIX3FVPROC)load("glProgramUniformMatrix3fv");
-	glad_glProgramUniformMatrix4fv = (PFNGLPROGRAMUNIFORMMATRIX4FVPROC)load("glProgramUniformMatrix4fv");
-	glad_glProgramUniformMatrix2dv = (PFNGLPROGRAMUNIFORMMATRIX2DVPROC)load("glProgramUniformMatrix2dv");
-	glad_glProgramUniformMatrix3dv = (PFNGLPROGRAMUNIFORMMATRIX3DVPROC)load("glProgramUniformMatrix3dv");
-	glad_glProgramUniformMatrix4dv = (PFNGLPROGRAMUNIFORMMATRIX4DVPROC)load("glProgramUniformMatrix4dv");
-	glad_glProgramUniformMatrix2x3fv = (PFNGLPROGRAMUNIFORMMATRIX2X3FVPROC)load("glProgramUniformMatrix2x3fv");
-	glad_glProgramUniformMatrix3x2fv = (PFNGLPROGRAMUNIFORMMATRIX3X2FVPROC)load("glProgramUniformMatrix3x2fv");
-	glad_glProgramUniformMatrix2x4fv = (PFNGLPROGRAMUNIFORMMATRIX2X4FVPROC)load("glProgramUniformMatrix2x4fv");
-	glad_glProgramUniformMatrix4x2fv = (PFNGLPROGRAMUNIFORMMATRIX4X2FVPROC)load("glProgramUniformMatrix4x2fv");
-	glad_glProgramUniformMatrix3x4fv = (PFNGLPROGRAMUNIFORMMATRIX3X4FVPROC)load("glProgramUniformMatrix3x4fv");
-	glad_glProgramUniformMatrix4x3fv = (PFNGLPROGRAMUNIFORMMATRIX4X3FVPROC)load("glProgramUniformMatrix4x3fv");
-	glad_glProgramUniformMatrix2x3dv = (PFNGLPROGRAMUNIFORMMATRIX2X3DVPROC)load("glProgramUniformMatrix2x3dv");
-	glad_glProgramUniformMatrix3x2dv = (PFNGLPROGRAMUNIFORMMATRIX3X2DVPROC)load("glProgramUniformMatrix3x2dv");
-	glad_glProgramUniformMatrix2x4dv = (PFNGLPROGRAMUNIFORMMATRIX2X4DVPROC)load("glProgramUniformMatrix2x4dv");
-	glad_glProgramUniformMatrix4x2dv = (PFNGLPROGRAMUNIFORMMATRIX4X2DVPROC)load("glProgramUniformMatrix4x2dv");
-	glad_glProgramUniformMatrix3x4dv = (PFNGLPROGRAMUNIFORMMATRIX3X4DVPROC)load("glProgramUniformMatrix3x4dv");
-	glad_glProgramUniformMatrix4x3dv = (PFNGLPROGRAMUNIFORMMATRIX4X3DVPROC)load("glProgramUniformMatrix4x3dv");
-	glad_glValidateProgramPipeline = (PFNGLVALIDATEPROGRAMPIPELINEPROC)load("glValidateProgramPipeline");
-	glad_glGetProgramPipelineInfoLog = (PFNGLGETPROGRAMPIPELINEINFOLOGPROC)load("glGetProgramPipelineInfoLog");
+	glad_glProgramUniformMatrix2fv =
+		(PFNGLPROGRAMUNIFORMMATRIX2FVPROC)load("glProgramUniformMatrix2fv");
+	glad_glProgramUniformMatrix3fv =
+		(PFNGLPROGRAMUNIFORMMATRIX3FVPROC)load("glProgramUniformMatrix3fv");
+	glad_glProgramUniformMatrix4fv =
+		(PFNGLPROGRAMUNIFORMMATRIX4FVPROC)load("glProgramUniformMatrix4fv");
+	glad_glProgramUniformMatrix2dv =
+		(PFNGLPROGRAMUNIFORMMATRIX2DVPROC)load("glProgramUniformMatrix2dv");
+	glad_glProgramUniformMatrix3dv =
+		(PFNGLPROGRAMUNIFORMMATRIX3DVPROC)load("glProgramUniformMatrix3dv");
+	glad_glProgramUniformMatrix4dv =
+		(PFNGLPROGRAMUNIFORMMATRIX4DVPROC)load("glProgramUniformMatrix4dv");
+	glad_glProgramUniformMatrix2x3fv =
+		(PFNGLPROGRAMUNIFORMMATRIX2X3FVPROC)load("glProgramUniformMatrix2x3fv");
+	glad_glProgramUniformMatrix3x2fv =
+		(PFNGLPROGRAMUNIFORMMATRIX3X2FVPROC)load("glProgramUniformMatrix3x2fv");
+	glad_glProgramUniformMatrix2x4fv =
+		(PFNGLPROGRAMUNIFORMMATRIX2X4FVPROC)load("glProgramUniformMatrix2x4fv");
+	glad_glProgramUniformMatrix4x2fv =
+		(PFNGLPROGRAMUNIFORMMATRIX4X2FVPROC)load("glProgramUniformMatrix4x2fv");
+	glad_glProgramUniformMatrix3x4fv =
+		(PFNGLPROGRAMUNIFORMMATRIX3X4FVPROC)load("glProgramUniformMatrix3x4fv");
+	glad_glProgramUniformMatrix4x3fv =
+		(PFNGLPROGRAMUNIFORMMATRIX4X3FVPROC)load("glProgramUniformMatrix4x3fv");
+	glad_glProgramUniformMatrix2x3dv =
+		(PFNGLPROGRAMUNIFORMMATRIX2X3DVPROC)load("glProgramUniformMatrix2x3dv");
+	glad_glProgramUniformMatrix3x2dv =
+		(PFNGLPROGRAMUNIFORMMATRIX3X2DVPROC)load("glProgramUniformMatrix3x2dv");
+	glad_glProgramUniformMatrix2x4dv =
+		(PFNGLPROGRAMUNIFORMMATRIX2X4DVPROC)load("glProgramUniformMatrix2x4dv");
+	glad_glProgramUniformMatrix4x2dv =
+		(PFNGLPROGRAMUNIFORMMATRIX4X2DVPROC)load("glProgramUniformMatrix4x2dv");
+	glad_glProgramUniformMatrix3x4dv =
+		(PFNGLPROGRAMUNIFORMMATRIX3X4DVPROC)load("glProgramUniformMatrix3x4dv");
+	glad_glProgramUniformMatrix4x3dv =
+		(PFNGLPROGRAMUNIFORMMATRIX4X3DVPROC)load("glProgramUniformMatrix4x3dv");
+	glad_glValidateProgramPipeline =
+		(PFNGLVALIDATEPROGRAMPIPELINEPROC)load("glValidateProgramPipeline");
+	glad_glGetProgramPipelineInfoLog =
+		(PFNGLGETPROGRAMPIPELINEINFOLOGPROC)load("glGetProgramPipelineInfoLog");
 	glad_glVertexAttribL1d = (PFNGLVERTEXATTRIBL1DPROC)load("glVertexAttribL1d");
 	glad_glVertexAttribL2d = (PFNGLVERTEXATTRIBL2DPROC)load("glVertexAttribL2d");
 	glad_glVertexAttribL3d = (PFNGLVERTEXATTRIBL3DPROC)load("glVertexAttribL3d");
@@ -2226,49 +2349,74 @@ static void load_GL_VERSION_4_1(GLADloadproc load) {
 	glad_glGetFloati_v = (PFNGLGETFLOATI_VPROC)load("glGetFloati_v");
 	glad_glGetDoublei_v = (PFNGLGETDOUBLEI_VPROC)load("glGetDoublei_v");
 }
-static void load_GL_VERSION_4_2(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_4_2) return;
-	glad_glDrawArraysInstancedBaseInstance = (PFNGLDRAWARRAYSINSTANCEDBASEINSTANCEPROC)load("glDrawArraysInstancedBaseInstance");
-	glad_glDrawElementsInstancedBaseInstance = (PFNGLDRAWELEMENTSINSTANCEDBASEINSTANCEPROC)load("glDrawElementsInstancedBaseInstance");
-	glad_glDrawElementsInstancedBaseVertexBaseInstance = (PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXBASEINSTANCEPROC)load("glDrawElementsInstancedBaseVertexBaseInstance");
+static void load_GL_VERSION_4_2(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_4_2)
+		return;
+	glad_glDrawArraysInstancedBaseInstance =
+		(PFNGLDRAWARRAYSINSTANCEDBASEINSTANCEPROC)load("glDrawArraysInstancedBaseInstance");
+	glad_glDrawElementsInstancedBaseInstance =
+		(PFNGLDRAWELEMENTSINSTANCEDBASEINSTANCEPROC)load("glDrawElementsInstancedBaseInstance");
+	glad_glDrawElementsInstancedBaseVertexBaseInstance =
+		(PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXBASEINSTANCEPROC)load(
+			"glDrawElementsInstancedBaseVertexBaseInstance");
 	glad_glGetInternalformativ = (PFNGLGETINTERNALFORMATIVPROC)load("glGetInternalformativ");
-	glad_glGetActiveAtomicCounterBufferiv = (PFNGLGETACTIVEATOMICCOUNTERBUFFERIVPROC)load("glGetActiveAtomicCounterBufferiv");
+	glad_glGetActiveAtomicCounterBufferiv =
+		(PFNGLGETACTIVEATOMICCOUNTERBUFFERIVPROC)load("glGetActiveAtomicCounterBufferiv");
 	glad_glBindImageTexture = (PFNGLBINDIMAGETEXTUREPROC)load("glBindImageTexture");
 	glad_glMemoryBarrier = (PFNGLMEMORYBARRIERPROC)load("glMemoryBarrier");
 	glad_glTexStorage1D = (PFNGLTEXSTORAGE1DPROC)load("glTexStorage1D");
 	glad_glTexStorage2D = (PFNGLTEXSTORAGE2DPROC)load("glTexStorage2D");
 	glad_glTexStorage3D = (PFNGLTEXSTORAGE3DPROC)load("glTexStorage3D");
-	glad_glDrawTransformFeedbackInstanced = (PFNGLDRAWTRANSFORMFEEDBACKINSTANCEDPROC)load("glDrawTransformFeedbackInstanced");
-	glad_glDrawTransformFeedbackStreamInstanced = (PFNGLDRAWTRANSFORMFEEDBACKSTREAMINSTANCEDPROC)load("glDrawTransformFeedbackStreamInstanced");
+	glad_glDrawTransformFeedbackInstanced =
+		(PFNGLDRAWTRANSFORMFEEDBACKINSTANCEDPROC)load("glDrawTransformFeedbackInstanced");
+	glad_glDrawTransformFeedbackStreamInstanced =
+		(PFNGLDRAWTRANSFORMFEEDBACKSTREAMINSTANCEDPROC)load(
+			"glDrawTransformFeedbackStreamInstanced");
 }
-static void load_GL_VERSION_4_3(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_4_3) return;
+static void load_GL_VERSION_4_3(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_4_3)
+		return;
 	glad_glClearBufferData = (PFNGLCLEARBUFFERDATAPROC)load("glClearBufferData");
 	glad_glClearBufferSubData = (PFNGLCLEARBUFFERSUBDATAPROC)load("glClearBufferSubData");
 	glad_glDispatchCompute = (PFNGLDISPATCHCOMPUTEPROC)load("glDispatchCompute");
-	glad_glDispatchComputeIndirect = (PFNGLDISPATCHCOMPUTEINDIRECTPROC)load("glDispatchComputeIndirect");
+	glad_glDispatchComputeIndirect =
+		(PFNGLDISPATCHCOMPUTEINDIRECTPROC)load("glDispatchComputeIndirect");
 	glad_glCopyImageSubData = (PFNGLCOPYIMAGESUBDATAPROC)load("glCopyImageSubData");
 	glad_glFramebufferParameteri = (PFNGLFRAMEBUFFERPARAMETERIPROC)load("glFramebufferParameteri");
-	glad_glGetFramebufferParameteriv = (PFNGLGETFRAMEBUFFERPARAMETERIVPROC)load("glGetFramebufferParameteriv");
+	glad_glGetFramebufferParameteriv =
+		(PFNGLGETFRAMEBUFFERPARAMETERIVPROC)load("glGetFramebufferParameteriv");
 	glad_glGetInternalformati64v = (PFNGLGETINTERNALFORMATI64VPROC)load("glGetInternalformati64v");
 	glad_glInvalidateTexSubImage = (PFNGLINVALIDATETEXSUBIMAGEPROC)load("glInvalidateTexSubImage");
 	glad_glInvalidateTexImage = (PFNGLINVALIDATETEXIMAGEPROC)load("glInvalidateTexImage");
-	glad_glInvalidateBufferSubData = (PFNGLINVALIDATEBUFFERSUBDATAPROC)load("glInvalidateBufferSubData");
+	glad_glInvalidateBufferSubData =
+		(PFNGLINVALIDATEBUFFERSUBDATAPROC)load("glInvalidateBufferSubData");
 	glad_glInvalidateBufferData = (PFNGLINVALIDATEBUFFERDATAPROC)load("glInvalidateBufferData");
 	glad_glInvalidateFramebuffer = (PFNGLINVALIDATEFRAMEBUFFERPROC)load("glInvalidateFramebuffer");
-	glad_glInvalidateSubFramebuffer = (PFNGLINVALIDATESUBFRAMEBUFFERPROC)load("glInvalidateSubFramebuffer");
-	glad_glMultiDrawArraysIndirect = (PFNGLMULTIDRAWARRAYSINDIRECTPROC)load("glMultiDrawArraysIndirect");
-	glad_glMultiDrawElementsIndirect = (PFNGLMULTIDRAWELEMENTSINDIRECTPROC)load("glMultiDrawElementsIndirect");
+	glad_glInvalidateSubFramebuffer =
+		(PFNGLINVALIDATESUBFRAMEBUFFERPROC)load("glInvalidateSubFramebuffer");
+	glad_glMultiDrawArraysIndirect =
+		(PFNGLMULTIDRAWARRAYSINDIRECTPROC)load("glMultiDrawArraysIndirect");
+	glad_glMultiDrawElementsIndirect =
+		(PFNGLMULTIDRAWELEMENTSINDIRECTPROC)load("glMultiDrawElementsIndirect");
 	glad_glGetProgramInterfaceiv = (PFNGLGETPROGRAMINTERFACEIVPROC)load("glGetProgramInterfaceiv");
-	glad_glGetProgramResourceIndex = (PFNGLGETPROGRAMRESOURCEINDEXPROC)load("glGetProgramResourceIndex");
-	glad_glGetProgramResourceName = (PFNGLGETPROGRAMRESOURCENAMEPROC)load("glGetProgramResourceName");
+	glad_glGetProgramResourceIndex =
+		(PFNGLGETPROGRAMRESOURCEINDEXPROC)load("glGetProgramResourceIndex");
+	glad_glGetProgramResourceName =
+		(PFNGLGETPROGRAMRESOURCENAMEPROC)load("glGetProgramResourceName");
 	glad_glGetProgramResourceiv = (PFNGLGETPROGRAMRESOURCEIVPROC)load("glGetProgramResourceiv");
-	glad_glGetProgramResourceLocation = (PFNGLGETPROGRAMRESOURCELOCATIONPROC)load("glGetProgramResourceLocation");
-	glad_glGetProgramResourceLocationIndex = (PFNGLGETPROGRAMRESOURCELOCATIONINDEXPROC)load("glGetProgramResourceLocationIndex");
-	glad_glShaderStorageBlockBinding = (PFNGLSHADERSTORAGEBLOCKBINDINGPROC)load("glShaderStorageBlockBinding");
+	glad_glGetProgramResourceLocation =
+		(PFNGLGETPROGRAMRESOURCELOCATIONPROC)load("glGetProgramResourceLocation");
+	glad_glGetProgramResourceLocationIndex =
+		(PFNGLGETPROGRAMRESOURCELOCATIONINDEXPROC)load("glGetProgramResourceLocationIndex");
+	glad_glShaderStorageBlockBinding =
+		(PFNGLSHADERSTORAGEBLOCKBINDINGPROC)load("glShaderStorageBlockBinding");
 	glad_glTexBufferRange = (PFNGLTEXBUFFERRANGEPROC)load("glTexBufferRange");
-	glad_glTexStorage2DMultisample = (PFNGLTEXSTORAGE2DMULTISAMPLEPROC)load("glTexStorage2DMultisample");
-	glad_glTexStorage3DMultisample = (PFNGLTEXSTORAGE3DMULTISAMPLEPROC)load("glTexStorage3DMultisample");
+	glad_glTexStorage2DMultisample =
+		(PFNGLTEXSTORAGE2DMULTISAMPLEPROC)load("glTexStorage2DMultisample");
+	glad_glTexStorage3DMultisample =
+		(PFNGLTEXSTORAGE3DMULTISAMPLEPROC)load("glTexStorage3DMultisample");
 	glad_glTextureView = (PFNGLTEXTUREVIEWPROC)load("glTextureView");
 	glad_glBindVertexBuffer = (PFNGLBINDVERTEXBUFFERPROC)load("glBindVertexBuffer");
 	glad_glVertexAttribFormat = (PFNGLVERTEXATTRIBFORMATPROC)load("glVertexAttribFormat");
@@ -2288,8 +2436,10 @@ static void load_GL_VERSION_4_3(GLADloadproc load) {
 	glad_glGetObjectPtrLabel = (PFNGLGETOBJECTPTRLABELPROC)load("glGetObjectPtrLabel");
 	glad_glGetPointerv = (PFNGLGETPOINTERVPROC)load("glGetPointerv");
 }
-static void load_GL_VERSION_4_4(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_4_4) return;
+static void load_GL_VERSION_4_4(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_4_4)
+		return;
 	glad_glBufferStorage = (PFNGLBUFFERSTORAGEPROC)load("glBufferStorage");
 	glad_glClearTexImage = (PFNGLCLEARTEXIMAGEPROC)load("glClearTexImage");
 	glad_glClearTexSubImage = (PFNGLCLEARTEXSUBIMAGEPROC)load("glClearTexSubImage");
@@ -2300,66 +2450,105 @@ static void load_GL_VERSION_4_4(GLADloadproc load) {
 	glad_glBindImageTextures = (PFNGLBINDIMAGETEXTURESPROC)load("glBindImageTextures");
 	glad_glBindVertexBuffers = (PFNGLBINDVERTEXBUFFERSPROC)load("glBindVertexBuffers");
 }
-static void load_GL_VERSION_4_5(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_4_5) return;
+static void load_GL_VERSION_4_5(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_4_5)
+		return;
 	glad_glClipControl = (PFNGLCLIPCONTROLPROC)load("glClipControl");
-	glad_glCreateTransformFeedbacks = (PFNGLCREATETRANSFORMFEEDBACKSPROC)load("glCreateTransformFeedbacks");
-	glad_glTransformFeedbackBufferBase = (PFNGLTRANSFORMFEEDBACKBUFFERBASEPROC)load("glTransformFeedbackBufferBase");
-	glad_glTransformFeedbackBufferRange = (PFNGLTRANSFORMFEEDBACKBUFFERRANGEPROC)load("glTransformFeedbackBufferRange");
-	glad_glGetTransformFeedbackiv = (PFNGLGETTRANSFORMFEEDBACKIVPROC)load("glGetTransformFeedbackiv");
-	glad_glGetTransformFeedbacki_v = (PFNGLGETTRANSFORMFEEDBACKI_VPROC)load("glGetTransformFeedbacki_v");
-	glad_glGetTransformFeedbacki64_v = (PFNGLGETTRANSFORMFEEDBACKI64_VPROC)load("glGetTransformFeedbacki64_v");
+	glad_glCreateTransformFeedbacks =
+		(PFNGLCREATETRANSFORMFEEDBACKSPROC)load("glCreateTransformFeedbacks");
+	glad_glTransformFeedbackBufferBase =
+		(PFNGLTRANSFORMFEEDBACKBUFFERBASEPROC)load("glTransformFeedbackBufferBase");
+	glad_glTransformFeedbackBufferRange =
+		(PFNGLTRANSFORMFEEDBACKBUFFERRANGEPROC)load("glTransformFeedbackBufferRange");
+	glad_glGetTransformFeedbackiv =
+		(PFNGLGETTRANSFORMFEEDBACKIVPROC)load("glGetTransformFeedbackiv");
+	glad_glGetTransformFeedbacki_v =
+		(PFNGLGETTRANSFORMFEEDBACKI_VPROC)load("glGetTransformFeedbacki_v");
+	glad_glGetTransformFeedbacki64_v =
+		(PFNGLGETTRANSFORMFEEDBACKI64_VPROC)load("glGetTransformFeedbacki64_v");
 	glad_glCreateBuffers = (PFNGLCREATEBUFFERSPROC)load("glCreateBuffers");
 	glad_glNamedBufferStorage = (PFNGLNAMEDBUFFERSTORAGEPROC)load("glNamedBufferStorage");
 	glad_glNamedBufferData = (PFNGLNAMEDBUFFERDATAPROC)load("glNamedBufferData");
 	glad_glNamedBufferSubData = (PFNGLNAMEDBUFFERSUBDATAPROC)load("glNamedBufferSubData");
-	glad_glCopyNamedBufferSubData = (PFNGLCOPYNAMEDBUFFERSUBDATAPROC)load("glCopyNamedBufferSubData");
+	glad_glCopyNamedBufferSubData =
+		(PFNGLCOPYNAMEDBUFFERSUBDATAPROC)load("glCopyNamedBufferSubData");
 	glad_glClearNamedBufferData = (PFNGLCLEARNAMEDBUFFERDATAPROC)load("glClearNamedBufferData");
-	glad_glClearNamedBufferSubData = (PFNGLCLEARNAMEDBUFFERSUBDATAPROC)load("glClearNamedBufferSubData");
+	glad_glClearNamedBufferSubData =
+		(PFNGLCLEARNAMEDBUFFERSUBDATAPROC)load("glClearNamedBufferSubData");
 	glad_glMapNamedBuffer = (PFNGLMAPNAMEDBUFFERPROC)load("glMapNamedBuffer");
 	glad_glMapNamedBufferRange = (PFNGLMAPNAMEDBUFFERRANGEPROC)load("glMapNamedBufferRange");
 	glad_glUnmapNamedBuffer = (PFNGLUNMAPNAMEDBUFFERPROC)load("glUnmapNamedBuffer");
-	glad_glFlushMappedNamedBufferRange = (PFNGLFLUSHMAPPEDNAMEDBUFFERRANGEPROC)load("glFlushMappedNamedBufferRange");
-	glad_glGetNamedBufferParameteriv = (PFNGLGETNAMEDBUFFERPARAMETERIVPROC)load("glGetNamedBufferParameteriv");
-	glad_glGetNamedBufferParameteri64v = (PFNGLGETNAMEDBUFFERPARAMETERI64VPROC)load("glGetNamedBufferParameteri64v");
-	glad_glGetNamedBufferPointerv = (PFNGLGETNAMEDBUFFERPOINTERVPROC)load("glGetNamedBufferPointerv");
+	glad_glFlushMappedNamedBufferRange =
+		(PFNGLFLUSHMAPPEDNAMEDBUFFERRANGEPROC)load("glFlushMappedNamedBufferRange");
+	glad_glGetNamedBufferParameteriv =
+		(PFNGLGETNAMEDBUFFERPARAMETERIVPROC)load("glGetNamedBufferParameteriv");
+	glad_glGetNamedBufferParameteri64v =
+		(PFNGLGETNAMEDBUFFERPARAMETERI64VPROC)load("glGetNamedBufferParameteri64v");
+	glad_glGetNamedBufferPointerv =
+		(PFNGLGETNAMEDBUFFERPOINTERVPROC)load("glGetNamedBufferPointerv");
 	glad_glGetNamedBufferSubData = (PFNGLGETNAMEDBUFFERSUBDATAPROC)load("glGetNamedBufferSubData");
 	glad_glCreateFramebuffers = (PFNGLCREATEFRAMEBUFFERSPROC)load("glCreateFramebuffers");
-	glad_glNamedFramebufferRenderbuffer = (PFNGLNAMEDFRAMEBUFFERRENDERBUFFERPROC)load("glNamedFramebufferRenderbuffer");
-	glad_glNamedFramebufferParameteri = (PFNGLNAMEDFRAMEBUFFERPARAMETERIPROC)load("glNamedFramebufferParameteri");
-	glad_glNamedFramebufferTexture = (PFNGLNAMEDFRAMEBUFFERTEXTUREPROC)load("glNamedFramebufferTexture");
-	glad_glNamedFramebufferTextureLayer = (PFNGLNAMEDFRAMEBUFFERTEXTURELAYERPROC)load("glNamedFramebufferTextureLayer");
-	glad_glNamedFramebufferDrawBuffer = (PFNGLNAMEDFRAMEBUFFERDRAWBUFFERPROC)load("glNamedFramebufferDrawBuffer");
-	glad_glNamedFramebufferDrawBuffers = (PFNGLNAMEDFRAMEBUFFERDRAWBUFFERSPROC)load("glNamedFramebufferDrawBuffers");
-	glad_glNamedFramebufferReadBuffer = (PFNGLNAMEDFRAMEBUFFERREADBUFFERPROC)load("glNamedFramebufferReadBuffer");
-	glad_glInvalidateNamedFramebufferData = (PFNGLINVALIDATENAMEDFRAMEBUFFERDATAPROC)load("glInvalidateNamedFramebufferData");
-	glad_glInvalidateNamedFramebufferSubData = (PFNGLINVALIDATENAMEDFRAMEBUFFERSUBDATAPROC)load("glInvalidateNamedFramebufferSubData");
-	glad_glClearNamedFramebufferiv = (PFNGLCLEARNAMEDFRAMEBUFFERIVPROC)load("glClearNamedFramebufferiv");
-	glad_glClearNamedFramebufferuiv = (PFNGLCLEARNAMEDFRAMEBUFFERUIVPROC)load("glClearNamedFramebufferuiv");
-	glad_glClearNamedFramebufferfv = (PFNGLCLEARNAMEDFRAMEBUFFERFVPROC)load("glClearNamedFramebufferfv");
-	glad_glClearNamedFramebufferfi = (PFNGLCLEARNAMEDFRAMEBUFFERFIPROC)load("glClearNamedFramebufferfi");
+	glad_glNamedFramebufferRenderbuffer =
+		(PFNGLNAMEDFRAMEBUFFERRENDERBUFFERPROC)load("glNamedFramebufferRenderbuffer");
+	glad_glNamedFramebufferParameteri =
+		(PFNGLNAMEDFRAMEBUFFERPARAMETERIPROC)load("glNamedFramebufferParameteri");
+	glad_glNamedFramebufferTexture =
+		(PFNGLNAMEDFRAMEBUFFERTEXTUREPROC)load("glNamedFramebufferTexture");
+	glad_glNamedFramebufferTextureLayer =
+		(PFNGLNAMEDFRAMEBUFFERTEXTURELAYERPROC)load("glNamedFramebufferTextureLayer");
+	glad_glNamedFramebufferDrawBuffer =
+		(PFNGLNAMEDFRAMEBUFFERDRAWBUFFERPROC)load("glNamedFramebufferDrawBuffer");
+	glad_glNamedFramebufferDrawBuffers =
+		(PFNGLNAMEDFRAMEBUFFERDRAWBUFFERSPROC)load("glNamedFramebufferDrawBuffers");
+	glad_glNamedFramebufferReadBuffer =
+		(PFNGLNAMEDFRAMEBUFFERREADBUFFERPROC)load("glNamedFramebufferReadBuffer");
+	glad_glInvalidateNamedFramebufferData =
+		(PFNGLINVALIDATENAMEDFRAMEBUFFERDATAPROC)load("glInvalidateNamedFramebufferData");
+	glad_glInvalidateNamedFramebufferSubData =
+		(PFNGLINVALIDATENAMEDFRAMEBUFFERSUBDATAPROC)load("glInvalidateNamedFramebufferSubData");
+	glad_glClearNamedFramebufferiv =
+		(PFNGLCLEARNAMEDFRAMEBUFFERIVPROC)load("glClearNamedFramebufferiv");
+	glad_glClearNamedFramebufferuiv =
+		(PFNGLCLEARNAMEDFRAMEBUFFERUIVPROC)load("glClearNamedFramebufferuiv");
+	glad_glClearNamedFramebufferfv =
+		(PFNGLCLEARNAMEDFRAMEBUFFERFVPROC)load("glClearNamedFramebufferfv");
+	glad_glClearNamedFramebufferfi =
+		(PFNGLCLEARNAMEDFRAMEBUFFERFIPROC)load("glClearNamedFramebufferfi");
 	glad_glBlitNamedFramebuffer = (PFNGLBLITNAMEDFRAMEBUFFERPROC)load("glBlitNamedFramebuffer");
-	glad_glCheckNamedFramebufferStatus = (PFNGLCHECKNAMEDFRAMEBUFFERSTATUSPROC)load("glCheckNamedFramebufferStatus");
-	glad_glGetNamedFramebufferParameteriv = (PFNGLGETNAMEDFRAMEBUFFERPARAMETERIVPROC)load("glGetNamedFramebufferParameteriv");
-	glad_glGetNamedFramebufferAttachmentParameteriv = (PFNGLGETNAMEDFRAMEBUFFERATTACHMENTPARAMETERIVPROC)load("glGetNamedFramebufferAttachmentParameteriv");
+	glad_glCheckNamedFramebufferStatus =
+		(PFNGLCHECKNAMEDFRAMEBUFFERSTATUSPROC)load("glCheckNamedFramebufferStatus");
+	glad_glGetNamedFramebufferParameteriv =
+		(PFNGLGETNAMEDFRAMEBUFFERPARAMETERIVPROC)load("glGetNamedFramebufferParameteriv");
+	glad_glGetNamedFramebufferAttachmentParameteriv =
+		(PFNGLGETNAMEDFRAMEBUFFERATTACHMENTPARAMETERIVPROC)load(
+			"glGetNamedFramebufferAttachmentParameteriv");
 	glad_glCreateRenderbuffers = (PFNGLCREATERENDERBUFFERSPROC)load("glCreateRenderbuffers");
-	glad_glNamedRenderbufferStorage = (PFNGLNAMEDRENDERBUFFERSTORAGEPROC)load("glNamedRenderbufferStorage");
-	glad_glNamedRenderbufferStorageMultisample = (PFNGLNAMEDRENDERBUFFERSTORAGEMULTISAMPLEPROC)load("glNamedRenderbufferStorageMultisample");
-	glad_glGetNamedRenderbufferParameteriv = (PFNGLGETNAMEDRENDERBUFFERPARAMETERIVPROC)load("glGetNamedRenderbufferParameteriv");
+	glad_glNamedRenderbufferStorage =
+		(PFNGLNAMEDRENDERBUFFERSTORAGEPROC)load("glNamedRenderbufferStorage");
+	glad_glNamedRenderbufferStorageMultisample =
+		(PFNGLNAMEDRENDERBUFFERSTORAGEMULTISAMPLEPROC)load("glNamedRenderbufferStorageMultisample");
+	glad_glGetNamedRenderbufferParameteriv =
+		(PFNGLGETNAMEDRENDERBUFFERPARAMETERIVPROC)load("glGetNamedRenderbufferParameteriv");
 	glad_glCreateTextures = (PFNGLCREATETEXTURESPROC)load("glCreateTextures");
 	glad_glTextureBuffer = (PFNGLTEXTUREBUFFERPROC)load("glTextureBuffer");
 	glad_glTextureBufferRange = (PFNGLTEXTUREBUFFERRANGEPROC)load("glTextureBufferRange");
 	glad_glTextureStorage1D = (PFNGLTEXTURESTORAGE1DPROC)load("glTextureStorage1D");
 	glad_glTextureStorage2D = (PFNGLTEXTURESTORAGE2DPROC)load("glTextureStorage2D");
 	glad_glTextureStorage3D = (PFNGLTEXTURESTORAGE3DPROC)load("glTextureStorage3D");
-	glad_glTextureStorage2DMultisample = (PFNGLTEXTURESTORAGE2DMULTISAMPLEPROC)load("glTextureStorage2DMultisample");
-	glad_glTextureStorage3DMultisample = (PFNGLTEXTURESTORAGE3DMULTISAMPLEPROC)load("glTextureStorage3DMultisample");
+	glad_glTextureStorage2DMultisample =
+		(PFNGLTEXTURESTORAGE2DMULTISAMPLEPROC)load("glTextureStorage2DMultisample");
+	glad_glTextureStorage3DMultisample =
+		(PFNGLTEXTURESTORAGE3DMULTISAMPLEPROC)load("glTextureStorage3DMultisample");
 	glad_glTextureSubImage1D = (PFNGLTEXTURESUBIMAGE1DPROC)load("glTextureSubImage1D");
 	glad_glTextureSubImage2D = (PFNGLTEXTURESUBIMAGE2DPROC)load("glTextureSubImage2D");
 	glad_glTextureSubImage3D = (PFNGLTEXTURESUBIMAGE3DPROC)load("glTextureSubImage3D");
-	glad_glCompressedTextureSubImage1D = (PFNGLCOMPRESSEDTEXTURESUBIMAGE1DPROC)load("glCompressedTextureSubImage1D");
-	glad_glCompressedTextureSubImage2D = (PFNGLCOMPRESSEDTEXTURESUBIMAGE2DPROC)load("glCompressedTextureSubImage2D");
-	glad_glCompressedTextureSubImage3D = (PFNGLCOMPRESSEDTEXTURESUBIMAGE3DPROC)load("glCompressedTextureSubImage3D");
+	glad_glCompressedTextureSubImage1D =
+		(PFNGLCOMPRESSEDTEXTURESUBIMAGE1DPROC)load("glCompressedTextureSubImage1D");
+	glad_glCompressedTextureSubImage2D =
+		(PFNGLCOMPRESSEDTEXTURESUBIMAGE2DPROC)load("glCompressedTextureSubImage2D");
+	glad_glCompressedTextureSubImage3D =
+		(PFNGLCOMPRESSEDTEXTURESUBIMAGE3DPROC)load("glCompressedTextureSubImage3D");
 	glad_glCopyTextureSubImage1D = (PFNGLCOPYTEXTURESUBIMAGE1DPROC)load("glCopyTextureSubImage1D");
 	glad_glCopyTextureSubImage2D = (PFNGLCOPYTEXTURESUBIMAGE2DPROC)load("glCopyTextureSubImage2D");
 	glad_glCopyTextureSubImage3D = (PFNGLCOPYTEXTURESUBIMAGE3DPROC)load("glCopyTextureSubImage3D");
@@ -2372,39 +2561,64 @@ static void load_GL_VERSION_4_5(GLADloadproc load) {
 	glad_glGenerateTextureMipmap = (PFNGLGENERATETEXTUREMIPMAPPROC)load("glGenerateTextureMipmap");
 	glad_glBindTextureUnit = (PFNGLBINDTEXTUREUNITPROC)load("glBindTextureUnit");
 	glad_glGetTextureImage = (PFNGLGETTEXTUREIMAGEPROC)load("glGetTextureImage");
-	glad_glGetCompressedTextureImage = (PFNGLGETCOMPRESSEDTEXTUREIMAGEPROC)load("glGetCompressedTextureImage");
-	glad_glGetTextureLevelParameterfv = (PFNGLGETTEXTURELEVELPARAMETERFVPROC)load("glGetTextureLevelParameterfv");
-	glad_glGetTextureLevelParameteriv = (PFNGLGETTEXTURELEVELPARAMETERIVPROC)load("glGetTextureLevelParameteriv");
+	glad_glGetCompressedTextureImage =
+		(PFNGLGETCOMPRESSEDTEXTUREIMAGEPROC)load("glGetCompressedTextureImage");
+	glad_glGetTextureLevelParameterfv =
+		(PFNGLGETTEXTURELEVELPARAMETERFVPROC)load("glGetTextureLevelParameterfv");
+	glad_glGetTextureLevelParameteriv =
+		(PFNGLGETTEXTURELEVELPARAMETERIVPROC)load("glGetTextureLevelParameteriv");
 	glad_glGetTextureParameterfv = (PFNGLGETTEXTUREPARAMETERFVPROC)load("glGetTextureParameterfv");
-	glad_glGetTextureParameterIiv = (PFNGLGETTEXTUREPARAMETERIIVPROC)load("glGetTextureParameterIiv");
-	glad_glGetTextureParameterIuiv = (PFNGLGETTEXTUREPARAMETERIUIVPROC)load("glGetTextureParameterIuiv");
+	glad_glGetTextureParameterIiv =
+		(PFNGLGETTEXTUREPARAMETERIIVPROC)load("glGetTextureParameterIiv");
+	glad_glGetTextureParameterIuiv =
+		(PFNGLGETTEXTUREPARAMETERIUIVPROC)load("glGetTextureParameterIuiv");
 	glad_glGetTextureParameteriv = (PFNGLGETTEXTUREPARAMETERIVPROC)load("glGetTextureParameteriv");
 	glad_glCreateVertexArrays = (PFNGLCREATEVERTEXARRAYSPROC)load("glCreateVertexArrays");
-	glad_glDisableVertexArrayAttrib = (PFNGLDISABLEVERTEXARRAYATTRIBPROC)load("glDisableVertexArrayAttrib");
-	glad_glEnableVertexArrayAttrib = (PFNGLENABLEVERTEXARRAYATTRIBPROC)load("glEnableVertexArrayAttrib");
-	glad_glVertexArrayElementBuffer = (PFNGLVERTEXARRAYELEMENTBUFFERPROC)load("glVertexArrayElementBuffer");
-	glad_glVertexArrayVertexBuffer = (PFNGLVERTEXARRAYVERTEXBUFFERPROC)load("glVertexArrayVertexBuffer");
-	glad_glVertexArrayVertexBuffers = (PFNGLVERTEXARRAYVERTEXBUFFERSPROC)load("glVertexArrayVertexBuffers");
-	glad_glVertexArrayAttribBinding = (PFNGLVERTEXARRAYATTRIBBINDINGPROC)load("glVertexArrayAttribBinding");
-	glad_glVertexArrayAttribFormat = (PFNGLVERTEXARRAYATTRIBFORMATPROC)load("glVertexArrayAttribFormat");
-	glad_glVertexArrayAttribIFormat = (PFNGLVERTEXARRAYATTRIBIFORMATPROC)load("glVertexArrayAttribIFormat");
-	glad_glVertexArrayAttribLFormat = (PFNGLVERTEXARRAYATTRIBLFORMATPROC)load("glVertexArrayAttribLFormat");
-	glad_glVertexArrayBindingDivisor = (PFNGLVERTEXARRAYBINDINGDIVISORPROC)load("glVertexArrayBindingDivisor");
+	glad_glDisableVertexArrayAttrib =
+		(PFNGLDISABLEVERTEXARRAYATTRIBPROC)load("glDisableVertexArrayAttrib");
+	glad_glEnableVertexArrayAttrib =
+		(PFNGLENABLEVERTEXARRAYATTRIBPROC)load("glEnableVertexArrayAttrib");
+	glad_glVertexArrayElementBuffer =
+		(PFNGLVERTEXARRAYELEMENTBUFFERPROC)load("glVertexArrayElementBuffer");
+	glad_glVertexArrayVertexBuffer =
+		(PFNGLVERTEXARRAYVERTEXBUFFERPROC)load("glVertexArrayVertexBuffer");
+	glad_glVertexArrayVertexBuffers =
+		(PFNGLVERTEXARRAYVERTEXBUFFERSPROC)load("glVertexArrayVertexBuffers");
+	glad_glVertexArrayAttribBinding =
+		(PFNGLVERTEXARRAYATTRIBBINDINGPROC)load("glVertexArrayAttribBinding");
+	glad_glVertexArrayAttribFormat =
+		(PFNGLVERTEXARRAYATTRIBFORMATPROC)load("glVertexArrayAttribFormat");
+	glad_glVertexArrayAttribIFormat =
+		(PFNGLVERTEXARRAYATTRIBIFORMATPROC)load("glVertexArrayAttribIFormat");
+	glad_glVertexArrayAttribLFormat =
+		(PFNGLVERTEXARRAYATTRIBLFORMATPROC)load("glVertexArrayAttribLFormat");
+	glad_glVertexArrayBindingDivisor =
+		(PFNGLVERTEXARRAYBINDINGDIVISORPROC)load("glVertexArrayBindingDivisor");
 	glad_glGetVertexArrayiv = (PFNGLGETVERTEXARRAYIVPROC)load("glGetVertexArrayiv");
-	glad_glGetVertexArrayIndexediv = (PFNGLGETVERTEXARRAYINDEXEDIVPROC)load("glGetVertexArrayIndexediv");
-	glad_glGetVertexArrayIndexed64iv = (PFNGLGETVERTEXARRAYINDEXED64IVPROC)load("glGetVertexArrayIndexed64iv");
+	glad_glGetVertexArrayIndexediv =
+		(PFNGLGETVERTEXARRAYINDEXEDIVPROC)load("glGetVertexArrayIndexediv");
+	glad_glGetVertexArrayIndexed64iv =
+		(PFNGLGETVERTEXARRAYINDEXED64IVPROC)load("glGetVertexArrayIndexed64iv");
 	glad_glCreateSamplers = (PFNGLCREATESAMPLERSPROC)load("glCreateSamplers");
-	glad_glCreateProgramPipelines = (PFNGLCREATEPROGRAMPIPELINESPROC)load("glCreateProgramPipelines");
+	glad_glCreateProgramPipelines =
+		(PFNGLCREATEPROGRAMPIPELINESPROC)load("glCreateProgramPipelines");
 	glad_glCreateQueries = (PFNGLCREATEQUERIESPROC)load("glCreateQueries");
-	glad_glGetQueryBufferObjecti64v = (PFNGLGETQUERYBUFFEROBJECTI64VPROC)load("glGetQueryBufferObjecti64v");
-	glad_glGetQueryBufferObjectiv = (PFNGLGETQUERYBUFFEROBJECTIVPROC)load("glGetQueryBufferObjectiv");
-	glad_glGetQueryBufferObjectui64v = (PFNGLGETQUERYBUFFEROBJECTUI64VPROC)load("glGetQueryBufferObjectui64v");
-	glad_glGetQueryBufferObjectuiv = (PFNGLGETQUERYBUFFEROBJECTUIVPROC)load("glGetQueryBufferObjectuiv");
+	glad_glGetQueryBufferObjecti64v =
+		(PFNGLGETQUERYBUFFEROBJECTI64VPROC)load("glGetQueryBufferObjecti64v");
+	glad_glGetQueryBufferObjectiv =
+		(PFNGLGETQUERYBUFFEROBJECTIVPROC)load("glGetQueryBufferObjectiv");
+	glad_glGetQueryBufferObjectui64v =
+		(PFNGLGETQUERYBUFFEROBJECTUI64VPROC)load("glGetQueryBufferObjectui64v");
+	glad_glGetQueryBufferObjectuiv =
+		(PFNGLGETQUERYBUFFEROBJECTUIVPROC)load("glGetQueryBufferObjectuiv");
 	glad_glMemoryBarrierByRegion = (PFNGLMEMORYBARRIERBYREGIONPROC)load("glMemoryBarrierByRegion");
 	glad_glGetTextureSubImage = (PFNGLGETTEXTURESUBIMAGEPROC)load("glGetTextureSubImage");
-	glad_glGetCompressedTextureSubImage = (PFNGLGETCOMPRESSEDTEXTURESUBIMAGEPROC)load("glGetCompressedTextureSubImage");
-	glad_glGetGraphicsResetStatus = (PFNGLGETGRAPHICSRESETSTATUSPROC)load("glGetGraphicsResetStatus");
-	glad_glGetnCompressedTexImage = (PFNGLGETNCOMPRESSEDTEXIMAGEPROC)load("glGetnCompressedTexImage");
+	glad_glGetCompressedTextureSubImage =
+		(PFNGLGETCOMPRESSEDTEXTURESUBIMAGEPROC)load("glGetCompressedTextureSubImage");
+	glad_glGetGraphicsResetStatus =
+		(PFNGLGETGRAPHICSRESETSTATUSPROC)load("glGetGraphicsResetStatus");
+	glad_glGetnCompressedTexImage =
+		(PFNGLGETNCOMPRESSEDTEXIMAGEPROC)load("glGetnCompressedTexImage");
 	glad_glGetnTexImage = (PFNGLGETNTEXIMAGEPROC)load("glGetnTexImage");
 	glad_glGetnUniformdv = (PFNGLGETNUNIFORMDVPROC)load("glGetnUniformdv");
 	glad_glGetnUniformfv = (PFNGLGETNUNIFORMFVPROC)load("glGetnUniformfv");
@@ -2425,56 +2639,63 @@ static void load_GL_VERSION_4_5(GLADloadproc load) {
 	glad_glGetnMinmax = (PFNGLGETNMINMAXPROC)load("glGetnMinmax");
 	glad_glTextureBarrier = (PFNGLTEXTUREBARRIERPROC)load("glTextureBarrier");
 }
-static void load_GL_VERSION_4_6(GLADloadproc load) {
-	if(!GLAD_GL_VERSION_4_6) return;
+static void load_GL_VERSION_4_6(GLADloadproc load)
+{
+	if(!GLAD_GL_VERSION_4_6)
+		return;
 	glad_glSpecializeShader = (PFNGLSPECIALIZESHADERPROC)load("glSpecializeShader");
-	glad_glMultiDrawArraysIndirectCount = (PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC)load("glMultiDrawArraysIndirectCount");
-	glad_glMultiDrawElementsIndirectCount = (PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC)load("glMultiDrawElementsIndirectCount");
+	glad_glMultiDrawArraysIndirectCount =
+		(PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC)load("glMultiDrawArraysIndirectCount");
+	glad_glMultiDrawElementsIndirectCount =
+		(PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC)load("glMultiDrawElementsIndirectCount");
 	glad_glPolygonOffsetClamp = (PFNGLPOLYGONOFFSETCLAMPPROC)load("glPolygonOffsetClamp");
 }
-static int find_extensionsGL(void) {
-	if (!get_exts()) return 0;
+static int find_extensionsGL(void)
+{
+	if(!get_exts())
+		return 0;
 	(void)&has_ext;
 	free_exts();
 	return 1;
 }
 
-static void find_coreGL(void) {
+static void find_coreGL(void)
+{
 
-    /* Thank you @elmindreda
+	/* Thank you @elmindreda
      * https://github.com/elmindreda/greg/blob/master/templates/greg.c.in#L176
      * https://github.com/glfw/glfw/blob/master/src/context.c#L36
      */
-    int i, major, minor;
+	int i, major, minor;
 
-    const char* version;
-    const char* prefixes[] = {
-        "OpenGL ES-CM ",
-        "OpenGL ES-CL ",
-        "OpenGL ES ",
-        NULL
-    };
+	const char* version;
+	const char* prefixes[] = {"OpenGL ES-CM ", "OpenGL ES-CL ", "OpenGL ES ", NULL};
 
-    version = (const char*) glGetString(GL_VERSION);
-    if (!version) return;
+	version = (const char*)glGetString(GL_VERSION);
+	if(!version)
+		return;
 
-    for (i = 0;  prefixes[i];  i++) {
-        const size_t length = strlen(prefixes[i]);
-        if (strncmp(version, prefixes[i], length) == 0) {
-            version += length;
-            break;
-        }
-    }
+	for(i = 0; prefixes[i]; i++)
+	{
+		const size_t length = strlen(prefixes[i]);
+		if(strncmp(version, prefixes[i], length) == 0)
+		{
+			version += length;
+			break;
+		}
+	}
 
 /* PR #18 */
 #ifdef _MSC_VER
-    sscanf_s(version, "%d.%d", &major, &minor);
+	sscanf_s(version, "%d.%d", &major, &minor);
 #else
-    sscanf(version, "%d.%d", &major, &minor);
+	sscanf(version, "%d.%d", &major, &minor);
 #endif
 
-    GLVersion.major = major; GLVersion.minor = minor;
-    max_loaded_major = major; max_loaded_minor = minor;
+	GLVersion.major = major;
+	GLVersion.minor = minor;
+	max_loaded_major = major;
+	max_loaded_minor = minor;
 	GLAD_GL_VERSION_1_0 = (major == 1 && minor >= 0) || major > 1;
 	GLAD_GL_VERSION_1_1 = (major == 1 && minor >= 1) || major > 1;
 	GLAD_GL_VERSION_1_2 = (major == 1 && minor >= 2) || major > 1;
@@ -2494,17 +2715,22 @@ static void find_coreGL(void) {
 	GLAD_GL_VERSION_4_4 = (major == 4 && minor >= 4) || major > 4;
 	GLAD_GL_VERSION_4_5 = (major == 4 && minor >= 5) || major > 4;
 	GLAD_GL_VERSION_4_6 = (major == 4 && minor >= 6) || major > 4;
-	if (GLVersion.major > 4 || (GLVersion.major >= 4 && GLVersion.minor >= 6)) {
+	if(GLVersion.major > 4 || (GLVersion.major >= 4 && GLVersion.minor >= 6))
+	{
 		max_loaded_major = 4;
 		max_loaded_minor = 6;
 	}
 }
 
-int gladLoadGLLoader(GLADloadproc load) {
-	GLVersion.major = 0; GLVersion.minor = 0;
+int gladLoadGLLoader(GLADloadproc load)
+{
+	GLVersion.major = 0;
+	GLVersion.minor = 0;
 	glGetString = (PFNGLGETSTRINGPROC)load("glGetString");
-	if(glGetString == NULL) return 0;
-	if(glGetString(GL_VERSION) == NULL) return 0;
+	if(glGetString == NULL)
+		return 0;
+	if(glGetString(GL_VERSION) == NULL)
+		return 0;
 	find_coreGL();
 	load_GL_VERSION_1_0(load);
 	load_GL_VERSION_1_1(load);
@@ -2526,7 +2752,7 @@ int gladLoadGLLoader(GLADloadproc load) {
 	load_GL_VERSION_4_5(load);
 	load_GL_VERSION_4_6(load);
 
-	if (!find_extensionsGL()) return 0;
+	if(!find_extensionsGL())
+		return 0;
 	return GLVersion.major != 0 || GLVersion.minor != 0;
 }
-
