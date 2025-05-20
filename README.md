@@ -14,6 +14,5 @@ Hopefully
 
 ### Learning OpenGL and c++
 
-[Here is a good website to learn OpenGL](https://www.learnopengl.com/)
-
-[Here is a good website to learn c++](https://www.learncpp.com/)
+- [Here is a good website to learn OpenGL](https://www.learnopengl.com/)
+- [Here is a good website to learn c++](https://www.learncpp.com/)
