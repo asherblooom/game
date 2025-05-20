@@ -9,10 +9,6 @@ Hopefully
 - Run `make linux` if on linux or `make windows` if on windows (in the root directory)
 - Run the resulting `game.o` file
 
-### Notes
-
-- When writing OpenGL files, include `glad.h` before `glfw3.h`
-
 ### Learning OpenGL and c++
 
 - [Here is a good website to learn OpenGL](https://www.learnopengl.com/)
