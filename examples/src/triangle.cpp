@@ -92,33 +92,35 @@ GLuint compile_shaders(void)
 	int success;
 	char info_log[512];
 
-	static const GLchar* vertex_shader_source[] = {
-		"#version 450 core                                  \n"
-		"                                                   \n"
-		"void main(void)                                    \n"
-		"{                                                  \n"
-		"    const vec4 vertices[3] = vec4[3](              \n"
-		"        vec4(0.25, -0.25, 0.5, 1.0),               \n"
-		"        vec4(-0.25, -0.25, 0.5, 1.0),              \n"
-		"        vec4(0.25, 0.25, 0.5, 1.0));               \n"
-		"                                                   \n"
-		//index into our verticies array using gl_VertexID
-		"    gl_Position = vertices[gl_VertexID];           \n"
-		"}                                                  \n"};
+	static const GLchar* vertex_shader_source = R"glsl(
+		#version 450 core
 
-	static const GLchar* fragment_shader_source[] = {
-		"#version 450 core                                  \n"
-		"                                                   \n"
-		"out vec4 color;                                    \n"
-		"                                                   \n"
-		"void main(void)                                    \n"
-		"{                                                  \n"
-		"    color = vec4(0.0, 0.8, 1.0, 1.0);              \n"
-		"}                                                  \n"};
+		void main(void)
+		{
+			const vec4 vertices[3] = vec4[3](
+				vec4(0.25, -0.25, 0.5, 1.0),
+				vec4(-0.25, -0.25, 0.5, 1.0),
+				vec4(0.25, 0.25, 0.5, 1.0));
+
+			// index into our verticies array using gl_VertexID
+			gl_Position = vertices[gl_VertexID];
+		}
+	)glsl";
+
+	static const GLchar* fragment_shader_source = R"glsl(
+		#version 450 core
+		
+		out vec4 color;
+
+		void main(void)
+		{
+			color = vec4(0.0, 0.8, 1.0, 1.0);
+		}
+	)glsl";
 
 	// Create and compile vertex shader
 	vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader, 1, vertex_shader_source, NULL);
+	glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
 	glCompileShader(vertex_shader);
 
 	// check for compile-time errors
@@ -131,7 +133,7 @@ GLuint compile_shaders(void)
 
 	// Create and compile fragment shader
 	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment_shader, 1, fragment_shader_source, NULL);
+	glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
 	glCompileShader(fragment_shader);
 
 	// check for compile-time errors
