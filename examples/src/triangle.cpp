@@ -1,6 +1,7 @@
 #include <glad/glad.hpp>
 
 #include <GLFW/glfw3.h>
+#include <cmath>
 #include <iostream>
 
 const unsigned int SCR_WIDTH = 1920;
@@ -46,11 +47,14 @@ int main(void)
 	glBindVertexArray(vertex_array_object);
 
 	//Initialise variables
-	const GLfloat background_color[] = {0.2f, 0.3f, 0.3f, 1.0f};
 
 	// Event loop
 	while(!glfwWindowShouldClose(window))
 	{
+		GLfloat time = {float(glfwGetTime())};
+		GLfloat background_color[] = {
+			std::sin(time) * 0.2f + 0.4f, std::cos(time) * 0.3f + 0.4f, 0.3f, 1.0f};
+
 		process_input(window);
 		glClearBufferfv(GL_COLOR, 0, background_color);
 
@@ -93,7 +97,7 @@ GLuint compile_shaders(void)
 	char info_log[512];
 
 	static const GLchar* vertex_shader_source = R"glsl(
-		#version 450 core
+		#version 430 core
 
 		void main(void)
 		{
@@ -108,7 +112,7 @@ GLuint compile_shaders(void)
 	)glsl";
 
 	static const GLchar* fragment_shader_source = R"glsl(
-		#version 450 core
+		#version 430 core
 		
 		out vec4 color;
 

@@ -89,7 +89,7 @@ GLuint compile_shaders(void)
 	GLuint program;
 
 	static const GLchar* vertex_shader_source[] = {
-		"#version 450 core                                  \n"
+		"#version 430 core                                  \n"
 		"                                                   \n"
 		"void main(void)                                    \n"
 		"{                                                  \n"
@@ -97,7 +97,7 @@ GLuint compile_shaders(void)
 		"}                                                  \n"};
 
 	static const GLchar* fragment_shader_source[] = {
-		"#version 450 core                                  \n"
+		"#version 430 core                                  \n"
 		"                                                   \n"
 		"out vec4 color;                                    \n"
 		"                                                   \n"
