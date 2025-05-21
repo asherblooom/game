@@ -89,7 +89,7 @@ GLuint compile_shaders(void)
 	GLuint fragment_shader;
 	GLuint program;
 
-	int success;
+	GLint success;
 	char info_log[512];
 
 	static const GLchar* vertex_shader_source = R"glsl(
