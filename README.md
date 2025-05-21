@@ -18,6 +18,8 @@ Hopefully
 
 ## Learning OpenGL and c++
 
+### Main resources
+
 - [This book is _highly_ recommended and teaches up to date OpenGl (ver. 4)](https://learning-oreilly-com.bris.idm.oclc.org/library/view/opengl-superbible-comprehensive/9780134193120/)
 _note: the link should take you to a sign-in page for UoB which will then direct
 you to the e-book_
@@ -27,5 +29,10 @@ is also highly recommended as a quick reference guide to c++ compared
 to the more indepth website linked below (You might be able to find a free pdf
 online or access an ebook from the library website)
 
-- [This website teaches OpenGl ver. 3 (but is still good)](https://www.learnopengl.com/)
 - [Here is a good website to learn c++](https://www.learncpp.com/)
+But just note it is _very_ detailed and sometimes in a strange order
+
+### Additional resources
+
+- [This website teaches OpenGl ver. 3 (but is still good)](https://www.learnopengl.com/)
+- [Another good opengl tutorial but again only version 3](https://www.open.gl)
