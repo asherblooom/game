@@ -5,6 +5,7 @@ Hopefully
 ## Setup instructions
 
 - [Install GLFW](https://www.glfw.org/download.html)
+- Clone the repository
 
 ### Building the game
 
