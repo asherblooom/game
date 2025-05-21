@@ -42,8 +42,10 @@ int main()
 	{
 		processInput(window);
 
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		// glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		// glClear(GL_COLOR_BUFFER_BIT);
+		const GLfloat red[] = {1.0f, 0.0f, 0.0f, 1.0f};
+		glClearBufferfv(GL_COLOR, 0, red);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
