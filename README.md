@@ -21,9 +21,9 @@ Hopefully
 
 ### Main resources
 
-- [This book is _highly_ recommended and teaches up to date OpenGl (ver. 4.5)](https://learning-oreilly-com.bris.idm.oclc.org/library/view/opengl-superbible-comprehensive/9780134193120/)
+- [This book is _highly_ recommended and teaches up to date OpenGl (ver. 4.5)](https://www-oreilly-com.bris.idm.oclc.org/library-access/?next=/library/view/~/9780133365023/?ar&orpq&email=tcAf2t%2bxyhAf4HyELvWxZNxKs3LYRtO0&tstamp=1747871539&id=F8CC5660B59938AF69A1F1CFF325D4DB7EBF877C)
 _note: the link should take you to a sign-in page for UoB which will then direct
-you to the e-book_
+you to the **6th edition** e-book. You can access the **7th edition** (most recent edition) by scrolling down and selecting it_
 
 - The book **"A Tour of C++" by Bjarne Stroustrup** (2nd or 3rd edition are good)
 is also highly recommended as a quick reference guide to c++ compared
