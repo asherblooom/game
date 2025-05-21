@@ -11,10 +11,14 @@ main: src/main.cpp mkbin
 
 
 # make rules for examples
-examples: moving-triangle triangle point glad
-	g++ -o examples/bin/triangle examples/bin/link/triangle.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+examples: tessellation moving-triangle triangle point glad
 	g++ -o examples/bin/point examples/bin/link/point.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+	g++ -o examples/bin/triangle examples/bin/link/triangle.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 	g++ -o examples/bin/moving-triangle examples/bin/link/moving-triangle.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+	g++ -o examples/bin/tessellation examples/bin/link/tessellation.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+
+tessellation: examples/src/tessellation.cpp mkbin
+	g++ -Wall -Wextra -Iinclude/ examples/src/tessellation.cpp -o examples/bin/link/tessellation.o -c
 
 moving-triangle: examples/src/moving-triangle.cpp mkbin
 	g++ -Wall -Wextra -Iinclude/ examples/src/moving-triangle.cpp -o examples/bin/link/moving-triangle.o -c
