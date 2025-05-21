@@ -16,7 +16,7 @@ Hopefully
 - Run `make examples` if on linux
 - The example programs will be created in `examples/bin`
 
-### Learning OpenGL and c++
+## Learning OpenGL and c++
 
 - [This book is _highly_ recommended and teaches more up to date OpenGl (ver. 4)](https://learning-oreilly-com.bris.idm.oclc.org/library/view/opengl-superbible-comprehensive/9780134193120/)
 _note: the link should take you to a sign-in page for UoB which will then direct you to the e-book_
