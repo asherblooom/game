@@ -1,10 +1,11 @@
-#include <glad/glad.h>
+#include <glad/glad.hpp>
 
 #include <GLFW/glfw3.h>
 #include <iostream>
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
+const GLfloat background_colour[] = {0.2f, 0.3f, 0.3f, 1.0f};
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -13,8 +14,8 @@ int main()
 {
 	// Initialise glfw and set options
 	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// create window
@@ -31,6 +32,7 @@ int main()
 	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD\n";
+		glfwTerminate();
 		return -1;
 	}
 
@@ -41,9 +43,7 @@ int main()
 	while(!glfwWindowShouldClose(window))
 	{
 		processInput(window);
-
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClearBufferfv(GL_COLOR, 0, background_colour);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
