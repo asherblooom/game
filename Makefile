@@ -1,15 +1,25 @@
 linux: main glad
-	g++ -o game.o main.o glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl 
+	g++ -o bin/game bin/main.o bin/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl 
 
 windows: main glad
 	# add something here?
 
-main: src/main.cpp 
-	g++ -Wall -Wextra -Iinclude/ src/main.cpp -o main.o -c
+examples: triangle glad
+	g++ -o examples/bin/triangle examples/bin/triangle.o bin/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 
-glad: src/glad.cpp
-	g++ -Iinclude/ src/glad.cpp -o glad.o -c
+main: src/main.cpp mkbin
+	g++ -Wall -Wextra -Iinclude/ src/main.cpp -o bin/main.o -c
+
+triangle: examples/src/triangle.cpp mkbin
+	g++ -Wall -Wextra -Iinclude/ examples/src/triangle.cpp -o examples/bin/triangle.o -c
+
+glad: src/glad.cpp mkbin
+	g++ -Iinclude/ src/glad.cpp -o bin/glad.o -c
+
+mkbin:
+	mkdir -p bin
+	mkdir -p examples/bin
 
 clean: 
-	rm *.o
+	rm -rf bin/ */bin/
 

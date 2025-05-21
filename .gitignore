@@ -1,5 +1,6 @@
-*.o
 compile_commands.json
 .clangd
 .cache/clangd/*
 .clang-format
+*/bin/
+bin/
