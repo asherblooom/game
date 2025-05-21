@@ -22,8 +22,8 @@ Hopefully
 _note: the link should take you to a sign-in page for UoB which will then direct
 you to the e-book_
 
-- The book "A Tour of C++" by Bjarne Stroustrup (2nd or 3rd edition are good) is
-also highly recommended as a quick reference guide to c++ compared
+- The book **"A Tour of C++" by Bjarne Stroustrup** (2nd or 3rd edition are good)
+is also highly recommended as a quick reference guide to c++ compared
 to the more indepth website linked below (You might be able to find a free pdf
 online or access an ebook from the library website)
 

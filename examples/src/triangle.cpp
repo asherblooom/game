@@ -54,8 +54,7 @@ int main()
 
 		glUseProgram(rendering_program);
 
-		glPointSize(40.0f);
-		glDrawArrays(GL_POINTS, 0, 1);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 
 		glfwPollEvents();
 		glfwSwapBuffers(window);
@@ -93,7 +92,13 @@ GLuint compile_shaders(void)
 		"                                                   \n"
 		"void main(void)                                    \n"
 		"{                                                  \n"
-		"    gl_Position = vec4(0.0, 0.0, 0.5, 1.0);        \n"
+		"    const vec4 vertices[3] = vec4[3](              \n"
+		"        vec4(0.25, -0.25, 0.5, 1.0),               \n"
+		"        vec4(-0.25, -0.25, 0.5, 1.0),              \n"
+		"        vec4(0.25, 0.25, 0.5, 1.0));               \n"
+		"                                                   \n"
+		//index into our verticies array using gl_VertexID
+		"    gl_Position = vertices[gl_VertexID];           \n"
 		"}                                                  \n"};
 
 	static const GLchar* fragment_shader_source[] = {
