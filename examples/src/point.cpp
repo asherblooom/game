@@ -43,8 +43,9 @@ int main()
 	// Initialse shaders etc.
 	GLuint rendering_program = compile_shaders();
 	GLuint vertex_array_object;
-	glCreateVertexArrays(1, &vertex_array_object);
+	glGenVertexArrays(1, &vertex_array_object);
 	glBindVertexArray(vertex_array_object);
+	glPointSize(40.0f);
 
 	// Event loop
 	while(!glfwWindowShouldClose(window))
@@ -54,7 +55,6 @@ int main()
 
 		glUseProgram(rendering_program);
 
-		glPointSize(40.0f);
 		glDrawArrays(GL_POINTS, 0, 1);
 
 		glfwPollEvents();
