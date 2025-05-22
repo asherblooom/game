@@ -27,8 +27,8 @@ is also what the examples are based on. \
 _Note: the link should take you to a sign-in page for UoB which will then direct
 you to the **6th edition** e-book. You can access the **7th edition** (most recent edition) by scrolling down and selecting it_
 
-- [This website](https://antongerdelan.net/opengl/index.html) is another good OpenGL 4 tutorial, but covers some topics
-in a slightly different order
+- [This website](https://antongerdelan.net/opengl/index.html) is another good OpenGL 4 tutorial, which is simpler than the above
+but covers some topics in a slightly different order
 
 - [This website](https://www.learnopengl.com/) teaches OpenGl ver. 3 (but is still good)
 and can be useful to provide extra detail/flesh out understanding\
