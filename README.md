@@ -21,7 +21,8 @@ Hopefully
 
 ### Main resources
 
-- [This book](https://www-oreilly-com.bris.idm.oclc.org/library-access/?next=/library/view/~/9780133365023/?ar&orpq&email=tcAf2t%2bxyhAf4HyELvWxZNxKs3LYRtO0&tstamp=1747871539&id=F8CC5660B59938AF69A1F1CFF325D4DB7EBF877C) is highly recommended and teaches up to date OpenGl (ver. 4.5) - this
+- [This book](https://linker2.worldcat.org/?jHome=https%3A%2F%2Fbris.idm.oclc.org%2Flogin%3Furl%3Dhttps%3A%2F%2Flearning.oreilly.com%2Flibrary%2Fview%2F~%2F9780133365023%2F%3Far%26orpq%26email%3D%5Eu&linktype=best&jHomeSig=18d1b86a967d5206742890e689759fabdaea0ebe6659ddee4ef995593108d486)
+is highly recommended and teaches up to date OpenGl (ver. 4.5) - this
 is also what the examples are based on. \
 _Note: the link should take you to a sign-in page for UoB which will then direct
 you to the **6th edition** e-book. You can access the **7th edition** (most recent edition) by scrolling down and selecting it_
