@@ -32,8 +32,8 @@ in a slightly different order
 
 - [This website](https://www.learnopengl.com/) teaches OpenGl ver. 3 (but is still good)
 and can be useful to provide extra detail/flesh out understanding\
-_Note:_ the boilerplate code for the examples (and the accompanying libraries) and the maths library are
-both taken from this website
+_Note: the boilerplate code for the examples (and the accompanying libraries, i.e. GLAD and glfw) and the maths library (GLM) are
+both taken from this website. Everything else is from the book_
 
 ### C++
 
