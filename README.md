@@ -22,7 +22,7 @@ Hopefully
 ### OpenGL
 
 - [This book](https://linker2.worldcat.org/?jHome=https%3A%2F%2Fbris.idm.oclc.org%2Flogin%3Furl%3Dhttps%3A%2F%2Flearning.oreilly.com%2Flibrary%2Fview%2F~%2F9780133365023%2F%3Far%26orpq%26email%3D%5Eu&linktype=best&jHomeSig=18d1b86a967d5206742890e689759fabdaea0ebe6659ddee4ef995593108d486)
-teaches up to date OpenGL (ver. 4.5) - this
+teaches up to date OpenGL (ver. 4.5) - it is somewhat detailed and
 is also what the examples are based on. \
 _Note: the link should take you to a sign-in page for UoB which will then direct
 you to the **6th edition** e-book. You can access the **7th edition** (most recent edition) by scrolling down and selecting it_
