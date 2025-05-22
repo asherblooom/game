@@ -31,7 +31,9 @@ you to the **6th edition** e-book. You can access the **7th edition** (most rece
 in a slightly different order
 
 - [This website](https://www.learnopengl.com/) teaches OpenGl ver. 3 (but is still good)
-and can be useful to provide extra detail/flesh out understanding
+and can be useful to provide extra detail/flesh out understanding\
+_Note:_ the boilerplate code for the examples (and the accompanying libraries) and the maths library are
+both taken from this website
 
 ### C++
 
