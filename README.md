@@ -19,26 +19,27 @@ Hopefully
 
 ## Learning OpenGL and C++
 
-### Main resources
+### OpenGL
 
 - [This book](https://linker2.worldcat.org/?jHome=https%3A%2F%2Fbris.idm.oclc.org%2Flogin%3Furl%3Dhttps%3A%2F%2Flearning.oreilly.com%2Flibrary%2Fview%2F~%2F9780133365023%2F%3Far%26orpq%26email%3D%5Eu&linktype=best&jHomeSig=18d1b86a967d5206742890e689759fabdaea0ebe6659ddee4ef995593108d486)
-is highly recommended and teaches up to date OpenGl (ver. 4.5) - this
+teaches up to date OpenGL (ver. 4.5) - this
 is also what the examples are based on. \
 _Note: the link should take you to a sign-in page for UoB which will then direct
 you to the **6th edition** e-book. You can access the **7th edition** (most recent edition) by scrolling down and selecting it_
 
+- [This website](https://antongerdelan.net/opengl/index.html) is another good OpenGL 4 tutorial, but covers some topics
+in a slightly different order
+
+- [This website](https://www.learnopengl.com/) teaches OpenGl ver. 3 (but is still good)
+and can be useful to provide extra detail/flesh out understanding
+
+### C++
+
 - The book **"A Tour of C++" by Bjarne Stroustrup** (2nd or 3rd edition are good)
-is also highly recommended as a quick reference guide to c++ compared
+is good as a quick reference guide to C++ compared
 to the more indepth website linked below \
 (You might be able to find a free pdf
 online or access an ebook from the library website)
 
 - [Here](https://www.learncpp.com/) is a good website to learn C++\
-  just note it is _very very_ detailed and sometimes in a strange order
-
-### Additional resources
-
-- [This website](https://www.learnopengl.com/) teaches OpenGl ver. 3 (but is still good)
-- [Another good opengl tutorial](https://www.open.gl) but again only version 3
-
-These can be useful to provide extra detail/flesh out understanding
+Just note it is _very_ detailed and sometimes in a strange order
