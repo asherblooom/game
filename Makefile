@@ -41,7 +41,7 @@ point: examples/src/point.cpp mkbin
 
 # compiles the glad library
 glad: src/glad.cpp mkbin
-	g++ -Iinclude/ src/glad.cpp -o bin/link/glad.o -c
+	g++ -Iinclude/ src/glad.c -o bin/link/glad.o -c
 
 # creates bin folders if they don't already exist
 mkbin:

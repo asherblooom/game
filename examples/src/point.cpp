@@ -1,17 +1,16 @@
-#include <glad/glad.hpp>
+#include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
 #include <iostream>
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
-const GLfloat background_colour[] = {0.2f, 0.3f, 0.3f, 1.0f};
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void process_input(GLFWwindow* window);
 GLuint compile_shaders(void);
 
-int main()
+int main(void)
 {
 	// Initialise glfw and set options
 	glfwInit();
@@ -46,6 +45,8 @@ int main()
 	glGenVertexArrays(1, &vertex_array_object);
 	glBindVertexArray(vertex_array_object);
 	glPointSize(40.0f);
+
+	const GLfloat background_colour[] = {0.2f, 0.3f, 0.3f, 1.0f};
 
 	// Event loop
 	while(!glfwWindowShouldClose(window))
