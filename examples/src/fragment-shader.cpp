@@ -43,7 +43,7 @@ int main(void)
 
 	// Initialse shaders etc.
 	GLuint vertex_array_object;
-	glCreateVertexArrays(1, &vertex_array_object);
+	glGenVertexArrays(1, &vertex_array_object);
 	glBindVertexArray(vertex_array_object);
 	GLuint rendering_program = compile_shaders();
 
