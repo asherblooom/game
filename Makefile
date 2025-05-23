@@ -11,13 +11,21 @@ main: src/main.cpp mkbin
 
 
 # make rules for examples
-examples: fragment-shader geometry-shader tessellation moving-triangle triangle point glad
+examples: vao2 vao1 fragment-shader geometry-shader tessellation moving-triangle triangle point glad
 	g++ -o examples/bin/point examples/bin/link/point.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 	g++ -o examples/bin/triangle examples/bin/link/triangle.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 	g++ -o examples/bin/moving-triangle examples/bin/link/moving-triangle.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 	g++ -o examples/bin/tessellation examples/bin/link/tessellation.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 	g++ -o examples/bin/geometry-shader examples/bin/link/geometry-shader.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 	g++ -o examples/bin/fragment-shader examples/bin/link/fragment-shader.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+	g++ -o examples/bin/vao1 examples/bin/link/vao1.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+	g++ -o examples/bin/vao2 examples/bin/link/vao2.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+
+vao2: examples/src/vao2.cpp mkbin
+	g++ -Wall -Wextra -Iinclude/ examples/src/vao2.cpp -o examples/bin/link/vao2.o -c
+
+vao1: examples/src/vao1.cpp mkbin
+	g++ -Wall -Wextra -Iinclude/ examples/src/vao1.cpp -o examples/bin/link/vao1.o -c
 
 fragment-shader: examples/src/fragment-shader.cpp mkbin
 	g++ -Wall -Wextra -Iinclude/ examples/src/fragment-shader.cpp -o examples/bin/link/fragment-shader.o -c
@@ -40,7 +48,7 @@ point: examples/src/point.cpp mkbin
 
 
 # compiles the glad library
-glad: src/glad.cpp mkbin
+glad: src/glad.c mkbin
 	g++ -Iinclude/ src/glad.c -o bin/link/glad.o -c
 
 # creates bin folders if they don't already exist
