@@ -11,7 +11,7 @@ main: src/main.cpp mkbin
 
 
 # make rules for examples
-examples: vao2 vao1 fragment-shader geometry-shader tessellation moving-triangle triangle point glad
+examples: vao3 vao2 vao1 fragment-shader geometry-shader tessellation moving-triangle triangle point glad
 	g++ -o examples/bin/point examples/bin/link/point.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 	g++ -o examples/bin/triangle examples/bin/link/triangle.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 	g++ -o examples/bin/moving-triangle examples/bin/link/moving-triangle.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
@@ -20,6 +20,10 @@ examples: vao2 vao1 fragment-shader geometry-shader tessellation moving-triangle
 	g++ -o examples/bin/fragment-shader examples/bin/link/fragment-shader.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 	g++ -o examples/bin/vao1 examples/bin/link/vao1.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 	g++ -o examples/bin/vao2 examples/bin/link/vao2.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+	g++ -o examples/bin/vao3 examples/bin/link/vao3.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+
+vao3: examples/src/vao3.cpp mkbin
+	g++ -Wall -Wextra -Iinclude/ examples/src/vao3.cpp -o examples/bin/link/vao3.o -c
 
 vao2: examples/src/vao2.cpp mkbin
 	g++ -Wall -Wextra -Iinclude/ examples/src/vao2.cpp -o examples/bin/link/vao2.o -c
