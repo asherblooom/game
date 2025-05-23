@@ -1,66 +1,49 @@
-# make rules for main game
-linux: main glad
-	g++ -o bin/game bin/link/main.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl 
+TARGET_EXEC := final_program
 
-windows: main glad
-	# add something here?
+BUILD_DIR := ./build
+SRC_DIRS := ./src
 
-main: src/main.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ src/main.cpp -o bin/link/main.o -c
+# Find all the C and C++ files we want to compile
+# Note the single quotes around the * expressions. The shell will incorrectly expand these otherwise, but we want to send the * directly to the find command.
+SRCS := $(shell find $(SRC_DIRS) -name '*.cpp' -or -name '*.c' -or -name '*.s')
 
+# Prepends BUILD_DIR and appends .o to every src file
+# As an example, ./your_dir/hello.cpp turns into ./build/./your_dir/hello.cpp.o
+OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 
+# String substitution (suffix version without %).
+# As an example, ./build/hello.cpp.o turns into ./build/hello.cpp.d
+DEPS := $(OBJS:.o=.d)
 
-# make rules for examples
-examples: vao3 vao2 vao1 fragment-shader geometry-shader tessellation moving-triangle triangle point glad
-	g++ -o examples/bin/point examples/bin/link/point.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/triangle examples/bin/link/triangle.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/moving-triangle examples/bin/link/moving-triangle.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/tessellation examples/bin/link/tessellation.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/geometry-shader examples/bin/link/geometry-shader.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/fragment-shader examples/bin/link/fragment-shader.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/vao1 examples/bin/link/vao1.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/vao2 examples/bin/link/vao2.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/vao3 examples/bin/link/vao3.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+# Every folder in ./src will need to be passed to GCC so that it can find header files
+INC_DIRS := $(shell find $(SRC_DIRS) -type d)
+# Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-vao3: examples/src/vao3.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/vao3.cpp -o examples/bin/link/vao3.o -c
+# The -MMD and -MP flags together generate Makefiles for us!
+# These files will have .d instead of .o as the output.
+CPPFLAGS := $(INC_FLAGS) -MMD -MP
 
-vao2: examples/src/vao2.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/vao2.cpp -o examples/bin/link/vao2.o -c
+# The final build step.
+$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
+	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
 
-vao1: examples/src/vao1.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/vao1.cpp -o examples/bin/link/vao1.o -c
+# Build step for C source
+$(BUILD_DIR)/%.c.o: %.c
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-fragment-shader: examples/src/fragment-shader.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/fragment-shader.cpp -o examples/bin/link/fragment-shader.o -c
-
-geometry-shader: examples/src/geometry-shader.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/geometry-shader.cpp -o examples/bin/link/geometry-shader.o -c
-
-tessellation: examples/src/tessellation.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/tessellation.cpp -o examples/bin/link/tessellation.o -c
-
-moving-triangle: examples/src/moving-triangle.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/moving-triangle.cpp -o examples/bin/link/moving-triangle.o -c
-
-triangle: examples/src/triangle.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/triangle.cpp -o examples/bin/link/triangle.o -c
-
-point: examples/src/point.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/point.cpp -o examples/bin/link/point.o -c
+# Build step for C++ source
+$(BUILD_DIR)/%.cpp.o: %.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 
+.PHONY: clean
+clean:
+	rm -r $(BUILD_DIR)
 
-# compiles the glad library
-glad: src/glad.c mkbin
-	g++ -Iinclude/ src/glad.c -o bin/link/glad.o -c
-
-# creates bin folders if they don't already exist
-mkbin:
-	mkdir -p bin/link
-	mkdir -p examples/bin/link
-
-# deletes all the bin folders (and containing executables)
-clean: 
-	rm -rf bin/ */bin/
-
+# Include the .d makefiles. The - at the front suppresses the errors of missing
+# Makefiles. Initially, all the .d files will be missing, and we don't want those
+# errors to show up.
+-include $(DEPS)
