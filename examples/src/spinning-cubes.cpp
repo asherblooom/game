@@ -38,34 +38,74 @@ int main(void) {
 	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	// Initialise vertex data
-	const GLfloat positions[] = {0, 0, 0, 0.5, 0.5, 0, 0, 0.5, 0.5};
-	GLuint buffers[2];
+	// Initialise vertex data for cube
+	static const GLfloat vertex_positions[] =
+		{
+			-0.25f, 0.25f, -0.25f,
+			-0.25f, -0.25f, -0.25f,
+			0.25f, -0.25f, -0.25f,
 
-	// get names for 2 buffers, point opengl to the beginning of the first elem of the array
-	// opengl will just assume the array has enough space and will fill it up
-	glGenBuffers(2, &buffers[0]);
-	// let opengl know we want to transfer data from buffer[0] to vertex array object
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+			0.25f, -0.25f, -0.25f,
+			0.25f, 0.25f, -0.25f,
+			-0.25f, 0.25f, -0.25f,
+
+			0.25f, -0.25f, -0.25f,
+			0.25f, -0.25f, 0.25f,
+			0.25f, 0.25f, -0.25f,
+
+			0.25f, -0.25f, 0.25f,
+			0.25f, 0.25f, 0.25f,
+			0.25f, 0.25f, -0.25f,
+
+			0.25f, -0.25f, 0.25f,
+			-0.25f, -0.25f, 0.25f,
+			0.25f, 0.25f, 0.25f,
+
+			-0.25f, -0.25f, 0.25f,
+			-0.25f, 0.25f, 0.25f,
+			0.25f, 0.25f, 0.25f,
+
+			-0.25f, -0.25f, 0.25f,
+			-0.25f, -0.25f, -0.25f,
+			-0.25f, 0.25f, 0.25f,
+
+			-0.25f, -0.25f, -0.25f,
+			-0.25f, 0.25f, -0.25f,
+			-0.25f, 0.25f, 0.25f,
+
+			-0.25f, -0.25f, 0.25f,
+			0.25f, -0.25f, 0.25f,
+			0.25f, -0.25f, -0.25f,
+
+			0.25f, -0.25f, -0.25f,
+			-0.25f, -0.25f, -0.25f,
+			-0.25f, -0.25f, 0.25f,
+
+			-0.25f, 0.25f, -0.25f,
+			0.25f, 0.25f, -0.25f,
+			0.25f, 0.25f, 0.25f,
+
+			0.25f, 0.25f, 0.25f,
+			-0.25f, 0.25f, 0.25f,
+			-0.25f, 0.25f, -0.25f};
+
+	GLuint buffer;
+	// get names for buffer
+	glGenBuffers(1, &buffer);
+	// let opengl know we want to transfer data from buffer to vertex array object
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	// fill buffer with data
-	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), &positions,
-				 GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions), &vertex_positions, GL_STATIC_DRAW);
 
 	GLuint vertex_array_object;
 	glGenVertexArrays(1, &vertex_array_object);
 	// let opengl know this vertex array is the one we want to use for input
 	// into vertex shader (when we draw the next polygon)
 	glBindVertexArray(vertex_array_object);
-	// fill vertex array index 0 with data from whatever is currently bound to
-	// GL_ARRAY_BUFFER
+	// fill vertex array index 0 with data from whatever is currently bound to GL_ARRAY_BUFFER
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 	// tell opengl to use the vertex array when we request input at location 0
 	glEnableVertexAttribArray(0);
-
-	// don't add buffer data as we will do that in the event loop
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-	glEnableVertexAttribArray(1);
 
 	// Initialse shaders etc.
 	GLuint rendering_program = compile_shaders();
@@ -76,21 +116,12 @@ int main(void) {
 
 		process_input(window);
 
-		GLfloat background_color[] = {std::sin(time) * 0.2f + 0.4f,
-									  std::cos(time) * 0.3f + 0.4f, 0.3f, 1.0f};
+		GLfloat background_color[] = {std::sin(time) * 0.2f + 0.4f, std::cos(time) * 0.3f + 0.4f, 0.3f, 1.0f};
 		glClearBufferfv(GL_COLOR, 0, background_color);
 
 		glUseProgram(rendering_program);
 
-		GLfloat colors[] = {1 + std::sin(time * 2), 0, 0, 0,
-							1 - std::sin(time * 2), 0, 0, 0,
-							1 - std::sin(time * 2)};
-		GLfloat pos_offset[] = {std::sin(time) * 0.5f, std::cos(time) * 0.6f,
-								0.0f, 0.0f};
-
-		// fill buffers[1] with data
-		glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(colors), &colors, GL_STATIC_DRAW);
+		GLfloat pos_offset[] = {std::sin(time) * 0.5f, std::cos(time) * 0.6f, 0.0f, 0.0f};
 
 		glVertexAttrib4fv(2, pos_offset);
 
