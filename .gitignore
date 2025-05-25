@@ -2,7 +2,6 @@ compile_commands.json
 .clangd
 .cache/clangd/*
 .clang-format
-examples/*
-!examples/src/
+examples/*.o
 obj/
 game

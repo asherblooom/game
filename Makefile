@@ -2,31 +2,39 @@ TARGET_EXEC := game
 CXX:=g++
 INC_DIR:=include/
 CXXFLAGS:=-I$(INC_DIR) -Wall -Wextra -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-OBJ_DIR:=./obj/
-SRC_DIR:=./src/
-GLAD_OBJ := ./obj/glad.o
+OBJ_DIR:=./obj
+SRC_DIR:=./src
+
+GLAD_OBJ := $(OBJ_DIR)/glad.o
+GLAD_SRC := $(SRC_DIR)/glad.c
 
 # Find all the C++ files we want to compile
 SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
+# get a list of object files we want to compile by removing the 
+# paths from the source files and then substituing .cpp for .o
+_OBJS := $(patsubst %.cpp,%.o,$(notdir $(SRCS)))
+# add the object directory to the front of the object files
+OBJS := $(_OBJS:%=$(OBJ_DIR)/%)
 
-OBJS := $(patsubst %.cpp,%.o,$(notdir $(SRCS)))
 
+game: $(OBJS) $(GLAD_OBJ)
+	$(CXX) -o $(TARGET_EXEC) $^ $(CXXFLAGS)
 
-linux: $(OBJS) $(GLAD_OBJ)
-	$(CXX) -o $(TARGET_EXEC) $(OBJ_DIR)$< $(GLAD_OBJ) $(CXXFLAGS)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp obj
+	$(CXX) -o $@ $< $(CXXFLAGS) -c
 
-%.o: ./src/%.cpp mkobjdir
-	$(CXX) -o $(OBJ_DIR)$@ $< $(CXXFLAGS) -c
-
-mkobjdir: 
+obj: 
 	mkdir -p obj
 
-OBJS_EXAMPLES := $(patsubst %.cpp,%.o,$(notdir $(shell find ./examples/src -name '*.cpp')))
+EXAMPLES_DIR := ./examples
+_OBJS_EXAMPLES := $(patsubst %.cpp,%.o,$(notdir $(shell find ./examples/src -name '*.cpp')))
+OBJS_EXAMPLES := $(_OBJS_EXAMPLES:%=$(EXAMPLES_DIR)/%)
+
 examples : $(OBJS_EXAMPLES)
 
-%.o : ./examples/src/%.cpp $(GLAD_OBJ)
-	$(CXX) -o ./examples/$@ $^ $(CXXFLAGS)
+$(EXAMPLES_DIR)/%.o : $(EXAMPLES_DIR)/src/%.cpp $(GLAD_OBJ)
+	$(CXX) -o $@ $^ $(CXXFLAGS)
 
 # compiles the glad library
-$(GLAD_OBJ): src/glad.c 
-	g++ -Iinclude/ src/glad.c -o $(GLAD_OBJ) -c
+$(GLAD_OBJ): $(GLAD_SRC) 
+	g++ -I$(INC_DIR) $(GLAD_SRC) -o $(GLAD_OBJ) -c
