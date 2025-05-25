@@ -10,8 +10,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void process_input(GLFWwindow* window);
 GLuint compile_shaders(void);
 
-int main(void)
-{
+int main(void) {
 	// Initialise glfw and set options
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -19,9 +18,9 @@ int main(void)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// create window
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Point Example", NULL, NULL);
-	if(window == NULL)
-	{
+	GLFWwindow* window =
+		glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Point Example", NULL, NULL);
+	if (window == NULL) {
 		std::cout << "Failed to create GLFW window\n";
 		glfwTerminate();
 		return -1;
@@ -29,8 +28,7 @@ int main(void)
 	glfwMakeContextCurrent(window);
 
 	// initialise GLAD - manages function pointers for OpenGL
-	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD\n";
 		glfwTerminate();
 		return -1;
@@ -49,8 +47,7 @@ int main(void)
 	const GLfloat background_colour[] = {0.2f, 0.3f, 0.3f, 1.0f};
 
 	// Event loop
-	while(!glfwWindowShouldClose(window))
-	{
+	while (!glfwWindowShouldClose(window)) {
 		process_input(window);
 		glClearBufferfv(GL_COLOR, 0, background_colour);
 
@@ -69,22 +66,19 @@ int main(void)
 }
 
 // callback for updating window size
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
 // callback for processing input
-void process_input(GLFWwindow* window)
-{
-	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS ||
-	   glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+void process_input(GLFWwindow* window) {
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS ||
+		glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
 
 // returns a program object
-GLuint compile_shaders(void)
-{
+GLuint compile_shaders(void) {
 	GLuint vertex_shader;
 	GLuint fragment_shader;
 	GLuint program;

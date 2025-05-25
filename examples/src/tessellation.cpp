@@ -11,8 +11,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void process_input(GLFWwindow* window);
 GLuint compile_shaders(void);
 
-int main(void)
-{
+int main(void) {
 	// Initialise glfw and set options
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -20,10 +19,9 @@ int main(void)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// create window
-	GLFWwindow* window =
-		glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Tessellation Example", NULL, NULL);
-	if(window == NULL)
-	{
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT,
+										  "Tessellation Example", NULL, NULL);
+	if (window == NULL) {
 		std::cout << "Failed to create GLFW window\n";
 		glfwTerminate();
 		return -1;
@@ -31,8 +29,7 @@ int main(void)
 	glfwMakeContextCurrent(window);
 
 	// initialise GLAD - manages function pointers for OpenGL
-	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD\n";
 		glfwTerminate();
 		return -1;
@@ -49,19 +46,19 @@ int main(void)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// Event loop
-	while(!glfwWindowShouldClose(window))
-	{
+	while (!glfwWindowShouldClose(window)) {
 		GLfloat time = {float(glfwGetTime())};
 
 		process_input(window);
 
-		GLfloat background_color[] = {
-			std::sin(time) * 0.2f + 0.4f, std::cos(time) * 0.3f + 0.4f, 0.3f, 1.0f};
+		GLfloat background_color[] = {std::sin(time) * 0.2f + 0.4f,
+									  std::cos(time) * 0.3f + 0.4f, 0.3f, 1.0f};
 		glClearBufferfv(GL_COLOR, 0, background_color);
 
 		glUseProgram(rendering_program);
 
-		GLfloat pos_offset[] = {std::sin(time) * 0.5f, std::cos(time) * 0.6f, 0.0f, 0.0f};
+		GLfloat pos_offset[] = {std::sin(time) * 0.5f, std::cos(time) * 0.6f,
+								0.0f, 0.0f};
 		// inputs to vertex shader
 		glVertexAttrib4fv(0, pos_offset);
 
@@ -78,22 +75,19 @@ int main(void)
 }
 
 // callback for updating window size
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
 // callback for processing input
-void process_input(GLFWwindow* window)
-{
-	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS ||
-	   glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+void process_input(GLFWwindow* window) {
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS ||
+		glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
 
 // returns a program object
-GLuint compile_shaders(void)
-{
+GLuint compile_shaders(void) {
 	GLuint vertex_shader;
 	GLuint fragment_shader;
 	GLuint control_shader;
@@ -173,10 +167,10 @@ GLuint compile_shaders(void)
 	glCompileShader(vertex_shader);
 	// check for compile-time errors
 	glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-	if(!success)
-	{
+	if (!success) {
 		glGetShaderInfoLog(vertex_shader, 512, NULL, info_log);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << info_log << "\n";
+		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
+				  << info_log << "\n";
 	}
 
 	// Create and compile fragment shader
@@ -185,10 +179,10 @@ GLuint compile_shaders(void)
 	glCompileShader(fragment_shader);
 	// check for compile-time errors
 	glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-	if(!success)
-	{
+	if (!success) {
 		glGetShaderInfoLog(fragment_shader, 512, NULL, info_log);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << info_log << "\n";
+		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
+				  << info_log << "\n";
 	}
 
 	// Create and compile control shader
@@ -197,10 +191,10 @@ GLuint compile_shaders(void)
 	glCompileShader(control_shader);
 	// check for compile-time errors
 	glGetShaderiv(control_shader, GL_COMPILE_STATUS, &success);
-	if(!success)
-	{
+	if (!success) {
 		glGetShaderInfoLog(control_shader, 512, NULL, info_log);
-		std::cout << "ERROR::SHADER::TESS_CONTROL::COMPILATION_FAILED\n" << info_log << "\n";
+		std::cout << "ERROR::SHADER::TESS_CONTROL::COMPILATION_FAILED\n"
+				  << info_log << "\n";
 	}
 
 	// Create and compile fragment shader
@@ -209,10 +203,10 @@ GLuint compile_shaders(void)
 	glCompileShader(evaluation_shader);
 	// check for compile-time errors
 	glGetShaderiv(evaluation_shader, GL_COMPILE_STATUS, &success);
-	if(!success)
-	{
+	if (!success) {
 		glGetShaderInfoLog(evaluation_shader, 512, NULL, info_log);
-		std::cout << "ERROR::SHADER::TESS_EVALUATION::COMPILATION_FAILED\n" << info_log << "\n";
+		std::cout << "ERROR::SHADER::TESS_EVALUATION::COMPILATION_FAILED\n"
+				  << info_log << "\n";
 	}
 
 	// Create program, attach shaders to it, and link it
@@ -224,10 +218,10 @@ GLuint compile_shaders(void)
 	glLinkProgram(program);
 	// check for linking errors
 	glGetProgramiv(program, GL_LINK_STATUS, &success);
-	if(!success)
-	{
+	if (!success) {
 		glGetProgramInfoLog(program, 512, NULL, info_log);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << info_log << "\n";
+		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
+				  << info_log << "\n";
 	}
 
 	// Delete the shaders as the program has them now
