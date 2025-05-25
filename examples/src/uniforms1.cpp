@@ -45,8 +45,7 @@ int main(void) {
 	// get names for 2 buffers, point opengl to the beginning of the first elem of the array
 	// opengl will just assume the array has enough space and will fill it up
 	glGenBuffers(2, &buffers[0]);
-	// let opengl know we want to transfer data from buffer[0] to vertex array
-	// object
+	// let opengl know we want to transfer data from buffer[0] to vertex array object
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
 	// fill buffer with data
 	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), &positions,

@@ -27,12 +27,12 @@ obj:
 	mkdir -p obj
 
 EXAMPLES_DIR := ./examples
-_OBJS_EXAMPLES := $(patsubst %.cpp,%.o,$(notdir $(shell find ./examples/src -name '*.cpp')))
+_OBJS_EXAMPLES := $(patsubst %.cpp,%,$(notdir $(shell find ./examples/src -name '*.cpp')))
 OBJS_EXAMPLES := $(_OBJS_EXAMPLES:%=$(EXAMPLES_DIR)/%)
 
 examples : $(OBJS_EXAMPLES)
 
-$(EXAMPLES_DIR)/%.o : $(EXAMPLES_DIR)/src/%.cpp $(GLAD_OBJ)
+$(EXAMPLES_DIR)/%: $(EXAMPLES_DIR)/src/%.cpp $(GLAD_OBJ)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
 
 # compiles the glad library
