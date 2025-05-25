@@ -42,9 +42,8 @@ int main(void) {
 	const GLfloat positions[] = {0, 0, 0, 0.5, 0.5, 0, 0, 0.5, 0.5};
 	GLuint buffers[2];
 
-	// get names for 2 buffers, point opengl to the beginning of the first elem
-	// of the array opengl will just assume the array has enough space and will
-	// fill it up
+	// get names for 2 buffers, point opengl to the beginning of the first elem of the array
+	// opengl will just assume the array has enough space and will fill it up
 	glGenBuffers(2, &buffers[0]);
 	// let opengl know we want to transfer data from buffer[0] to vertex array
 	// object

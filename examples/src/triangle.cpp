@@ -44,7 +44,7 @@ int main(void) {
 	glGenVertexArrays(1, &vertex_array_object);
 	glBindVertexArray(vertex_array_object);
 
-	// Initialise variables
+	//Initialise variables
 
 	// Event loop
 	while (!glfwWindowShouldClose(window)) {

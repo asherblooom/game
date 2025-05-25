@@ -40,12 +40,12 @@ int main(void) {
 
 	// Initialise vertex data
 	struct vertexData {
-		// Position
+		//Position
 		float x;
 		float y;
 		float z;
 
-		// Colour
+		//Colour
 		float r;
 		float g;
 		float b;
