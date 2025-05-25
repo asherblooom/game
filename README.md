@@ -9,13 +9,15 @@ Hopefully
 
 ### Building the game
 
-- Run `make linux` if on linux or `make windows` if on windows
-- Run the resulting `game` file (located in the `bin` subdirectory)
+- Run `make` in the root directory to build the game\
+_Note: this has only been tested on linux_
+- Run the resulting `game` file (located in the home directory)
 
 ### Building the examples
 
-- Run `make examples` if on linux
-- The example programs will be created in the location `examples/bin`
+- Run `make examples`\
+_Note: this has only been tested on linux_
+- The example programs will be created in the `examples` directory
 
 ## Learning OpenGL and C++
 
