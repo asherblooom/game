@@ -52,7 +52,6 @@ int main(void)
 	while(!glfwWindowShouldClose(window))
 	{
 		GLfloat time = {float(glfwGetTime())};
-
 		process_input(window);
 
 		GLfloat background_color[] = {
