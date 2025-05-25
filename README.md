@@ -9,7 +9,7 @@ Hopefully
 
 ### Building the game
 
-- Run `make` in the root directory to build the game\
+- Run `make` in the root directory\
 _Note: this has only been tested on linux_
 - Run the resulting `game` file (located in the home directory)
 
