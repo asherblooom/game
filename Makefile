@@ -1,54 +1,40 @@
-# make rules for main game
-linux: main glad
-	g++ -o bin/game bin/link/main.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl 
+TARGET_EXEC := game
+CXX:=g++
+INC_DIR:=include/
+CXXFLAGS:=-I$(INC_DIR) -Wall -Wextra -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+OBJ_DIR:=./obj
+SRC_DIR:=./src
 
-windows: main glad
-	# add something here?
+GLAD_OBJ := $(OBJ_DIR)/glad.o
+GLAD_SRC := $(SRC_DIR)/glad.c
 
-main: src/main.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ src/main.cpp -o bin/link/main.o -c
-
-
-
-# make rules for examples
-examples: fragment-shader geometry-shader tessellation moving-triangle triangle point glad
-	g++ -o examples/bin/point examples/bin/link/point.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/triangle examples/bin/link/triangle.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/moving-triangle examples/bin/link/moving-triangle.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/tessellation examples/bin/link/tessellation.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/geometry-shader examples/bin/link/geometry-shader.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-	g++ -o examples/bin/fragment-shader examples/bin/link/fragment-shader.o bin/link/glad.o -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
-
-fragment-shader: examples/src/fragment-shader.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/fragment-shader.cpp -o examples/bin/link/fragment-shader.o -c
-
-geometry-shader: examples/src/geometry-shader.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/geometry-shader.cpp -o examples/bin/link/geometry-shader.o -c
-
-tessellation: examples/src/tessellation.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/tessellation.cpp -o examples/bin/link/tessellation.o -c
-
-moving-triangle: examples/src/moving-triangle.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/moving-triangle.cpp -o examples/bin/link/moving-triangle.o -c
-
-triangle: examples/src/triangle.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/triangle.cpp -o examples/bin/link/triangle.o -c
-
-point: examples/src/point.cpp mkbin
-	g++ -Wall -Wextra -Iinclude/ examples/src/point.cpp -o examples/bin/link/point.o -c
+# Find all the C++ files we want to compile
+SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
+# get a list of object files we want to compile by removing the 
+# paths from the source files and then substituing .cpp for .o
+_OBJS := $(patsubst %.cpp,%.o,$(notdir $(SRCS)))
+# add the object directory to the front of the object files
+OBJS := $(_OBJS:%=$(OBJ_DIR)/%)
 
 
+game: $(OBJS) $(GLAD_OBJ)
+	$(CXX) -o $(TARGET_EXEC) $^ $(CXXFLAGS)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp obj
+	$(CXX) -o $@ $< $(CXXFLAGS) -c
+
+obj: 
+	mkdir -p obj
+
+EXAMPLES_DIR := ./examples
+_OBJS_EXAMPLES := $(patsubst %.cpp,%,$(notdir $(shell find ./examples/src -name '*.cpp')))
+OBJS_EXAMPLES := $(_OBJS_EXAMPLES:%=$(EXAMPLES_DIR)/%)
+
+examples : $(OBJS_EXAMPLES)
+
+$(EXAMPLES_DIR)/%: $(EXAMPLES_DIR)/src/%.cpp $(GLAD_OBJ)
+	$(CXX) -o $@ $^ $(CXXFLAGS)
 
 # compiles the glad library
-glad: src/glad.cpp mkbin
-	g++ -Iinclude/ src/glad.cpp -o bin/link/glad.o -c
-
-# creates bin folders if they don't already exist
-mkbin:
-	mkdir -p bin/link
-	mkdir -p examples/bin/link
-
-# deletes all the bin folders (and containing executables)
-clean: 
-	rm -rf bin/ */bin/
-
+$(GLAD_OBJ): $(GLAD_SRC) 
+	g++ -I$(INC_DIR) $(GLAD_SRC) -o $(GLAD_OBJ) -c

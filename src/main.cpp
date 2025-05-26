@@ -1,4 +1,4 @@
-#include <glad/glad.hpp>
+#include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -62,6 +62,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 // callback for processing input
 void processInput(GLFWwindow* window)
 {
-	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS ||
+	   glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
