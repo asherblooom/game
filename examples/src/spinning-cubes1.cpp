@@ -46,14 +46,18 @@ GLuint compile_shaders(void) {
 	static const GLchar* vertex_shader_source = R"glsl(
 		#version 430 core
 
-		layout (location = 0) in vec3 pos;
-		layout (location = 1) in vec3 color;
-		layout (location = 2) in vec4 offset;
-		out vec4 vs_color;
+		in vec4 position;
+
+		out VS_OUT {
+			vec4 color;
+		} vs_out;
+
+		uniform mat4 mv_matrix;
+		uniform mat4 proj_matrix;
 
 		void main(void) {
-			gl_Position = vec4(pos.x, pos.y, pos.z, 1) + offset;
-			vs_color = vec4(color.r, color.g, color.b, 1);
+			gl_Position = proj_matrix * mv_matrix * position;
+			vs_out.color = position * 2.0 + vec4(0.5, 0.5, 0.5, 0.0);
 		}
 
 	)glsl";
@@ -61,11 +65,14 @@ GLuint compile_shaders(void) {
 	static const GLchar* fragment_shader_source = R"glsl(
 		#version 430 core
 
-		in vec4 vs_color;
+		in VS_OUT {
+			vec4 color;
+		} fs_in;
+
 		out vec4 color;
 		
 		void main(void) {
-			color = vs_color;
+			color = fs_in.color;
 		}
 
 	)glsl";
@@ -212,6 +219,11 @@ void initVAO() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 	// tell opengl to use the vertex array when we request input at location 0
 	glEnableVertexAttribArray(0);
+
+	// enable culling, so that we only see the front-facing parts of the cube
+	glEnable(GL_CULL_FACE);
+	// we change this otherwise opengl wil think the back faces are actually the front faces
+	glFrontFace(GL_CW);
 }
 
 int main(void) {
@@ -225,6 +237,10 @@ int main(void) {
 
 	// Initialse shaders etc.
 	GLuint rendering_program = compile_shaders();
+
+	// get location of model-view and projection matrix uniforms
+	GLint mv_location = glGetUniformLocation(rendering_program, "mv_matrix");
+	GLint proj_location = glGetUniformLocation(rendering_program, "proj_matrix");
 
 	// Event loop
 	while (!glfwWindowShouldClose(window)) {
@@ -241,11 +257,11 @@ int main(void) {
 		// create model-view matrix
 		float f = time * M_PI * 0.1f;
 		auto mv_matrix = glm::mat4(1.0f);
-		mv_matrix = glm::rotate(mv_matrix, glm::radians(time * 81.0f), glm::vec3{1.0f, 0.0f, 0.0f});
-		mv_matrix = glm::rotate(mv_matrix, glm::radians(time * 45.0f), glm::vec3{0.0f, 1.0f, 0.0f});
+		mv_matrix = glm::translate(mv_matrix, glm::vec3{0.0f, 0.0f, -4.0f});
 		mv_matrix = glm::translate(mv_matrix,
 								   glm::vec3{std::sin(2.1f * f) * 0.5f, std::cos(1.7f * f) * 0.5f, std::sin(1.3f * f) * std::cos(1.5f * f) * 2.0f});
-		mv_matrix = glm::translate(mv_matrix, glm::vec3{0.0f, 0.0f, -4.0f});
+		mv_matrix = glm::rotate(mv_matrix, glm::radians(time * 45.0f), glm::vec3{0.0f, 1.0f, 0.0f});
+		mv_matrix = glm::rotate(mv_matrix, glm::radians(time * 81.0f), glm::vec3{1.0f, 0.0f, 0.0f});
 
 		// Set the model-view and projection matrices
 		glUniformMatrix4fv(mv_location, 1, GL_FALSE, glm::value_ptr(mv_matrix));
