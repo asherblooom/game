@@ -30,11 +30,25 @@ EXAMPLES_DIR := ./examples
 _OBJS_EXAMPLES := $(patsubst %.cpp,%,$(notdir $(shell find ./examples/src -name '*.cpp')))
 OBJS_EXAMPLES := $(_OBJS_EXAMPLES:%=$(EXAMPLES_DIR)/%)
 
+
+.PHONY: examples
+
 examples : $(OBJS_EXAMPLES)
 
 $(EXAMPLES_DIR)/%: $(EXAMPLES_DIR)/src/%.cpp $(GLAD_OBJ)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
 
 # compiles the glad library
-$(GLAD_OBJ): $(GLAD_SRC) 
+$(GLAD_OBJ): $(GLAD_SRC) obj
 	g++ -I$(INC_DIR) $(GLAD_SRC) -o $(GLAD_OBJ) -c
+
+
+.PHONY: clean
+
+clean:
+	rm -rf $(OBJ_DIR) game
+	# remove everything in EXAMPLES_DIR that isn't EXAMPLES_DIR/src
+	rm -f $(filter-out $(EXAMPLES_DIR)/src, $(wildcard $(EXAMPLES_DIR)/*))
+
+
+
