@@ -138,7 +138,7 @@ GLuint compile_shaders(void) {
 			// color = texelFetch(s, ivec2(gl_FragCoord.xy), 0);
 
 			// this does but in theory it should be equivalent to the above...
-			color = texture(s, gl_FragCoord.xy / textureSize(s, 0));
+			color = texture(s, (gl_FragCoord.xy / textureSize(s, 0)) / 6);
 		}
 	)glsl";
 
