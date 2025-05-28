@@ -5,7 +5,6 @@ Hopefully
 ## Setup instructions
 
 - [Install GLFW](https://www.glfw.org/download.html)
-- [Install KTX Software](https://github.com/KhronosGroup/KTX-Software/tree/main)
 - Clone the repository
 
 ### Building the game

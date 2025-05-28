@@ -1,7 +1,10 @@
 #include <glad/glad.h>
 
+#include <GL/gl.h>
 #include <GLFW/glfw3.h>
-#include <ktx.h>
+extern "C" {
+#include "../../src/dds.h"
+}
 #include <cmath>
 #include <iostream>
 
@@ -39,26 +42,10 @@ int main(void) {
 	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	ktxTexture* kTexture;
-	GLuint texture;
-	GLenum target = GL_TEXTURE_2D;
-	ktxTexture_CreateFromNamedFile("./examples/media/forest.ktx", KTX_TEXTURE_CREATE_NO_FLAGS, &kTexture);
-
-	// Before the first call to  ktxTexture_GLUpload make libktx load its
-	// function pointers for the GL functions it uses. The parameter is a
-	// pointer to the GLGetProcAddress function provided by whatever OpenGL
-	// framework the application is using.
-	//
-	// Note 1: This is unrelated to any GL function pointers the app may be
-	//         using.
-	// Note 2: When this is not called, libktx has fallback mechanisms to
-	//         find the pointers which work on the vast majority of
-	//         platforms. The only known failures have occurred on Fedora.
-	ktxLoadOpenGL((PFNGLGETPROCADDRESS)glfwGetProcAddress);
-
-	glGenTextures(1, &texture);	 // Optional. GLUpload can generate a texture.
-	ktxTexture_GLUpload(kTexture, &texture, &target, NULL);
-	ktxTexture_Destroy(kTexture);
+	GLuint texture = texture_loadDDS("./examples/media/forest.dds");
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);	// don't forget to enable mipmaping
 
 	// Initialse shaders etc.
 	GLuint rendering_program = compile_shaders();
@@ -134,11 +121,7 @@ GLuint compile_shaders(void) {
 
 		void main(void)
 		{
-			// this doesn't work but I have no clue why
-			// color = texelFetch(s, ivec2(gl_FragCoord.xy), 0);
-
-			// this does but in theory it should be equivalent to the above...
-			color = texture(s, (gl_FragCoord.xy / textureSize(s, 0)) / 6);
+			color = texture(s, (gl_FragCoord.xy / textureSize(s, 0)) * 2.22);
 		}
 	)glsl";
 

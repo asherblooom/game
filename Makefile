@@ -1,12 +1,16 @@
 TARGET_EXEC := game
 CXX:=g++
+CC:=gcc
 INC_DIR:=include/
-CXXFLAGS:=-I$(INC_DIR) -Wall -Wextra -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lktx
+CXXFLAGS:=-I$(INC_DIR) -Wall -Wextra -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
 OBJ_DIR:=./obj
 SRC_DIR:=./src
 
 GLAD_OBJ := $(OBJ_DIR)/glad.o
 GLAD_SRC := $(SRC_DIR)/glad.c
+
+DDS_OBJ := $(OBJ_DIR)/dds.o
+DDS_SRC := $(SRC_DIR)/dds.c
 
 # Find all the C++ files we want to compile
 SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
@@ -16,11 +20,12 @@ _OBJS := $(patsubst %.cpp,%.o,$(notdir $(SRCS)))
 # add the object directory to the front of the object files
 OBJS := $(_OBJS:%=$(OBJ_DIR)/%)
 
+main: $(TARGET_EXEC) obj
 
-game: $(OBJS) $(GLAD_OBJ)
+$(TARGET_EXEC): $(OBJS) $(GLAD_OBJ)
 	$(CXX) -o $(TARGET_EXEC) $^ $(CXXFLAGS)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp obj
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CXX) -o $@ $< $(CXXFLAGS) -c
 
 obj: 
@@ -33,14 +38,18 @@ OBJS_EXAMPLES := $(_OBJS_EXAMPLES:%=$(EXAMPLES_DIR)/%)
 
 .PHONY: examples
 
-examples : $(OBJS_EXAMPLES)
+examples : $(OBJS_EXAMPLES) obj
 
-$(EXAMPLES_DIR)/%: $(EXAMPLES_DIR)/src/%.cpp $(GLAD_OBJ)
+$(EXAMPLES_DIR)/%: $(EXAMPLES_DIR)/src/%.cpp $(GLAD_OBJ) $(DDS_OBJ)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
 
 # compiles the glad library
-$(GLAD_OBJ): $(GLAD_SRC) obj
-	g++ -I$(INC_DIR) $(GLAD_SRC) -o $(GLAD_OBJ) -c
+$(GLAD_OBJ): $(GLAD_SRC)
+	$(CC) -I$(INC_DIR) $(GLAD_SRC) -o $(GLAD_OBJ) -c
+
+# compiles the dds loader
+$(DDS_OBJ): $(DDS_SRC)
+	$(CC) -I$(INC_DIR) $(DDS_SRC) -o $(DDS_OBJ) -c
 
 
 .PHONY: clean
