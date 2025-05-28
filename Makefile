@@ -20,10 +20,10 @@ _OBJS := $(patsubst %.cpp,%.o,$(notdir $(SRCS)))
 # add the object directory to the front of the object files
 OBJS := $(_OBJS:%=$(OBJ_DIR)/%)
 
-main: $(TARGET_EXEC) obj
+main: obj $(TARGET_EXEC)
 
-$(TARGET_EXEC): $(OBJS) $(GLAD_OBJ)
-	$(CXX) -o $(TARGET_EXEC) $^ $(CXXFLAGS)
+$(TARGET_EXEC): $(OBJS) $(GLAD_OBJ) $(DDS_OBJ)
+	$(CXX) -o $@ $^ $(CXXFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CXX) -o $@ $< $(CXXFLAGS) -c
@@ -38,18 +38,18 @@ OBJS_EXAMPLES := $(_OBJS_EXAMPLES:%=$(EXAMPLES_DIR)/%)
 
 .PHONY: examples
 
-examples : $(OBJS_EXAMPLES) obj
+examples: obj $(OBJS_EXAMPLES)
 
 $(EXAMPLES_DIR)/%: $(EXAMPLES_DIR)/src/%.cpp $(GLAD_OBJ) $(DDS_OBJ)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
 
 # compiles the glad library
 $(GLAD_OBJ): $(GLAD_SRC)
-	$(CC) -I$(INC_DIR) $(GLAD_SRC) -o $(GLAD_OBJ) -c
+	$(CC) -I$(INC_DIR) $< -o $@ -c
 
 # compiles the dds loader
 $(DDS_OBJ): $(DDS_SRC)
-	$(CC) -I$(INC_DIR) $(DDS_SRC) -o $(DDS_OBJ) -c
+	$(CC) -I$(INC_DIR) $< -o $@ -c
 
 
 .PHONY: clean
