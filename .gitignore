@@ -4,5 +4,6 @@ compile_commands.json
 .clang-format
 examples/*
 !examples/src
+!examples/media
 obj/
 game

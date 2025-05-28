@@ -56,8 +56,8 @@ $(DDS_OBJ): $(DDS_SRC)
 
 clean:
 	rm -rf $(OBJ_DIR) game
-	# remove everything in EXAMPLES_DIR that isn't EXAMPLES_DIR/src
-	rm -f $(filter-out $(EXAMPLES_DIR)/src, $(wildcard $(EXAMPLES_DIR)/*))
+	# remove everything in EXAMPLES_DIR that isn't EXAMPLES_DIR/src or EXAMPLES_DIR/media
+	rm -f $(filter-out $(EXAMPLES_DIR)/src $(EXAMPLES_DIR)/media, $(wildcard $(EXAMPLES_DIR)/*))
 
 
 
