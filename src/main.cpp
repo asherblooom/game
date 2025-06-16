@@ -10,8 +10,7 @@ const GLfloat background_colour[] = {0.2f, 0.3f, 0.3f, 1.0f};
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
-int main()
-{
+int main() {
 	// Initialise glfw and set options
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -20,8 +19,7 @@ int main()
 
 	// create window
 	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Game?", NULL, NULL);
-	if(window == NULL)
-	{
+	if (window == NULL) {
 		std::cout << "Failed to create GLFW window\n";
 		glfwTerminate();
 		return -1;
@@ -29,8 +27,7 @@ int main()
 	glfwMakeContextCurrent(window);
 
 	// initialise GLAD - manages function pointers for OpenGL
-	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD\n";
 		glfwTerminate();
 		return -1;
@@ -40,8 +37,7 @@ int main()
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	// Event loop
-	while(!glfwWindowShouldClose(window))
-	{
+	while (!glfwWindowShouldClose(window)) {
 		processInput(window);
 		glClearBufferfv(GL_COLOR, 0, background_colour);
 
@@ -54,15 +50,13 @@ int main()
 }
 
 // callback for updating window size
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
 // callback for processing input
-void processInput(GLFWwindow* window)
-{
-	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS ||
-	   glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+void processInput(GLFWwindow* window) {
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS ||
+		glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
