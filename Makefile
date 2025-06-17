@@ -20,6 +20,9 @@ _OBJS := $(patsubst %.cpp,%.o,$(notdir $(SRCS)))
 # add the object directory to the front of the object files
 OBJS := $(_OBJS:%=$(OBJ_DIR)/%)
 
+
+.PHONY: main
+
 main: obj $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(OBJS) $(GLAD_OBJ) $(DDS_OBJ)
@@ -55,7 +58,7 @@ $(DDS_OBJ): $(DDS_SRC)
 .PHONY: clean
 
 clean:
-	rm -rf $(OBJ_DIR) game
+	rm -rf $(OBJ_DIR) $(TARGET_EXEC)
 	# remove everything in EXAMPLES_DIR that isn't EXAMPLES_DIR/src or EXAMPLES_DIR/media
 	rm -f $(filter-out $(EXAMPLES_DIR)/src $(EXAMPLES_DIR)/media, $(wildcard $(EXAMPLES_DIR)/*))
 
