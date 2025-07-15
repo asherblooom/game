@@ -1,7 +1,7 @@
 TARGET_EXEC := game
 CXX:=g++
 CC:=gcc
-INC_DIR:=include/
+INC_DIR:=lib/
 CXXFLAGS:=-I$(INC_DIR) -Wall -Wextra -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -std=c++20
 OBJ_DIR:=./obj
 SRC_DIR:=./src
