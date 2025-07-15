@@ -1,12 +1,16 @@
 TARGET_EXEC := game
 CXX:=g++
+CC:=gcc
 INC_DIR:=include/
-CXXFLAGS:=-I$(INC_DIR) -Wall -Wextra -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl
+CXXFLAGS:=-I$(INC_DIR) -Wall -Wextra -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -std=c++20
 OBJ_DIR:=./obj
 SRC_DIR:=./src
 
 GLAD_OBJ := $(OBJ_DIR)/glad.o
 GLAD_SRC := $(SRC_DIR)/glad.c
+
+DDS_OBJ := $(OBJ_DIR)/dds.o
+DDS_SRC := $(SRC_DIR)/dds.c
 
 # Find all the C++ files we want to compile
 SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
@@ -17,10 +21,14 @@ _OBJS := $(patsubst %.cpp,%.o,$(notdir $(SRCS)))
 OBJS := $(_OBJS:%=$(OBJ_DIR)/%)
 
 
-game: $(OBJS) $(GLAD_OBJ)
-	$(CXX) -o $(TARGET_EXEC) $^ $(CXXFLAGS)
+.PHONY: main
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp obj
+main: obj $(TARGET_EXEC)
+
+$(TARGET_EXEC): $(OBJS) $(GLAD_OBJ) $(DDS_OBJ)
+	$(CXX) -o $@ $^ $(CXXFLAGS)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CXX) -o $@ $< $(CXXFLAGS) -c
 
 obj: 
@@ -30,11 +38,29 @@ EXAMPLES_DIR := ./examples
 _OBJS_EXAMPLES := $(patsubst %.cpp,%,$(notdir $(shell find ./examples/src -name '*.cpp')))
 OBJS_EXAMPLES := $(_OBJS_EXAMPLES:%=$(EXAMPLES_DIR)/%)
 
-examples : $(OBJS_EXAMPLES)
 
-$(EXAMPLES_DIR)/%: $(EXAMPLES_DIR)/src/%.cpp $(GLAD_OBJ)
+.PHONY: examples
+
+examples: obj $(OBJS_EXAMPLES)
+
+$(EXAMPLES_DIR)/%: $(EXAMPLES_DIR)/src/%.cpp $(GLAD_OBJ) $(DDS_OBJ)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
 
 # compiles the glad library
-$(GLAD_OBJ): $(GLAD_SRC) 
-	g++ -I$(INC_DIR) $(GLAD_SRC) -o $(GLAD_OBJ) -c
+$(GLAD_OBJ): $(GLAD_SRC)
+	$(CC) -I$(INC_DIR) $< -o $@ -c
+
+# compiles the dds loader
+$(DDS_OBJ): $(DDS_SRC)
+	$(CC) -I$(INC_DIR) $< -o $@ -c
+
+
+.PHONY: clean
+
+clean:
+	rm -rf $(OBJ_DIR) $(TARGET_EXEC)
+	# remove everything in EXAMPLES_DIR that isn't EXAMPLES_DIR/src or EXAMPLES_DIR/media
+	rm -f $(filter-out $(EXAMPLES_DIR)/src $(EXAMPLES_DIR)/media, $(wildcard $(EXAMPLES_DIR)/*))
+
+
+
