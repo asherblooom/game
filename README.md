@@ -8,6 +8,7 @@ Press:
 - 'Right mouse button' while cursor is over a card to delete it
 - '+' while cursor is over a card to make it bigger
 - '-' while cursor is over a card to make it smaller
+- 'c' to clear all cards
 - 'q' or 'esc' to exit the game
 
 Click and drag to move cards around
