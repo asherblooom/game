@@ -7,7 +7,7 @@ OBJ_DIR:=./obj
 SRC_DIR:=./src
 
 GLAD_OBJ := $(OBJ_DIR)/glad.o
-GLAD_SRC := $(SRC_DIR)/glad.c
+GLAD_SRC := $(SRC_DIR)/engine/glad.c
 
 # Find all the C++ files we want to compile
 SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
@@ -22,11 +22,13 @@ OBJS := $(_OBJS:%=$(OBJ_DIR)/%)
 
 main: obj $(TARGET_EXEC)
 
-$(TARGET_EXEC): $(OBJS) $(GLAD_OBJ)
+$(TARGET_EXEC): $(OBJS)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
 
 # find sources not in base directory
 $(OBJ_DIR)/%.o: $(SRC_DIR)/*/%.cpp
+	$(CXX) -o $@ $< $(CXXFLAGS) -c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/*/*/%.cpp
 	$(CXX) -o $@ $< $(CXXFLAGS) -c
 
 # find sources in base directory
@@ -49,9 +51,9 @@ examples: obj $(OBJS_EXAMPLES)
 $(EXAMPLES_DIR)/%: $(EXAMPLES_DIR)/src/%.cpp $(GLAD_OBJ) $(DDS_OBJ)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
 
-# compiles the glad library
-$(GLAD_OBJ): $(GLAD_SRC)
-	$(CC) -I$(INC_DIR) $< -o $@ -c
+# # compiles the glad library
+# $(GLAD_OBJ): $(GLAD_SRC)
+# 	$(CC) -I$(INC_DIR) $< -o $@ -c
 
 
 .PHONY: clean

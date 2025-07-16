@@ -1,11 +1,10 @@
 #include "game.hpp"
 
 #include <GLFW/glfw3.h>
-#include <cstdlib>
 #include <iostream>
-#include <memory>
-#include "engine/objects/game_object.hpp"
-#include "engine/resource_manager.hpp"
+
+int cardCount = 0;
+int suitCount = 0;
 
 Game::Game(unsigned int width, unsigned int height)
 	: width(width), height(height) {
@@ -23,86 +22,119 @@ void Game::Init() {
 	// set render-specific controls
 	renderer = new SpriteRenderer();
 	// load textures
-	ResourceManager::LoadDDSTexture("ball", "textures/circle.dds");
+	LoadCardTextures();
 }
 
 void Game::ProcessInput(float dt) {
-	// if there is a selected ball and the mouse button is no longer held, make it react to forces
+	if (Keys[GLFW_KEY_C]) {
+		cardCount += 1;
+		// draw jokers once end of normal cards is reached
+		if (cardCount == 14 && suitCount == 3) {
+			// make black joker
+			suitCount = 4;
+			cardCount = 0;
+		} else if (cardCount == 1 && suitCount == 4) {
+			// make red joker
+			suitCount = 5;
+			cardCount = 0;
+		} else if (suitCount == 5) {
+			//reset
+			suitCount = 0;
+			cardCount = 1;
+		}
+		// switch to next suit
+		if (cardCount == 14) {
+			cardCount = 1;
+			suitCount += 1;
+		}
+		makeCard((CardValue)cardCount, (CardSuit)suitCount, {width / 2 - 108, 0});
+		// only want one card per key press
+		Keys[GLFW_KEY_C] = false;
+	}
+	// if there is a selected card and the mouse button is no longer held, make it react to forces
 	// if the mouse pointer is no longer over it, deselect it
-	if (selectedBall && !MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
-		selectedBall->Physics->Static = false;
-		if (!(selectedBall->BoundingVolume->DetectMouseOver(MousePos))) {
-			selectedBall->Render->Color -= glm::vec3(0.1);
-			selectedBall = nullptr;
+	if (selectedCard && !MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
+		if (!(selectedCard->DetectMouseOver(MousePos))) {
+			selectedCard->Color -= glm::vec3(0.1);
+			selectedCard = nullptr;
 		}
 	}
-	// if no ball currently selected, select a ball which is over the mouse pointer
-	// loop through balls in reverse order, so as to pick the one on top (drawn last) if any overlap
-	if (!selectedBall) {
-		for (int i = balls.size() - 1; i >= 0; i--) {
-			auto& ball = balls[i];
-			if (ball.BoundingVolume->DetectMouseOver(MousePos)) {
-				selectedBall = &ball;
-				// make selected ball brighter
-				ball.Render->Color += glm::vec3(0.1);
-				// only select one ball
+	// if no card currently selected, select a card which is over the mouse pointer
+	// loop through cards in reverse order, so as to pick the one on top (drawn last) if any overlap
+	if (!selectedCard) {
+		for (int i = Cards.size() - 1; i >= 0; i--) {
+			auto& card = Cards[i];
+			if (card.DetectMouseOver(MousePos)) {
+				selectedCard = &card;
+				// make selected card brighter
+				card.Color += glm::vec3(0.1);
+				// only select one card
 				break;
 			}
 		}
 	}
 }
 
-// TODO: make movement fps independent!!!
-// FIXME: stop rendering/updating balls once they leave the frame!!
 void Game::Update(float dt) {
-	// if there is a selected ball and the mouse is down, make it follow the mouse pointer
-	if (selectedBall && MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
-		selectedBall->transform->Position += ChangeInMousePos;
+	// if there is a selected card and the mouse is down, make it follow the mouse pointer
+	if (selectedCard && MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
+		selectedCard->Position += ChangeInMousePos;
+	}
+	for (int i = 0; i < (int)Cards.size() - 1; i++) {
+		Cards.at(i).Position.y += 1;
 	}
 }
 
 void Game::Render() {
-	for (GameObject& ball : balls) {
-		renderer->DrawSprite(*ball.Render);
+	for (CardObject& card : Cards) {
+		card.Draw(*renderer);
 	}
-	renderer->DrawSprite(*container->Render);
 }
 
-GameObject& Game::makeBall(glm::vec2 center, glm::vec3 color, glm::vec2 velocity) {
-	auto ballTex = ResourceManager::GetTexture("ball");
-	auto ballShader = ResourceManager::GetShader("sprite");
-	float diameter = 50.0f;
-	glm::vec2 pos = center - glm::vec2(diameter / 2.0f);
+CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
+	Texture2D cardTex = GetCardTexture(value, suit);
+	// Texture2D cardTexBack = ResourceManager::GetTexture("BACK");
+	Shader cardShader = ResourceManager::GetShader("sprite");
 
-	if (selectedBall) {
+	if (selectedCard) {
 		int selectedLoc = 0;
-		for (int i = 0; i < (int)balls.size(); i++) {
-			if (&balls.at(i) == selectedBall) {
+		for (int i = 0; i < (int)Cards.size(); i++) {
+			if (&Cards.at(i) == selectedCard) {
 				selectedLoc = i;
-				selectedBall = nullptr;
+				selectedCard = nullptr;
 			}
 		}
-		balls.emplace_back(pos, glm::vec2(diameter), CIRCLE, ballTex, ballShader, 1.0f, velocity, color);
-		selectedBall = &balls.at(selectedLoc);
+		Cards.emplace_back(value, suit, cardTex, cardShader, pos);
+		selectedCard = &Cards.at(selectedLoc);
 	} else
-		balls.emplace_back(pos, glm::vec2(diameter), CIRCLE, ballTex, ballShader, 1.0f, velocity, color);
-	return balls.back();
+		Cards.emplace_back(value, suit, cardTex, cardShader, pos);
+	return Cards.back();
 }
 
 void Game::LoadCardTextures() {
-	ResourceManager::LoadDDSTexture("ACE", "ACE.dds");
-	ResourceManager::LoadDDSTexture("ONE", "ONE.dds");
-	ResourceManager::LoadDDSTexture("TWO", "TWO.dds");
-	ResourceManager::LoadDDSTexture("THREE", "THREE.dds");
-	ResourceManager::LoadDDSTexture("FOUR", "FOUR.dds");
-	ResourceManager::LoadDDSTexture("FIVE", "FIVE.dds");
-	ResourceManager::LoadDDSTexture("SIX", "SIX.dds");
-	ResourceManager::LoadDDSTexture("SEVEN", "SEVEN.dds");
-	ResourceManager::LoadDDSTexture("EIGHT", "EIGHT.dds");
-	ResourceManager::LoadDDSTexture("NINE", "NINE.dds");
-	ResourceManager::LoadDDSTexture("TEN", "TEN.dds");
-	ResourceManager::LoadDDSTexture("JACK", "JACK.dds");
-	ResourceManager::LoadDDSTexture("QUEEN", "QUEEN.dds");
-	ResourceManager::LoadDDSTexture("KING", "KING.dds");
-	ResourceManager::LoadDDSTexture("JOKER", "JOKER.dds");
+	// ResourceManager::LoadDDSTexture("BACK", "textures/BACK.dds");
+	ResourceManager::LoadDDSTexture("JOKER-BLACKJOKER", "textures/JOKER-BLACKJOKER.dds");
+	ResourceManager::LoadDDSTexture("JOKER-REDJOKER", "textures/JOKER-REDJOKER.dds");
+	std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
+	std::string values[] = {"ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
+							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
+	for (std::string suit : suits) {
+		for (std::string value : values) {
+			std::string name = value + "-" + suit;
+			ResourceManager::LoadDDSTexture(name, ("textures/" + name + ".dds").c_str());
+		}
+	}
+}
+
+Texture2D Game::GetCardTexture(CardValue value, CardSuit suit) {
+	if (value == JOKER) {
+		if (suit == BLACKJOKER)
+			return ResourceManager::GetTexture("JOKER-BLACKJOKER");
+		else if (suit == REDJOKER)
+			return ResourceManager::GetTexture("JOKER-REDJOKER");
+	}
+	std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
+	std::string values[] = {"JOKER", "ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
+							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
+	return ResourceManager::GetTexture(values[value] + "-" + suits[suit]);
 }

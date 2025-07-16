@@ -79,7 +79,8 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile
 	try {
 		// open the DDS file for binary reading and get file size
 		if ((f = std::fopen(ddsFile, "rb")) == 0) {
-			throw "ERROR: incorrect file name";
+			std::cerr << ddsFile << " ";
+			throw "ERROR::TEXTURE: incorrect file name";
 		}
 		std::fseek(f, 0, SEEK_END);
 		long file_size = ftell(f);
@@ -90,7 +91,7 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile
 
 		// compare the `DDS ` signature
 		if (std::memcmp(header, "DDS ", 4) != 0) {
-			throw "ERROR: incorrect DDS signature";
+			throw "ERROR::TEXTURE: incorrect DDS signature";
 		}
 
 		// extract height, width, and amount of mipmaps - yes it is stored height then width
@@ -119,16 +120,16 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile
 						   // as it adds sizeof(struct DDS_HEADER_DXT10) between pixels
 						   // so, buffer = malloc((file_size - 128) - sizeof(struct DDS_HEADER_DXT10));
 				default:
-					throw "ERROR: unsupported compression";
+					throw "ERROR::TEXTURE: unsupported compression";
 			}
 		} else {  // BC4U/BC4S/ATI2/BC55/R8G8_B8G8/G8R8_G8B8/UYVY-packed/YUY2-packed unsupported
-			throw "ERROR: unsupported compression";
+			throw "ERROR::TEXTURE: unsupported compression";
 		}
 
 		// read rest of file
 		buffer = new unsigned char[file_size - 128];
 		if (buffer == 0) {
-			throw "ERROR: memory allocation failed";
+			throw "ERROR::TEXTURE: memory allocation failed";
 		}
 		fread(buffer, 1, file_size, f);
 
@@ -146,6 +147,7 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile
 		delete[] (buffer);
 		delete[] (header);
 		if (f) fclose(f);
+		std::cerr << e << "\n";
 		throw(e);
 	}
 }

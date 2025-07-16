@@ -6,8 +6,8 @@
 #include "game_object.hpp"
 
 enum CardValue {
+	JOKER,
 	ACE,
-	ONE,
 	TWO,
 	THREE,
 	FOUR,
@@ -19,15 +19,16 @@ enum CardValue {
 	TEN,
 	JACK,
 	QUEEN,
-	KING,
-	JOKER
+	KING
 };
 
 enum CardSuit {
 	SPADES,
 	HEARTS,
 	DIAMONDS,
-	CLUBS
+	CLUBS,
+	BLACKJOKER,
+	REDJOKER
 };
 
 class CardObject : public GameObject {
@@ -40,7 +41,7 @@ public:
 			   Texture2D texture,
 			   Shader shader,
 			   glm::vec2 pos,
-			   glm::vec2 size = {50, 50},
+			   glm::vec2 size = {216, 313.6},
 			   glm::vec3 color = glm::vec3(1.0f));
 };
 

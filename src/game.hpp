@@ -6,7 +6,6 @@
 #include "engine/resource_manager.hpp"
 
 #include <GLFW/glfw3.h>
-#include <initializer_list>
 #include <vector>
 
 class Game {
@@ -21,8 +20,8 @@ private:
 	CardObject* selectedCard = nullptr;
 
 	CardObject& makeCard(CardValue value, CardSuit suit, glm::vec2 pos);
-	//TODO: implement this
-	void LoadCardTextures(std::initializer_list<std::string> names);
+	void LoadCardTextures();
+	Texture2D GetCardTexture(CardValue value, CardSuit suit);
 
 public:
 	bool Keys[1024];
