@@ -6,9 +6,6 @@ CXXFLAGS:=-I$(INC_DIR) -Wall -Wextra -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -
 OBJ_DIR:=./obj
 SRC_DIR:=./src
 
-GLAD_OBJ := $(OBJ_DIR)/glad.o
-GLAD_SRC := $(SRC_DIR)/engine/glad.c
-
 # Find all the C++ files we want to compile
 SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
 # get a list of object files we want to compile by removing the 
@@ -51,16 +48,12 @@ examples: obj $(OBJS_EXAMPLES)
 $(EXAMPLES_DIR)/%: $(EXAMPLES_DIR)/src/%.cpp $(GLAD_OBJ) $(DDS_OBJ)
 	$(CXX) -o $@ $^ $(CXXFLAGS)
 
-# # compiles the glad library
-# $(GLAD_OBJ): $(GLAD_SRC)
-# 	$(CC) -I$(INC_DIR) $< -o $@ -c
-
 
 .PHONY: clean
-
+# remove object dir and target exec and
+# remove everything in EXAMPLES_DIR that isn't EXAMPLES_DIR/src or EXAMPLES_DIR/media
 clean:
 	rm -rf $(OBJ_DIR) $(TARGET_EXEC)
-	# remove everything in EXAMPLES_DIR that isn't EXAMPLES_DIR/src or EXAMPLES_DIR/media
 	rm -f $(filter-out $(EXAMPLES_DIR)/src $(EXAMPLES_DIR)/media, $(wildcard $(EXAMPLES_DIR)/*))
 
 
