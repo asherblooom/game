@@ -1,17 +1,15 @@
 #ifndef GAME_HPP
 #define GAME_HPP
 
+#include "basegame.hpp"
 #include "engine/objects/card_object.hpp"
 #include "engine/render/sprite_renderer.hpp"
-#include "engine/resource_manager.hpp"
 
 #include <GLFW/glfw3.h>
 #include <vector>
 
-class Game {
+class Game : public BaseGame {
 private:
-	// the max values in the coordinate system for x and y respectively
-	unsigned int width, height;
 	// this is a pointer so that we can choose when to destruct it (that is, before glfwTerminate is called)
 	SpriteRenderer* renderer;
 	std::vector<CardObject> Cards;
@@ -24,21 +22,13 @@ private:
 	Texture2D GetCardTexture(CardValue value, CardSuit suit);
 
 public:
-	bool Keys[1024];
-	bool MouseButtons[3];
-	glm::vec2 MousePos;
-	glm::vec2 ChangeInMousePos;
-	Game(unsigned int width, unsigned int height);
-	~Game() {
-		delete renderer;
-		ResourceManager::Clear();
-	}
+	void Clear() override { delete renderer; }
 	// initialize game state (load all shaders/textures/levels)
-	void Init();
+	void Init() override;
 	// game loop
-	void ProcessInput(float dt);
-	void Update(float dt);
-	void Render();
+	void ProcessInput(float dt) override;
+	void Update(float dt) override;
+	void Render() override;
 };
 
 #endif

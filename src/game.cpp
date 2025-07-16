@@ -6,10 +6,6 @@
 int cardCount = 0;
 int suitCount = 0;
 
-Game::Game(unsigned int width, unsigned int height)
-	: width(width), height(height) {
-}
-
 void Game::Init() {
 	// load shaders
 	ResourceManager::LoadShader("sprite", "src/shaders/sprite.vs", "src/shaders/sprite.frag");

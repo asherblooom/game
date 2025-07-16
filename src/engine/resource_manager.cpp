@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -48,7 +49,7 @@ Shader &ResourceManager::LoadShader(std::string name, const char *vShaderFile, c
 			geometryShaderFile.close();
 			geometryCode = gShaderStream.str();
 		}
-	} catch (std::exception e) {
+	} catch (std::exception_ptr p) {
 		std::cout << "ERROR::SHADER: Failed to read shader files" << std::endl;
 	}
 	const char *vShaderCode = vertexCode.c_str();
