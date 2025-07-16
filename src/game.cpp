@@ -27,7 +27,7 @@ void Game::Init() {
 
 void Game::ProcessInput(float dt) {
 	// add new card
-	if (Keys[GLFW_KEY_C]) {
+	if (MouseButtons[GLFW_MOUSE_BUTTON_LEFT] && !selectedCard) {
 		cardCount += 1;
 		// draw jokers once end of normal cards is reached
 		if (cardCount == 14 && suitCount == 3) {
@@ -48,9 +48,9 @@ void Game::ProcessInput(float dt) {
 			cardCount = 1;
 			suitCount += 1;
 		}
-		makeCard((CardValue)cardCount, (CardSuit)suitCount, {width / 2 - 108, 0});
-		// only want one card per key press
-		Keys[GLFW_KEY_C] = false;
+		makeCard((CardValue)cardCount, (CardSuit)suitCount, MousePos);
+		// only want one card per button press
+		MouseButtons[GLFW_MOUSE_BUTTON_LEFT] = false;
 	}
 	// if plus key, increase size
 	if (Keys[GLFW_KEY_EQUAL] && (Keys[GLFW_KEY_LEFT_SHIFT] || Keys[GLFW_KEY_RIGHT_SHIFT])) {
@@ -67,7 +67,7 @@ void Game::ProcessInput(float dt) {
 		Keys[GLFW_KEY_MINUS] = false;
 	}
 	// delete selected card
-	if (Keys[GLFW_KEY_D]) {
+	if (MouseButtons[GLFW_MOUSE_BUTTON_RIGHT]) {
 		if (selectedCard) {
 			for (int i = 0; i < (int)Cards.size(); i++) {
 				if (&Cards.at(i) == selectedCard) {
@@ -76,7 +76,7 @@ void Game::ProcessInput(float dt) {
 				}
 			}
 		}
-		Keys[GLFW_KEY_D] = false;
+		MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
 	}
 	// if there is a selected card and the mouse pointer is no longer over it, deselect it
 	if (selectedCard && !MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
