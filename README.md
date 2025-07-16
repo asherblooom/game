@@ -34,7 +34,7 @@ _Note: this has only been tested on linux_
 
 ### OpenGL
 
-- [This website](https://www.learnopengl.com/) teaches OpenGl ver. 3 (but is still very good and widely recommended)
+- [This website](https://www.learnopengl.com/) teaches OpenGl ver. 3 (but is still very good and widely recommended) \
 _Note: the boilerplate code for the examples (and the accompanying libraries,
 i.e. GLAD and glfw) and the maths library (GLM) are
 both taken from this website. Everything else is from the book below_
