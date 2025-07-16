@@ -26,6 +26,7 @@ void Game::Init() {
 }
 
 void Game::ProcessInput(float dt) {
+	// add new card
 	if (Keys[GLFW_KEY_C]) {
 		cardCount += 1;
 		// draw jokers once end of normal cards is reached
@@ -51,11 +52,36 @@ void Game::ProcessInput(float dt) {
 		// only want one card per key press
 		Keys[GLFW_KEY_C] = false;
 	}
-	// if there is a selected card and the mouse button is no longer held, make it react to forces
-	// if the mouse pointer is no longer over it, deselect it
+	// if plus key, increase size
+	if (Keys[GLFW_KEY_EQUAL] && (Keys[GLFW_KEY_LEFT_SHIFT] || Keys[GLFW_KEY_RIGHT_SHIFT])) {
+		if (selectedCard) {
+			selectedCard->Size += glm::vec2{21.6, 31.36};
+		}
+		Keys[GLFW_KEY_EQUAL] = false;
+	}
+	// decrease size
+	if (Keys[GLFW_KEY_MINUS]) {
+		if (selectedCard) {
+			selectedCard->Size -= glm::vec2{21.6, 31.36};
+		}
+		Keys[GLFW_KEY_MINUS] = false;
+	}
+	// delete selected card
+	if (Keys[GLFW_KEY_D]) {
+		if (selectedCard) {
+			for (int i = 0; i < (int)Cards.size(); i++) {
+				if (&Cards.at(i) == selectedCard) {
+					Cards.erase(Cards.begin() + i);
+					selectedCard = nullptr;
+				}
+			}
+		}
+		Keys[GLFW_KEY_D] = false;
+	}
+	// if there is a selected card and the mouse pointer is no longer over it, deselect it
 	if (selectedCard && !MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
 		if (!(selectedCard->DetectMouseOver(MousePos))) {
-			selectedCard->Color -= glm::vec3(0.1);
+			selectedCard->Color += glm::vec3(0.2);
 			selectedCard = nullptr;
 		}
 	}
@@ -63,11 +89,11 @@ void Game::ProcessInput(float dt) {
 	// loop through cards in reverse order, so as to pick the one on top (drawn last) if any overlap
 	if (!selectedCard) {
 		for (int i = Cards.size() - 1; i >= 0; i--) {
-			auto& card = Cards[i];
+			CardObject& card = Cards[i];
 			if (card.DetectMouseOver(MousePos)) {
 				selectedCard = &card;
-				// make selected card brighter
-				card.Color += glm::vec3(0.1);
+				// make selected card darker
+				card.Color -= glm::vec3(0.2);
 				// only select one card
 				break;
 			}

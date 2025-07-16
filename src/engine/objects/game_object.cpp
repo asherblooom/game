@@ -11,3 +11,13 @@ void GameObject::Draw(SpriteRenderer& renderer) {
 						texture,
 						shader);
 }
+
+bool GameObject::DetectMouseOver(glm::vec2 mousePos) {
+	glm::vec2 minBounds = Position;
+	glm::vec2 maxBounds = Position + Size;
+	if (minBounds.x <= mousePos.x && mousePos.x < maxBounds.x &&
+		minBounds.y <= mousePos.y && mousePos.y < maxBounds.y) {
+		return true;
+	} else
+		return false;
+}

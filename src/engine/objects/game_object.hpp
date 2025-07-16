@@ -20,6 +20,7 @@ public:
 	GameObject(glm::vec2 pos, glm::vec2 size, Texture2D texture, Shader shader, glm::vec3 color = glm::vec3(1.0f));
 
 	void Draw(SpriteRenderer& renderer);
+	bool DetectMouseOver(glm::vec2 mousePos);
 
 protected:
 	Texture2D texture;
