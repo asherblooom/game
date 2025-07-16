@@ -1,6 +1,14 @@
 # A Game??????
 
-Hopefully
+## Demo Game instructions
+Press:
+- 'Left mouse button' to create a new card at cursor position
+- 'Right mouse button' while cursor is over a card to delete it
+- '+' while cursor is over a card to make it bigger
+- '-' while cursor is over a card to make it smaller
+- 'q' or 'esc' to exit the game
+
+Click and drag to move cards around
 
 ## Setup instructions
 
