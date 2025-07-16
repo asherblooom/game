@@ -78,12 +78,17 @@ void Game::ProcessInput(float dt) {
 		}
 		MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
 	}
-	// if there is a selected card and the mouse pointer is no longer over it, deselect it
+	if (Keys[GLFW_KEY_C]) {
+		selectedCard = nullptr;
+		Cards.clear();
+		cardCount = 0;
+		suitCount = 0;
+		Keys[GLFW_KEY_C] = false;
+	}
+	// if there is a selected card and the mouse button is released, deselect it
 	if (selectedCard && !MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
-		if (!(selectedCard->DetectMouseOver(MousePos))) {
-			selectedCard->Color += glm::vec3(0.2);
-			selectedCard = nullptr;
-		}
+		selectedCard->Color += glm::vec3(0.2);
+		selectedCard = nullptr;
 	}
 	// if no card currently selected, select a card which is over the mouse pointer
 	// loop through cards in reverse order, so as to pick the one on top (drawn last) if any overlap
@@ -105,9 +110,6 @@ void Game::Update(float dt) {
 	// if there is a selected card and the mouse is down, make it follow the mouse pointer
 	if (selectedCard && MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
 		selectedCard->Position += ChangeInMousePos;
-	}
-	for (int i = 0; i < (int)Cards.size() - 1; i++) {
-		Cards.at(i).Position.y += 1;
 	}
 }
 
