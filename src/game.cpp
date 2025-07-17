@@ -55,8 +55,8 @@ void Game::ProcessInput(float dt) {
 		}
 		Keys[GLFW_KEY_EQUAL] = false;
 	}
-	// decrease size
-	if (Keys[GLFW_KEY_MINUS]) {
+	// if minus key (not underscore) decrease size
+	if (Keys[GLFW_KEY_MINUS] && !(Keys[GLFW_KEY_LEFT_SHIFT] || Keys[GLFW_KEY_RIGHT_SHIFT])) {
 		if (selectedCard) {
 			selectedCard->Size -= glm::vec2{21.6, 31.36};
 		}

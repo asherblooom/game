@@ -9,6 +9,20 @@
 #include <vector>
 
 class Game : public BaseGame {
+public:
+	Game(unsigned int width, unsigned int height)
+		: BaseGame(width, height) {}
+
+	// initialize game state (load all shaders/textures/levels)
+	void Init() override;
+	// game loop
+	void ProcessInput(float dt) override;
+	void Update(float dt) override;
+	void Render() override;
+
+	// used to delete resources that must be deleted before GLFWTeminate() is called
+	void Clear() override { delete renderer; }
+
 private:
 	// this is a pointer so that we can choose when to destruct it (that is, before glfwTerminate is called)
 	SpriteRenderer* renderer;
@@ -20,15 +34,6 @@ private:
 	CardObject& makeCard(CardValue value, CardSuit suit, glm::vec2 pos);
 	void LoadCardTextures();
 	Texture2D GetCardTexture(CardValue value, CardSuit suit);
-
-public:
-	void Clear() override { delete renderer; }
-	// initialize game state (load all shaders/textures/levels)
-	void Init() override;
-	// game loop
-	void ProcessInput(float dt) override;
-	void Update(float dt) override;
-	void Render() override;
 };
 
 #endif

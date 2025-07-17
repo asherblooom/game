@@ -1,18 +1,29 @@
-#include "basegame.hpp"
+#include <glad/glad.h>
+
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <iostream>
+#include "../game.hpp"
+
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 
 // used to calculate change in mouse position
 glm::vec2 oldMousePosWorld = {0, 0};  // world space position
 int xposOld, yposOld;				  // screen space position
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
-void mouse_button_callback(GLFWwindow *window, int button, int action, int mods);
+void key_callback(GLFWwindow *window, int key, int scancode, int action,
+				  int mode);
+void mouse_button_callback(GLFWwindow *window, int button, int action,
+						   int mods);
+
 void updateMousePosition(GLFWwindow *window, double xpos, double ypos);
 
-BaseGame::BaseGame(unsigned int width, unsigned int height)
-	: width{width}, height{height} {}
+// here width and height are the max values for the x and y coords respectively
+Game cardGame(SCR_WIDTH, SCR_HEIGHT);
 
-void BaseGame::Run() {
+int main() {
 	// Initialise glfw and set options
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -20,11 +31,11 @@ void BaseGame::Run() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// create window
-	GLFWwindow *window = glfwCreateWindow(width, height, "Card Game", NULL, NULL);
+	GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Card Game", NULL, NULL);
 	if (window == NULL) {
 		std::cout << "Failed to create GLFW window\n";
 		glfwTerminate();
-		return;
+		return -1;
 	}
 	glfwMakeContextCurrent(window);
 
@@ -32,7 +43,7 @@ void BaseGame::Run() {
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD\n";
 		glfwTerminate();
-		return;
+		return -1;
 	}
 
 	glEnable(GL_BLEND);
@@ -47,7 +58,7 @@ void BaseGame::Run() {
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
-	Init();
+	cardGame.Init();
 
 	float deltaTime, lastFrame = 0.0f;
 	double xpos, ypos;
@@ -67,25 +78,25 @@ void BaseGame::Run() {
 		if (xpos - xposOld != 0 && ypos - yposOld != 0) {
 			updateMousePosition(window, xpos, ypos);
 		} else {
-			ChangeInMousePos = glm::vec2(0);
+			cardGame.ChangeInMousePos = glm::vec2(0);
 		}
-		ProcessInput(deltaTime);
+		cardGame.ProcessInput(deltaTime);
 
 		// update game state
 		// -----------------
-		Update(deltaTime);
+		cardGame.Update(deltaTime);
 
 		// render
 		// ------
 		glClearColor(0, 0, 0, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		Render();
+		cardGame.Render();
+
 		glfwSwapBuffers(window);
 	}
-
-	Clear();
+	cardGame.Clear();
 	glfwTerminate();
-	return;
+	return 0;
 }
 
 // calculates the boundaries of the screen space needed to maintain a constant
@@ -124,16 +135,15 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 // callback for processing input
-void key_callback(GLFWwindow *window, int key, int scancode, int action,
-				  int mode) {
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS ||
 		glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 	if (key >= 0 && key < 1024) {
 		if (action == GLFW_PRESS)
-			Keys[key] = true;
+			cardGame.Keys[key] = true;
 		else if (action == GLFW_RELEASE)
-			Keys[key] = false;
+			cardGame.Keys[key] = false;
 	}
 }
 
@@ -147,25 +157,23 @@ void updateMousePosition(GLFWwindow *window, double xpos, double ypos) {
 	// move top left to match beginning of render area
 	xpos = xpos - x;
 	ypos = ypos - y;
-	//TODO: rewrite this comment
 	// we know world space has coordinates (0, 0) to (SCR_WIDTH, SCR_HEIGHT)
 	//  as those constants are what we used to construct our Game object with
-	double xRatio = this->width / gameWidth;
-	double yRatio = this->height / gameHeight;
+	double xRatio = SCR_WIDTH / gameWidth;
+	double yRatio = SCR_HEIGHT / gameHeight;
 	glm::vec2 mousePos = {xpos * xRatio, ypos * yRatio};
 
-	MousePos = mousePos;
-	ChangeInMousePos = mousePos - oldMousePosWorld;
+	cardGame.MousePos = mousePos;
+	cardGame.ChangeInMousePos = mousePos - oldMousePosWorld;
 	oldMousePosWorld = mousePos;
 }
 
 // callback for processing mouse input
-void mouse_button_callback(GLFWwindow *window, int button, int action,
-						   int mods) {
+void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
 	if (button >= 0 && button <= 2) {
 		if (action == GLFW_PRESS)
-			MouseButtons[button] = true;
+			cardGame.MouseButtons[button] = true;
 		else if (action == GLFW_RELEASE)
-			MouseButtons[button] = false;
+			cardGame.MouseButtons[button] = false;
 	}
 }
