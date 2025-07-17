@@ -2,11 +2,10 @@
 
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
-extern "C" {
-#include "../../src/dds.h"
-}
 #include <cmath>
 #include <iostream>
+
+#include "../lib/ddsLoader.hpp"
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;

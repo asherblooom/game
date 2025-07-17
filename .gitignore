@@ -5,5 +5,6 @@ compile_commands.json
 examples/*
 !examples/src
 !examples/media
+!examples/lib
 obj/
 game
