@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: install dependencies
+      run: sudo apt install -y libgl libx11-dev libxi-dev libxrandr-dev libglfw3-dev
     - name: configure
       run: ./configure
     - name: make
