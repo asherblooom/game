@@ -39,8 +39,7 @@ _Note: this has only been tested on Linux_
 ### OpenGL
 
 - [This website](https://www.learnopengl.com/) teaches OpenGl ver. 3 (but is still very good and widely recommended) \
-_Note: the boilerplate code for the examples (and the accompanying libraries,
-i.e. GLAD and glfw) and the maths library (GLM) are
+_Note: the boilerplate code for the examples (and the accompanying libraries, i.e. GLAD and glfw) and the maths library (GLM) are
 both taken from this website. Everything else is from the book below_
 
 - [This book](https://linker2.worldcat.org/?jHome=https%3A%2F%2Fbris.idm.oclc.org%2Flogin%3Furl%3Dhttps%3A%2F%2Flearning.oreilly.com%2Flibrary%2Fview%2F~%2F9780133365023%2F%3Far%26orpq%26email%3D%5Eu&linktype=best&jHomeSig=18d1b86a967d5206742890e689759fabdaea0ebe6659ddee4ef995593108d486)
