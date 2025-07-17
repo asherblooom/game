@@ -13,6 +13,9 @@ Press:
 
 Click and drag to move cards around
 
+_Note: every odd card will be rendered using mipmaps, whereas every even card will not, just so you can see the difference\
+The textures are currently very high resolution, I will look at making the native resolution lower they are clearer when rendered small_
+
 ## Setup instructions
 
 - [Install GLFW](https://www.glfw.org/download.html)

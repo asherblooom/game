@@ -24,7 +24,7 @@ public:
 	// retrieves a stored sader
 	static Shader &GetShader(std::string name);
 	// loads (and generates) a texture from file
-	static Texture2D &LoadDDSTexture(std::string name, const char *ddsFile);
+	static Texture2D &LoadDDSTexture(std::string name, const char *ddsFile, bool mipmaps = true);
 	// retrieves a stored texture
 	static Texture2D &GetTexture(std::string name);
 	// properly de-allocates all loaded resources

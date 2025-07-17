@@ -62,7 +62,7 @@ Shader &ResourceManager::LoadShader(std::string name, const char *vShaderFile, c
 	return Shaders[name];
 }
 
-Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile) {
+Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile, bool mipmaps) {
 	// allocate new unsigned char space with 4 (file code) + 124 (header size) bytes
 	unsigned char *header = new unsigned char[128];
 
@@ -98,7 +98,10 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile
 		// extract height, width, and amount of mipmaps - yes it is stored height then width
 		height = (header[12]) | (header[13] << 8) | (header[14] << 16) | (header[15] << 24);
 		width = (header[16]) | (header[17] << 8) | (header[18] << 16) | (header[19] << 24);
-		mipMapCount = (header[28]) | (header[29] << 8) | (header[30] << 16) | (header[31] << 24);
+		if (mipmaps)
+			mipMapCount = (header[28]) | (header[29] << 8) | (header[30] << 16) | (header[31] << 24);
+		else
+			mipMapCount = 1;
 
 		// figure out what format to use for what fourCC file type it is
 		// block size is about physical chunk storage of compressed data in file (important)
@@ -142,7 +145,7 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile
 		delete[] (buffer);
 		delete[] (header);
 		fclose(f);
-		return Textures[name];
+		return Textures.at(name);
 
 	} catch (const char *e) {
 		delete[] (buffer);
@@ -154,7 +157,7 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile
 }
 
 Texture2D &ResourceManager::GetTexture(std::string name) {
-	return Textures[name];
+	return Textures.at(name);
 }
 
 void ResourceManager::Clear() {

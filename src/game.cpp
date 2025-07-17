@@ -142,10 +142,12 @@ void Game::LoadCardTextures() {
 	std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
 	std::string values[] = {"ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
 							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
+	int myvar = 1;
 	for (std::string suit : suits) {
 		for (std::string value : values) {
 			std::string name = value + "-" + suit;
-			ResourceManager::LoadDDSTexture(name, ("textures/" + name + ".dds").c_str());
+			ResourceManager::LoadDDSTexture(name, ("textures/" + name + ".dds").c_str(), myvar % 2);
+			myvar++;
 		}
 	}
 }
