@@ -20,9 +20,17 @@ The textures are currently very high resolution, I will look at making the nativ
 
 _Note: this has only been tested on Linux_
 
-- [Install GLFW](https://www.glfw.org/download.html), and ensure the openGL, x11, xInput and xrandr development libraries are installed\
-_on ubuntu you can run ```sudo apt install libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev```\
-on fedora you can run ```sudo dnf install libglvnd-devel mesa-libGL-devel libXi-devel libX11-devel libXrandr-devel glfw-devel```_
+- [Install GLFW](https://www.glfw.org/download.html)
+- (For Linux) ensure the openGL, x11, xInput and xrandr development libraries are installed
+  
+  - _on ubuntu you can run_
+    ```
+    sudo apt install libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev
+    ```
+  - _on fedora you can run_
+    ```
+    sudo dnf install libglvnd-devel mesa-libGL-devel libXi-devel libX11-devel libXrandr-devel glfw-devel
+    ```
 - Clone the repository
 
 ### Building the game
