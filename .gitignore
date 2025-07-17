@@ -8,12 +8,3 @@ examples/*
 !examples/lib
 obj/
 game
-Makefile
-config.h
-config.status
-config.log
-autoscan.log
-configure.scan
-configure.ac
-configure~*
-autom4te.cache

@@ -20,9 +20,10 @@ The textures are currently very high resolution, I will look at making the nativ
 
 _Note: this has only been tested on Linux_
 
-- [Install GLFW](https://www.glfw.org/download.html)
+- [Install GLFW](https://www.glfw.org/download.html),\
+and ensure the gl, x11, xi and xrandr development libraries are installed\
+(on ubuntu you can run `sudo apt install libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev`)
 - Clone the repository
-- Run `./configure` in the root directory
 
 ### Building the game
 
