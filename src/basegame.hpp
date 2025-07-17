@@ -15,7 +15,7 @@ public:
 	glm::vec2 ChangeInMousePos;
 	BaseGame(unsigned int width, unsigned int height)
 		: width{width}, height{height} {}
-	// used to delete resources that must be deleted before GLFWTeminate() is called
+	// used to delete resources that must be deleted before glfwTeminate() is called
 	virtual void Clear() {}
 	virtual ~BaseGame() { ResourceManager::Clear(); }
 

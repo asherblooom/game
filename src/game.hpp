@@ -20,7 +20,7 @@ public:
 	void Update(float dt) override;
 	void Render() override;
 
-	// used to delete resources that must be deleted before GLFWTeminate() is called
+	// used to delete resources that must be deleted before glfwTeminate() is called
 	void Clear() override { delete renderer; }
 
 private:
@@ -34,6 +34,10 @@ private:
 	CardObject& makeCard(CardValue value, CardSuit suit, glm::vec2 pos);
 	void LoadCardTextures();
 	Texture2D GetCardTexture(CardValue value, CardSuit suit);
+
+	// used for iterating through all the cards
+	int cardCount = 0;
+	int suitCount = 0;
 };
 
 #endif

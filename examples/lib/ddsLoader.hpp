@@ -1,5 +1,5 @@
-#ifndef DDS_HPP
-#define DDS_HPP
+#ifndef DDSLOADER_HPP
+#define DDSLOADER_HPP
 
 #include <GL/gl.h>
 

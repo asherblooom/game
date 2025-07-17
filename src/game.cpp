@@ -3,9 +3,6 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-int cardCount = 0;
-int suitCount = 0;
-
 void Game::Init() {
 	// load shaders
 	ResourceManager::LoadShader("sprite", "src/shaders/sprite.vs", "src/shaders/sprite.frag");
@@ -117,7 +114,6 @@ void Game::Render() {
 
 CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 	Texture2D cardTex = GetCardTexture(value, suit);
-	// Texture2D cardTexBack = ResourceManager::GetTexture("BACK");
 	Shader cardShader = ResourceManager::GetShader("sprite");
 
 	if (selectedCard) {
@@ -136,18 +132,17 @@ CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 }
 
 void Game::LoadCardTextures() {
-	// ResourceManager::LoadDDSTexture("BACK", "textures/BACK.dds");
 	ResourceManager::LoadDDSTexture("JOKER-BLACKJOKER", "textures/JOKER-BLACKJOKER.dds");
 	ResourceManager::LoadDDSTexture("JOKER-REDJOKER", "textures/JOKER-REDJOKER.dds");
 	std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
 	std::string values[] = {"ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
 							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
-	int myvar = 1;
+	int isDDS = 1;
 	for (std::string suit : suits) {
 		for (std::string value : values) {
 			std::string name = value + "-" + suit;
-			ResourceManager::LoadDDSTexture(name, ("textures/" + name + ".dds").c_str(), myvar % 2);
-			myvar++;
+			ResourceManager::LoadDDSTexture(name, ("textures/" + name + ".dds").c_str(), isDDS % 2);
+			isDDS++;
 		}
 	}
 }
