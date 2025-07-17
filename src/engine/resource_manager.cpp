@@ -75,11 +75,11 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile
 
 	unsigned char *buffer = 0;
 
-	std::FILE *f;
+	std::FILE *f = std::fopen(ddsFile, "rb");
 
 	try {
 		// open the DDS file for binary reading and get file size
-		if ((f = std::fopen(ddsFile, "rb")) == 0) {
+		if (f == nullptr) {
 			std::cerr << ddsFile << " ";
 			throw "ERROR::TEXTURE: incorrect file name";
 		}
