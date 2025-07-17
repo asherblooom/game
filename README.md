@@ -17,9 +17,10 @@ _Note: every odd card will be rendered using mipmaps, whereas every even card wi
 The textures are currently very high resolution, I will look at making the native resolution lower they are clearer when rendered small_
 
 ## Setup instructions
-
 _Note: this has only been tested on Linux_
 
+### Linux
+#### Prerequisites
 - [Install GLFW](https://www.glfw.org/download.html)
 - (For Linux) ensure the openGL, x11, xInput and xrandr development libraries are installed
   
@@ -31,14 +32,14 @@ _Note: this has only been tested on Linux_
     ```
     sudo dnf install libglvnd-devel mesa-libGL-devel libXi-devel libX11-devel libXrandr-devel glfw-devel
     ```
+
+#### Building and running the game
+
 - Clone the repository
-
-### Building the game
-
 - Run `make` in the root directory
 - Run the resulting `game` file (located in the root directory)
 
-### Building the examples
+#### Building the examples
 
 - Run `make examples` in the root directory
 - The example programs will be created in the `examples` directory
