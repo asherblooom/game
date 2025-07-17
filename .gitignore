@@ -8,3 +8,7 @@ examples/*
 !examples/lib
 obj/
 game
+Makefile
+config.h
+config.status
+config.log

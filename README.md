@@ -18,19 +18,20 @@ The textures are currently very high resolution, I will look at making the nativ
 
 ## Setup instructions
 
+_Note: this has only been tested on Linux_
+
 - [Install GLFW](https://www.glfw.org/download.html)
 - Clone the repository
+- Run `./configure` in the root directory
 
 ### Building the game
 
-- Run `make` in the root directory\
-_Note: this has only been tested on linux_
-- Run the resulting `game` file (located in the home directory)
+- Run `make` in the root directory
+- Run the resulting `game` file (located in the root directory)
 
 ### Building the examples
 
-- Run `make examples`\
-_Note: this has only been tested on linux_
+- Run `make examples` in the root directory
 - The example programs will be created in the `examples` directory
 
 ## Learning OpenGL and C++
