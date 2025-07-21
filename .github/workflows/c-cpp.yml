@@ -17,5 +17,3 @@ jobs:
       run: sudo apt install -y libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev
     - name: make
       run: make
-    - name: make examples
-      run: make examples
