@@ -62,7 +62,7 @@ void Game::ProcessInput(float dt) {
 	// delete selected card
 	if (MouseButtons[GLFW_MOUSE_BUTTON_RIGHT]) {
 		if (selectedCard) {
-			for (int i = 0; i < (int)Cards.size(); i++) {
+			for (size_t i = 0; i < Cards.size(); i++) {
 				if (&Cards.at(i) == selectedCard) {
 					Cards.erase(Cards.begin() + i);
 					selectedCard = nullptr;
@@ -118,7 +118,7 @@ CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 
 	if (selectedCard) {
 		int selectedLoc = 0;
-		for (int i = 0; i < (int)Cards.size(); i++) {
+		for (size_t i = 0; i < Cards.size(); i++) {
 			if (&Cards.at(i) == selectedCard) {
 				selectedLoc = i;
 				selectedCard = nullptr;
@@ -132,8 +132,8 @@ CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 }
 
 void Game::LoadCardTextures() {
-	ResourceManager::LoadDDSTexture("JOKER-BLACKJOKER", "textures/JOKER-BLACKJOKER.dds");
-	ResourceManager::LoadDDSTexture("JOKER-REDJOKER", "textures/JOKER-REDJOKER.dds");
+	ResourceManager::LoadDDSTexture("JOKER-BLACKJOKER", "media/textures/JOKER-BLACKJOKER.dds");
+	ResourceManager::LoadDDSTexture("JOKER-REDJOKER", "media/textures/JOKER-REDJOKER.dds");
 	std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
 	std::string values[] = {"ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
 							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
@@ -141,7 +141,7 @@ void Game::LoadCardTextures() {
 	for (std::string suit : suits) {
 		for (std::string value : values) {
 			std::string name = value + "-" + suit;
-			ResourceManager::LoadDDSTexture(name, ("textures/" + name + ".dds").c_str(), isDDS % 2);
+			ResourceManager::LoadDDSTexture(name, ("media/textures/" + name + ".dds").c_str(), isDDS % 2);
 			isDDS++;
 		}
 	}
