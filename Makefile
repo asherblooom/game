@@ -2,7 +2,7 @@ TARGET_EXEC := game
 CXX:=g++
 CC:=gcc
 INC_DIR:=lib
-CXXFLAGS:=-I$(INC_DIR) -Wall -Wextra -Wno-unused-parameter -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -std=c++20
+CXXFLAGS:=-I$(INC_DIR) -march=native -Wall -Wextra -Wno-unused-parameter -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl -std=c++20
 OBJ_DIR:=./obj
 SRC_DIR:=./src
 
