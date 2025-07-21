@@ -1,4 +1,47 @@
-# A Game??????
+# A 2D Card Game Engine
+
+## Setup instructions
+
+### Linux
+
+<details>
+<summary>Prerequisites</summary>
+  
+- [Install GLFW](https://www.glfw.org/download.html)
+- Ensure the openGL, x11, xInput and xrandr development libraries are installed
+  
+  - _on ubuntu you can run_
+    ```
+    sudo apt install libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev
+    ```
+  - _on fedora you can run_
+    ```
+    sudo dnf install libglvnd-devel mesa-libGL-devel libXi-devel libX11-devel libXrandr-devel glfw-devel
+    ```
+</details>
+
+<details>
+<summary>Building and running your game</summary>
+
+- Clone the repository
+- Run `make` in the root directory
+- Run the resulting `game` file (located in the root directory)
+</details>
+
+### Windows
+<details>
+<summary>Prerequisites</summary>
+  
+- [Install GLFW](https://www.glfw.org/download.html)
+- Something else?
+</details>
+
+<details>
+<summary>Building and running your game</summary>
+
+- Clone the repository
+- Something else?
+</details>
 
 ## Demo Game instructions
 
@@ -16,45 +59,16 @@ Click and drag to move cards around
 _Note: every odd card will be rendered using mipmaps, whereas every even card will not, just so you can see the difference\
 The textures are currently very high resolution, I will look at making the native resolution lower they are clearer when rendered small_
 
-## Setup instructions
-_Note: this has only been tested on Linux_
-
-### Linux
-#### Prerequisites
-- [Install GLFW](https://www.glfw.org/download.html)
-- (For Linux) ensure the openGL, x11, xInput and xrandr development libraries are installed
-  
-  - _on ubuntu you can run_
-    ```
-    sudo apt install libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev
-    ```
-  - _on fedora you can run_
-    ```
-    sudo dnf install libglvnd-devel mesa-libGL-devel libXi-devel libX11-devel libXrandr-devel glfw-devel
-    ```
-
-#### Building and running the game
-
-- Clone the repository
-- Run `make` in the root directory
-- Run the resulting `game` file (located in the root directory)
-
-#### Building the examples
-
-- Run `make examples` in the root directory
-- The example programs will be created in the `examples` directory
-
 ## Learning OpenGL and C++
 
 ### OpenGL
 
 - [This website](https://www.learnopengl.com/) teaches OpenGl ver. 3 (but is still very good and widely recommended) \
-_Note: the boilerplate code for the examples (and the accompanying libraries, i.e. GLAD and glfw) and the maths library (GLM) are
-both taken from this website. Everything else is from the book below_
+_Note: the boilerplate code (and the accompanying libraries, i.e. GLAD and glfw) and the maths library (GLM) are
+both taken from this website_
 
 - [This book](https://linker2.worldcat.org/?jHome=https%3A%2F%2Fbris.idm.oclc.org%2Flogin%3Furl%3Dhttps%3A%2F%2Flearning.oreilly.com%2Flibrary%2Fview%2F~%2F9780133365023%2F%3Far%26orpq%26email%3D%5Eu&linktype=best&jHomeSig=18d1b86a967d5206742890e689759fabdaea0ebe6659ddee4ef995593108d486)
-teaches up to date OpenGL (ver. 4.5) - it is somewhat detailed and
-is also what the examples are based on. \
+teaches up to date OpenGL (ver. 4.5) - it is somewhat detailed \
 _Note: the link should take you to a sign-in page for UoB which will then direct
 you to the **6th edition** e-book. You can access the **7th edition** (most recent edition) by scrolling down and selecting it_
 
