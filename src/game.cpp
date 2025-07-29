@@ -5,7 +5,7 @@
 
 void Game::Init() {
 	// load shaders
-	ResourceManager::LoadShader("sprite", "src/shaders/sprite.vs", "src/shaders/sprite.frag");
+	ResourceManager::LoadShader("sprite", "src/shaders/sprite.vert", "src/shaders/sprite.frag");
 	// configure shaders
 	glm::mat4 projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);
 	Shader& spriteShader = ResourceManager::GetShader("sprite");
