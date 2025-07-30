@@ -12,7 +12,7 @@ std::map<std::string, Shader> ResourceManager::Shaders;
 std::map<std::string, Texture2D> ResourceManager::Textures;
 
 Shader &ResourceManager::GetShader(std::string name) {
-	return Shaders[name];
+	return Shaders.at(name);
 }
 
 Shader &ResourceManager::LoadShader(std::string name, const char *vShaderFile, const char *fShaderFile, const char *gShaderFile) {
@@ -59,7 +59,7 @@ Shader &ResourceManager::LoadShader(std::string name, const char *vShaderFile, c
 	Shader shader;
 	shader.Compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
 	Shaders[name] = shader;
-	return Shaders[name];
+	return Shaders.at(name);
 }
 
 Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile, bool mipmaps) {

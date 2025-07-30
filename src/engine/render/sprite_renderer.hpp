@@ -6,20 +6,29 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "../objects/game_object.hpp"
 #include "shader.hpp"
-#include "texture.hpp"
+
+struct Vertex {
+	// Position
+	float x;
+	float y;
+	//Texture coordinates
+	float s;
+	float t;
+};
 
 class SpriteRenderer {
 public:
-	SpriteRenderer();
+	SpriteRenderer(Shader shader);
 	~SpriteRenderer();
-	// Renders a defined quad textured with given texture and using given shader
-	void DrawSprite(glm::vec2 pos, glm::vec2 size, glm::vec3 color, float rotation, Texture2D texture, Shader shader);
+	// Renders a defined quad textured with given texture using the renderer's shader
+	void Draw(GameObject* object);
 
 private:
-	// Render state
-	unsigned int quadVAO;
-	// Initializes and configures quadVAO
+	Shader shader;
+	unsigned int VAO;
+	// Initializes and configures VAO
 	void initRenderData();
 };
 

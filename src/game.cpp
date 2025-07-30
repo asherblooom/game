@@ -4,17 +4,14 @@
 #include <iostream>
 
 void Game::Init() {
-	// load shaders
 	ResourceManager::LoadShader("sprite", "src/shaders/sprite.vert", "src/shaders/sprite.frag");
-	// configure shaders
+
 	glm::mat4 projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);
 	Shader& spriteShader = ResourceManager::GetShader("sprite");
 	spriteShader.Use();
-	spriteShader.SetInteger("image", 0);
 	spriteShader.SetMatrix4("projection", projection);
-	// set render-specific controls
-	renderer = new SpriteRenderer();
-	// load textures
+
+	renderer = new SpriteRenderer(spriteShader);
 	LoadCardTextures();
 }
 
@@ -108,14 +105,12 @@ void Game::Update(float dt) {
 
 void Game::Render() {
 	for (CardObject& card : Cards) {
-		card.Draw(*renderer);
+		renderer->Draw(&card);
 	}
 }
 
 CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 	Texture2D cardTex = GetCardTexture(value, suit);
-	Shader cardShader = ResourceManager::GetShader("sprite");
-
 	if (selectedCard) {
 		int selectedLoc = 0;
 		for (size_t i = 0; i < Cards.size(); i++) {
@@ -124,10 +119,10 @@ CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 				selectedCard = nullptr;
 			}
 		}
-		Cards.emplace_back(value, suit, cardTex, cardShader, pos);
+		Cards.emplace_back(value, suit, cardTex, pos);
 		selectedCard = &Cards.at(selectedLoc);
 	} else
-		Cards.emplace_back(value, suit, cardTex, cardShader, pos);
+		Cards.emplace_back(value, suit, cardTex, pos);
 	return Cards.back();
 }
 

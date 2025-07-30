@@ -3,8 +3,6 @@
 
 #include <glm/glm.hpp>
 
-#include "../render/shader.hpp"
-#include "../render/sprite_renderer.hpp"
 #include "../render/texture.hpp"
 
 // Container object for holding all state relevant for a single
@@ -16,15 +14,11 @@ public:
 	glm::vec2 Size;
 	glm::vec2 Position;
 	float Rotation;
+	Texture2D Texture;
 
-	GameObject(glm::vec2 pos, glm::vec2 size, Texture2D texture, Shader shader, glm::vec3 color = glm::vec3(1.0f));
+	GameObject(glm::vec2 pos, glm::vec2 size, Texture2D texture, glm::vec3 color = glm::vec3(1.0f));
 
-	void Draw(SpriteRenderer& renderer);
 	bool DetectMouseOver(glm::vec2 mousePos);
-
-protected:
-	Texture2D texture;
-	Shader shader;
 };
 
 #endif
