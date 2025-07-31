@@ -15,18 +15,17 @@ Shader &ResourceManager::GetShader(std::string name) {
 	return Shaders.at(name);
 }
 
-Shader &ResourceManager::LoadShader(std::string name, const char *vShaderFile, const char *fShaderFile, const char *gShaderFile) {
+Shader &ResourceManager::LoadShader(std::string name, std::string vShaderFile, std::string fShaderFile, std::string gShaderFile) {
 	// 1. retrieve the vertex/fragment source code from files
 	std::string vertexCode;
 	std::string fragmentCode;
 	std::string geometryCode;
 	try {
 		// open files
-		// first try to opoen with default path
-		char defaultPathV[] = "src/engine/shaders/";
-		char defaultPathF[] = "src/engine/shaders/";
-		std::ifstream vertexShaderFile{strcat(defaultPathV, vShaderFile)};
-		std::ifstream fragmentShaderFile{strcat(defaultPathF, fShaderFile)};
+		// first try to open with default path
+		std::string defaultPath = "src/engine/shaders/";
+		std::ifstream vertexShaderFile{defaultPath + vShaderFile};
+		std::ifstream fragmentShaderFile{defaultPath + fShaderFile};
 		// otherwise assume input is a full path itself and try to open
 		if (!vertexShaderFile || !fragmentShaderFile) {
 			std::ifstream vertexShaderFile{vShaderFile};
@@ -50,9 +49,8 @@ Shader &ResourceManager::LoadShader(std::string name, const char *vShaderFile, c
 		fragmentCode = fShaderStream.str();
 
 		// if geometry shader path is present, also load a geometry shader
-		if (gShaderFile != nullptr) {
-			char defaultPathG[] = "src/engine/shaders/";
-			std::ifstream geometryShaderFile{strcat(defaultPathG, gShaderFile)};
+		if (gShaderFile != "") {
+			std::ifstream geometryShaderFile{defaultPath + gShaderFile};
 			if (!geometryShaderFile) {
 				std::ifstream geometryShaderFile{gShaderFile};
 				if (!geometryShaderFile)
@@ -71,12 +69,12 @@ Shader &ResourceManager::LoadShader(std::string name, const char *vShaderFile, c
 	const char *gShaderCode = geometryCode.c_str();
 	// 2. now create shader object from source code
 	Shader shader;
-	shader.Compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
+	shader.Compile(vShaderCode, fShaderCode, gShaderFile != "" ? gShaderCode : nullptr);
 	Shaders[name] = shader;
 	return Shaders.at(name);
 }
 
-Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile, bool mipmaps) {
+Texture2D &ResourceManager::LoadDDSTexture(std::string name, std::string ddsFile, bool mipmaps) {
 	// allocate new unsigned char space with 4 (file code) + 124 (header size) bytes
 	unsigned char *header = new unsigned char[128];
 
@@ -89,13 +87,18 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile
 
 	unsigned char *buffer = 0;
 
-	std::FILE *f = std::fopen(ddsFile, "rb");
-
+	// open the DDS file for binary reading and get file size
+	// first try to open with default path
+	std::string defaultPath = "media/textures/";
+	std::FILE *f = std::fopen((defaultPath + ddsFile).c_str(), "rb");
 	try {
-		// open the DDS file for binary reading and get file size
 		if (f == nullptr) {
-			std::cerr << ddsFile << " ";
-			throw "ERROR::TEXTURE: incorrect file name";
+			// otherwise assume input is a full path itself and try to open
+			f = std::fopen(ddsFile.c_str(), "rb");
+			if (f == nullptr) {
+				std::cerr << ddsFile << " ";
+				throw "ERROR::TEXTURE: incorrect file name";
+			}
 		}
 		std::fseek(f, 0, SEEK_END);
 		long file_size = ftell(f);

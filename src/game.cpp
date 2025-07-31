@@ -102,7 +102,7 @@ void Game::Render() {
 		renderer->Draw(&card);
 	}
 	TextRenderer texty = TextRenderer(width, height);
-	texty.Load("media/fonts/OCRAEXT.TTF", 24);
+	texty.Load("OCRAEXT.TTF", 24);
 	texty.RenderText("hello", 100, 100, 1);
 }
 
@@ -124,15 +124,15 @@ CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 }
 
 void Game::LoadCardTextures() {
-	ResourceManager::LoadDDSTexture("JOKER-BLACKJOKER", "media/textures/JOKER-BLACKJOKER.dds");
-	ResourceManager::LoadDDSTexture("JOKER-REDJOKER", "media/textures/JOKER-REDJOKER.dds");
+	ResourceManager::LoadDDSTexture("JOKER-BLACKJOKER", "JOKER-BLACKJOKER.dds");
+	ResourceManager::LoadDDSTexture("JOKER-REDJOKER", "JOKER-REDJOKER.dds");
 	std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
 	std::string values[] = {"ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
 							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
 	for (std::string suit : suits) {
 		for (std::string value : values) {
 			std::string name = value + "-" + suit;
-			ResourceManager::LoadDDSTexture(name, ("media/textures/" + name + ".dds").c_str(), false);
+			ResourceManager::LoadDDSTexture(name, (name + ".dds"), false);
 		}
 	}
 }

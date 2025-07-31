@@ -20,36 +20,44 @@ TextRenderer::TextRenderer(unsigned int width, unsigned int height) {
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * 6, NULL, GL_DYNAMIC_DRAW);
 
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, x));
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, s));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, s));
 	glEnableVertexAttribArray(1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
 
-void TextRenderer::Load(std::string font, unsigned int fontSize) {
+void TextRenderer::Load(std::string fontFile, unsigned int fontSize) {
 	// first clear the previously loaded characters
 	characters.clear();
 	// then initialize and load the FreeType library
 	FT_Library ft;
-	if (FT_Init_FreeType(&ft))	// all functions return a value different than 0 whenever an error occurred
-		std::cout << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
+	if (FT_Init_FreeType(&ft)) {  // all functions return a value different than 0 whenever an error occurred
+		std::cerr << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
+		return;
+	}
 	// load font as face
 	FT_Face face;
-	if (FT_New_Face(ft, font.c_str(), 0, &face))
-		std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
+	// first try to open with default path
+	std::string defaultPath = "media/fonts/";
+	if (FT_New_Face(ft, (defaultPath + fontFile).c_str(), 0, &face)) {
+		// otherwise assume input is a full path itself and try to open
+		if (FT_New_Face(ft, fontFile.c_str(), 0, &face)) {
+			std::cerr << "ERROR::FREETYPE: Failed to load font" << std::endl;
+			return;
+		}
+	}
 	// set size to load glyphs as
 	FT_Set_Pixel_Sizes(face, 0, fontSize);
 	// disable byte-alignment restriction
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	// then for the first 128 ASCII characters, pre-load/compile their characters and store them
-	for (GLubyte c = 0; c < 128; c++)  // lol see what I did there
-	{
+	for (GLubyte c = 0; c < 128; c++) {
 		// load character glyph
 		if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
-			std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
+			std::cerr << "ERROR::FREETYPE: Failed to load Glyph" << std::endl;
 			continue;
 		}
 		// generate texture
