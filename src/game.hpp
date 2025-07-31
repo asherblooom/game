@@ -4,6 +4,7 @@
 #include "basegame.hpp"
 #include "engine/objects/card_object.hpp"
 #include "engine/render/sprite_renderer.hpp"
+#include "engine/render/text_renderer.hpp"
 
 #include <GLFW/glfw3.h>
 #include <vector>
@@ -21,11 +22,15 @@ public:
 	void Render() override;
 
 	// used to delete resources that must be deleted before glfwTeminate() is called
-	void Clear() override { delete renderer; }
+	void Clear() override {
+		delete spriteRenderer;
+		delete textRenderer;
+	}
 
 private:
-	// this is a pointer so that we can choose when to destruct it (that is, before glfwTerminate is called)
-	SpriteRenderer* renderer;
+	// these are pointers so that we can choose when to destruct them (that is, before glfwTerminate is called)
+	SpriteRenderer* spriteRenderer;
+	TextRenderer* textRenderer;
 	std::vector<CardObject> Cards;
 	// stores a pointer to the card in the cards vector when said card is hovered over
 	// set to nullptr if no card is hovered over

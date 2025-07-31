@@ -2,10 +2,11 @@
 
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include "engine/render/text_renderer.hpp"
 
 void Game::Init() {
-	renderer = new SpriteRenderer(width, height);
+	spriteRenderer = new SpriteRenderer(width, height);
+	textRenderer = new TextRenderer(width, height);
+	textRenderer->Load("OCRAEXT.TTF", 24);
 	LoadCardTextures();
 }
 
@@ -99,11 +100,9 @@ void Game::Update(float dt) {
 
 void Game::Render() {
 	for (CardObject& card : Cards) {
-		renderer->Draw(&card);
+		spriteRenderer->Draw(&card);
 	}
-	TextRenderer texty = TextRenderer(width, height);
-	texty.Load("OCRAEXT.TTF", 24);
-	texty.RenderText("hello", 100, 100, 1);
+	textRenderer->RenderText("hello", 100, 100, 1);
 }
 
 CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
