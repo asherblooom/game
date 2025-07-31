@@ -16,18 +16,27 @@ Shader &ResourceManager::GetShader(std::string name) {
 }
 
 Shader &ResourceManager::LoadShader(std::string name, const char *vShaderFile, const char *fShaderFile, const char *gShaderFile) {
-	// 1. retrieve the vertex/fragment source code from filePath
+	// 1. retrieve the vertex/fragment source code from files
 	std::string vertexCode;
 	std::string fragmentCode;
 	std::string geometryCode;
 	try {
 		// open files
-		std::ifstream vertexShaderFile{vShaderFile};
-		std::ifstream fragmentShaderFile{fShaderFile};
-		if (!vertexShaderFile)
-			std::cout << "ERROR::SHADER: Vertex shader file not found" << std::endl;
-		if (!fragmentShaderFile)
-			std::cout << "ERROR::SHADER: Fragment shader file not found" << std::endl;
+		// first try to opoen with default path
+		char defaultPathV[] = "src/engine/shaders/";
+		char defaultPathF[] = "src/engine/shaders/";
+		std::ifstream vertexShaderFile{strcat(defaultPathV, vShaderFile)};
+		std::ifstream fragmentShaderFile{strcat(defaultPathF, fShaderFile)};
+		// otherwise assume input is a full path itself and try to open
+		if (!vertexShaderFile || !fragmentShaderFile) {
+			std::ifstream vertexShaderFile{vShaderFile};
+			std::ifstream fragmentShaderFile{fShaderFile};
+			// otherwise error
+			if (!vertexShaderFile)
+				std::cout << "ERROR::SHADER: Vertex shader file not found: " << vShaderFile << std::endl;
+			if (!fragmentShaderFile)
+				std::cout << "ERROR::SHADER: Fragment shader file not found: " << fShaderFile << std::endl;
+		}
 
 		std::stringstream vShaderStream, fShaderStream;
 		// read file's buffer contents into streams
@@ -39,11 +48,16 @@ Shader &ResourceManager::LoadShader(std::string name, const char *vShaderFile, c
 		// convert stream into string
 		vertexCode = vShaderStream.str();
 		fragmentCode = fShaderStream.str();
+
 		// if geometry shader path is present, also load a geometry shader
 		if (gShaderFile != nullptr) {
-			std::ifstream geometryShaderFile(gShaderFile);
-			if (!geometryShaderFile)
-				std::cout << "ERROR::SHADER: Geometry shader file not found" << std::endl;
+			char defaultPathG[] = "src/engine/shaders/";
+			std::ifstream geometryShaderFile{strcat(defaultPathG, gShaderFile)};
+			if (!geometryShaderFile) {
+				std::ifstream geometryShaderFile{gShaderFile};
+				if (!geometryShaderFile)
+					std::cout << "ERROR::SHADER: Geometry shader file not found: " << gShaderFile << std::endl;
+			}
 			std::stringstream gShaderStream;
 			gShaderStream << geometryShaderFile.rdbuf();
 			geometryShaderFile.close();

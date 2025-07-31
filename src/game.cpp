@@ -2,16 +2,10 @@
 
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "engine/render/text_renderer.hpp"
 
 void Game::Init() {
-	ResourceManager::LoadShader("sprite", "src/shaders/sprite.vert", "src/shaders/sprite.frag");
-
-	glm::mat4 projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);
-	Shader& spriteShader = ResourceManager::GetShader("sprite");
-	spriteShader.Use();
-	spriteShader.SetMatrix4("projection", projection);
-
-	renderer = new SpriteRenderer(spriteShader);
+	renderer = new SpriteRenderer(width, height);
 	LoadCardTextures();
 }
 
@@ -107,6 +101,9 @@ void Game::Render() {
 	for (CardObject& card : Cards) {
 		renderer->Draw(&card);
 	}
+	TextRenderer texty = TextRenderer(width, height);
+	texty.Load("media/fonts/OCRAEXT.TTF", 24);
+	texty.RenderText("hello", 100, 100, 1);
 }
 
 CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
