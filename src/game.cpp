@@ -2,12 +2,9 @@
 
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "engine/resource_manager.hpp"
 
 void Game::Init() {
-	spriteRenderer = new SpriteRenderer(width, height);
-	textRenderer = new TextRenderer(width, height);
-	textRenderer->Load("OCRAEXT.TTF", 24);
-	LoadCardTextures();
 }
 
 void Game::ProcessInput(float dt) {
@@ -102,7 +99,7 @@ void Game::Render() {
 	for (CardObject& card : Cards) {
 		spriteRenderer->Draw(&card);
 	}
-	textRenderer->RenderText("hello", 100, 100, 1);
+	textRenderer->RenderText("hello", 100, 100, 1, ResourceManager::GetFont("default"));
 }
 
 CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
@@ -120,31 +117,4 @@ CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 	} else
 		Cards.emplace_back(value, suit, cardTex, pos);
 	return Cards.back();
-}
-
-void Game::LoadCardTextures() {
-	ResourceManager::LoadDDSTexture("JOKER-BLACKJOKER", "JOKER-BLACKJOKER.dds");
-	ResourceManager::LoadDDSTexture("JOKER-REDJOKER", "JOKER-REDJOKER.dds");
-	std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
-	std::string values[] = {"ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
-							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
-	for (std::string suit : suits) {
-		for (std::string value : values) {
-			std::string name = value + "-" + suit;
-			ResourceManager::LoadDDSTexture(name, (name + ".dds"), false);
-		}
-	}
-}
-
-Texture2D Game::GetCardTexture(CardValue value, CardSuit suit) {
-	if (value == JOKER) {
-		if (suit == BLACKJOKER)
-			return ResourceManager::GetTexture("JOKER-BLACKJOKER");
-		else if (suit == REDJOKER)
-			return ResourceManager::GetTexture("JOKER-REDJOKER");
-	}
-	std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
-	std::string values[] = {"JOKER", "ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
-							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
-	return ResourceManager::GetTexture(values[value] + "-" + suits[suit]);
 }

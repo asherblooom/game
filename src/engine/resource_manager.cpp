@@ -1,15 +1,18 @@
 #include "resource_manager.hpp"
 
+#include <freetype2/ft2build.h>
 #include <cstdio>
 #include <cstring>
 #include <exception>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include FT_FREETYPE_H
 
 // Instantiate (global) static variables
 std::map<std::string, Shader> ResourceManager::Shaders;
 std::map<std::string, Texture2D> ResourceManager::Textures;
+std::map<std::string, Font> ResourceManager::Fonts;
 
 Shader &ResourceManager::GetShader(std::string name) {
 	return Shaders.at(name);
@@ -177,14 +180,86 @@ Texture2D &ResourceManager::GetTexture(std::string name) {
 	return Textures.at(name);
 }
 
+Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned int defaultFontSize) {
+	// initialize and load the FreeType library
+	FT_Library ft;
+	if (FT_Init_FreeType(&ft)) {  // all functions return a value different than 0 whenever an error occurred
+		std::cerr << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
+	}
+	// load font as face
+	FT_Face face;
+	// first try to open with default path
+	std::string defaultPath = "media/fonts/";
+	if (FT_New_Face(ft, (defaultPath + fontFile).c_str(), 0, &face)) {
+		// otherwise assume input is a full path itself and try to open
+		if (FT_New_Face(ft, fontFile.c_str(), 0, &face)) {
+			std::cerr << "ERROR::FREETYPE: Failed to load font" << std::endl;
+		}
+	}
+	// set size to load glyphs as
+	FT_Set_Pixel_Sizes(face, 0, defaultFontSize);
+	// disable byte-alignment restriction
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	// then for the first 128 ASCII characters, pre-load/compile their characters and store them
+	Font font;
+	for (GLubyte c = 0; c < 128; c++) {
+		// load character glyph
+		if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+			std::cerr << "ERROR::FREETYPE: Failed to load Glyph" << std::endl;
+			continue;
+		}
+		// generate texture
+		unsigned int texture;
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			GL_RED,
+			face->glyph->bitmap.width,
+			face->glyph->bitmap.rows,
+			0,
+			GL_RED,
+			GL_UNSIGNED_BYTE,
+			face->glyph->bitmap.buffer);
+		// set texture options
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		// now store character for later use
+		CharacterData characterData = {
+			texture,
+			glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+			glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+			(unsigned int)face->glyph->advance.x};
+		font[c] = characterData;
+	}
+	Fonts[name] = font;
+	glBindTexture(GL_TEXTURE_2D, 0);
+	// destroy FreeType once we're finished
+	FT_Done_Face(face);
+	FT_Done_FreeType(ft);
+	return Fonts.at(name);
+}
+
+Font &ResourceManager::GetFont(std::string name) {
+	return Fonts.at(name);
+}
+
 void ResourceManager::Clear() {
 	// (properly) delete all shaders
 	for (auto &shader : Shaders) {
 		glDeleteProgram(shader.second.ID());
 	}
-
 	// (properly) delete all textures
 	for (auto &texture : Textures) {
 		glDeleteTextures(1, &texture.second.ID());
+	}
+	// (properly) delete all font textures
+	for (auto &font : Fonts) {
+		for (auto &c : font.second)
+			glDeleteTextures(1, &c.second.TextureID);
 	}
 }

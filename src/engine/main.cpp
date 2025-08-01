@@ -7,6 +7,7 @@
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
+Game *cardGame;
 
 // used to calculate change in mouse position
 glm::vec2 oldMousePosWorld = {0, 0};  // world space position
@@ -17,11 +18,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
 				  int mode);
 void mouse_button_callback(GLFWwindow *window, int button, int action,
 						   int mods);
-
 void updateMousePosition(GLFWwindow *window, double xpos, double ypos);
-
-// here width and height are the max values for the x and y coords respectively
-Game cardGame(SCR_WIDTH, SCR_HEIGHT);
 
 int main() {
 	// Initialise glfw and set options
@@ -54,11 +51,12 @@ int main() {
 	glfwGetWindowSize(window, &width, &height);
 	framebuffer_size_callback(window, width, height);
 
+	// here width and height are the max values for the x and y coords respectively
+	cardGame = new Game(SCR_WIDTH, SCR_HEIGHT);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
-
-	cardGame.Init();
+	cardGame->Init();
 
 	float deltaTime, lastFrame = 0.0f;
 	double xpos, ypos;
@@ -78,23 +76,24 @@ int main() {
 		if (xpos - xposOld != 0 && ypos - yposOld != 0) {
 			updateMousePosition(window, xpos, ypos);
 		} else {
-			cardGame.ChangeInMousePos = glm::vec2(0);
+			cardGame->ChangeInMousePos = glm::vec2(0);
 		}
-		cardGame.ProcessInput(deltaTime);
+		cardGame->ProcessInput(deltaTime);
 
 		// update game state
 		// -----------------
-		cardGame.Update(deltaTime);
+		cardGame->Update(deltaTime);
 
 		// render
 		// ------
 		glClearColor(0, 0, 0, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		cardGame.Render();
+		cardGame->Render();
 
 		glfwSwapBuffers(window);
 	}
-	cardGame.Clear();
+	ResourceManager::Clear();
+	delete cardGame;
 	glfwTerminate();
 	return 0;
 }
@@ -141,9 +140,9 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 		glfwSetWindowShouldClose(window, true);
 	if (key >= 0 && key < 1024) {
 		if (action == GLFW_PRESS)
-			cardGame.Keys[key] = true;
+			cardGame->Keys[key] = true;
 		else if (action == GLFW_RELEASE)
-			cardGame.Keys[key] = false;
+			cardGame->Keys[key] = false;
 	}
 }
 
@@ -163,8 +162,8 @@ void updateMousePosition(GLFWwindow *window, double xpos, double ypos) {
 	double yRatio = SCR_HEIGHT / gameHeight;
 	glm::vec2 mousePos = {xpos * xRatio, ypos * yRatio};
 
-	cardGame.MousePos = mousePos;
-	cardGame.ChangeInMousePos = mousePos - oldMousePosWorld;
+	cardGame->MousePos = mousePos;
+	cardGame->ChangeInMousePos = mousePos - oldMousePosWorld;
 	oldMousePosWorld = mousePos;
 }
 
@@ -172,8 +171,8 @@ void updateMousePosition(GLFWwindow *window, double xpos, double ypos) {
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
 	if (button >= 0 && button <= 2) {
 		if (action == GLFW_PRESS)
-			cardGame.MouseButtons[button] = true;
+			cardGame->MouseButtons[button] = true;
 		else if (action == GLFW_RELEASE)
-			cardGame.MouseButtons[button] = false;
+			cardGame->MouseButtons[button] = false;
 	}
 }
