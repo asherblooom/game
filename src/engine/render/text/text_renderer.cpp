@@ -4,10 +4,10 @@
 #include <vector>
 #include FT_FREETYPE_H
 
-#include "../resource_manager.hpp"
+#include "../../resource_manager.hpp"
+#include "../vertex.hpp"
 #include "font.hpp"
 #include "text_renderer.hpp"
-#include "vertex.hpp"
 
 TextRenderer::TextRenderer(unsigned int width, unsigned int height) {
 	// load and configure shader

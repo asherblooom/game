@@ -3,11 +3,23 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include "engine/objects/game_object.hpp"
+#include "engine/render/text/box_packer.hpp"
 #include "engine/resource_manager.hpp"
 
 void Game::Init() {
 	ResourceManager::LoadDDSTexture("background", "background.dds");
 	background = new GameObject({0, 0}, {width, width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
+	BoxPacker pack(100, 100);
+	glm::vec2 loc;
+	std::cout << "hi ";
+	loc = pack.addBox({80, 10});
+	std::cout << "(" << loc.x << ", " << loc.y << ")\n";
+	loc = pack.addBox({10, 5});
+	std::cout << "(" << loc.x << ", " << loc.y << ")\n";
+	loc = pack.addBox({10, 5});
+	std::cout << "(" << loc.x << ", " << loc.y << ")\n";
+	loc = pack.addBox({10, 5});
+	std::cout << "(" << loc.x << ", " << loc.y << ")\n";
 }
 
 void Game::ProcessInput(float dt) {

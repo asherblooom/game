@@ -1,9 +1,10 @@
 #ifndef BOX_PACKER_HPP
 #define BOX_PACKER_HPP
 
+#include <climits>
 #include <glm/glm.hpp>
+#include <iostream>
 #include <list>
-#include <vector>
 
 using Position = glm::vec2;
 using Node = glm::vec2;
@@ -17,43 +18,42 @@ public:
 
 	// TODO: handle box not fitting!!
 
-	// returns top left position??
+	// returns bottom left position??
 	// is that what we want????
 	Position addBox(glm::vec2 size) {
+		std::cout << "starting ";
 		std::list<Node>::iterator bottomLeft = packBox(size);
+		std::cout << "box packed ";
+		Node botLef = *bottomLeft;
 		Node topLeft = {bottomLeft->x, bottomLeft->y + size.y};
 		Node bottomRight = {bottomLeft->x + size.x, bottomLeft->y};
+		Node topRight = {bottomLeft->x + size.x, bottomLeft->y + size.y};
 
-		// replace bottomLeft with topLeft coords
-		*bottomLeft = topLeft;
 		//check if previous node is duplicate
+		//if not, insert topLeft
 		std::list<Node>::iterator prev = bottomLeft;
-		if (*(--prev) == topLeft)
-			skyline.erase(prev);
-
+		if (*(--prev) != topLeft)
+			skyline.insert(bottomLeft, topLeft);
+		// insert topRight
+		auto next = bottomLeft;
+		next++;
+		skyline.insert(bottomLeft, topRight);
 		// insert new bottomRight node
-		std::list<Node>::iterator insertPos = overlappingNodesEnd;
-		insertPos++;
 		if (overlappingNodesEnd->y < bottomRight.y) {
 			Node newNode = {bottomRight.x, overlappingNodesEnd->y};
-			skyline.insert(insertPos, newNode);
-		} else if (overlappingNodesEnd->x == bottomRight.x) {
-		}
+			skyline.insert(bottomLeft, newNode);
+		} else if (overlappingNodesEnd->x == topRight.x && overlappingNodesEnd->y != topRight.y) {
+			Node newNode = {topRight.x, overlappingNodesEnd->y};
+			skyline.insert(bottomLeft, newNode);
+		} else
+			skyline.insert(bottomLeft, bottomRight);
 		// delete all nodes that have x coords overlapping with our new box
-		std::list<Node>::iterator node = bottomLeft;
-		skyline.erase(++node, ++overlappingNodesEnd);
-		// while (node->x <= topLeft.x + size.x && node != skyline.end()) {
-		// 	yUnderneath = node->y;
-		// 	std::list<Node>::iterator deleteNode = node;
-		// 	node++;
-		// 	skyline.erase(deleteNode);
-		// }
-		// TODO: update skyline edge cases:
-		// https://jvernay.fr/en/blog/skyline-2d-packer/implementation/
+		skyline.erase(bottomLeft, ++overlappingNodesEnd);
+
 		// TODO: generate texture:
 		// https://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Tutorial_Text_Rendering_02
 
-		return topLeft;
+		return botLef;
 	}
 
 private:
@@ -65,8 +65,12 @@ private:
 	// find node with lowest y coord that has space for box
 	std::list<Node>::iterator packBox(glm::vec2 size) {
 		std::list<Node>::iterator bestNode;
-		int minY;
+		int minY = INT_MAX;
 		std::list<Node>::iterator node = skyline.begin();
+		std::cout << "NODES: ";
+		for (Node n : skyline) {
+			std::cout << "(" << n.x << ", " << n.y << ") ";
+		}
 		while (node->x + size.x <= width && node != skyline.end()) {
 			if (node->y < minY && node->y + size.y <= height) {
 				int y = findMinY(size, node);
@@ -74,8 +78,8 @@ private:
 					minY = y;
 					bestNode = node;
 				}
-				node++;
 			}
+			node++;
 		}
 		return bestNode;
 	}
@@ -86,7 +90,7 @@ private:
 		std::list<Node>::iterator node = startingNode;
 		overlappingNodesEnd = node;
 		node++;
-		while (node->x <= boxWidth) {
+		while (node->x <= boxWidth && node != skyline.end()) {
 			if (node->x < boxWidth) {
 				if (node->y > minY) {
 					// raise minY higher to avoid collision

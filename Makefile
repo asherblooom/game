@@ -27,6 +27,8 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/*/%.cpp
 	$(CXX) -o $@ $< $(CXXFLAGS) -c
 $(OBJ_DIR)/%.o: $(SRC_DIR)/*/*/%.cpp
 	$(CXX) -o $@ $< $(CXXFLAGS) -c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/*/*/*/%.cpp
+	$(CXX) -o $@ $< $(CXXFLAGS) -c
 
 # find sources in base directory
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
