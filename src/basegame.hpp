@@ -23,7 +23,6 @@ public:
 		textRenderer = new TextRenderer(width, height);
 		// load default assets
 		LoadCardTextures();
-		ResourceManager::LoadDDSTexture("background", "background.dds");
 		ResourceManager::LoadFont("default", "OpenSans-Regular.ttf", 32);
 	}
 	virtual ~BaseGame() {

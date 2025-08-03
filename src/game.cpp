@@ -6,6 +6,7 @@
 #include "engine/resource_manager.hpp"
 
 void Game::Init() {
+	ResourceManager::LoadDDSTexture("background", "background.dds");
 	background = new GameObject({0, 0}, {width, width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
 }
 
