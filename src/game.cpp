@@ -12,13 +12,11 @@ void Game::Init() {
 	BoxPacker pack(100, 100);
 	glm::vec2 loc;
 	std::cout << "hi ";
-	loc = pack.addBox({80, 10});
+	loc = pack.addBox({10, 10});
 	std::cout << "(" << loc.x << ", " << loc.y << ")\n";
-	loc = pack.addBox({10, 5});
+	loc = pack.addBox({10, 10});
 	std::cout << "(" << loc.x << ", " << loc.y << ")\n";
-	loc = pack.addBox({10, 5});
-	std::cout << "(" << loc.x << ", " << loc.y << ")\n";
-	loc = pack.addBox({10, 5});
+	loc = pack.addBox({10, 10});
 	std::cout << "(" << loc.x << ", " << loc.y << ")\n";
 }
 

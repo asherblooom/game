@@ -17,6 +17,7 @@ public:
 	}
 
 	// TODO: handle box not fitting!!
+	// TODO: DO EXTRA OPTIMISATION!! study rules on website carefully!
 
 	// returns bottom left position??
 	// is that what we want????
@@ -27,23 +28,14 @@ public:
 		Node botLef = *bottomLeft;
 		Node topLeft = {bottomLeft->x, bottomLeft->y + size.y};
 		Node bottomRight = {bottomLeft->x + size.x, bottomLeft->y};
-		Node topRight = {bottomLeft->x + size.x, bottomLeft->y + size.y};
 
-		//check if previous node is duplicate
-		//if not, insert topLeft
-		std::list<Node>::iterator prev = bottomLeft;
-		if (*(--prev) != topLeft)
-			skyline.insert(bottomLeft, topLeft);
-		// insert topRight
-		auto next = bottomLeft;
-		next++;
-		skyline.insert(bottomLeft, topRight);
+		skyline.insert(bottomLeft, topLeft);
 		// insert new bottomRight node
 		if (overlappingNodesEnd->y < bottomRight.y) {
 			Node newNode = {bottomRight.x, overlappingNodesEnd->y};
 			skyline.insert(bottomLeft, newNode);
-		} else if (overlappingNodesEnd->x == topRight.x && overlappingNodesEnd->y != topRight.y) {
-			Node newNode = {topRight.x, overlappingNodesEnd->y};
+		} else if (overlappingNodesEnd->x == bottomRight.x && overlappingNodesEnd->y > bottomRight.y) {
+			Node newNode = {bottomRight.x, overlappingNodesEnd->y};
 			skyline.insert(bottomLeft, newNode);
 		} else
 			skyline.insert(bottomLeft, bottomRight);
