@@ -7,8 +7,8 @@
 
 #include <glad/glad.h>
 
-#include "render/font.hpp"
 #include "render/shader.hpp"
+#include "render/text/font.hpp"
 #include "render/texture.hpp"
 
 // A static singleton ResourceManager class that hosts several functions to load Textures and Shaders.

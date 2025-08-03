@@ -5,8 +5,8 @@
 #include <glm/glm.hpp>
 #include <string>
 
+#include "../shader.hpp"
 #include "font.hpp"
-#include "shader.hpp"
 
 // A renderer class for rendering text displayed by a font loaded using the
 // FreeType library. A single font is loaded, processed into a list of Character

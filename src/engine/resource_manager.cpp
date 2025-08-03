@@ -206,7 +206,7 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	// then for the first 128 ASCII characters, pre-load/compile their characters and store them
 	Font font;
-	for (GLubyte c = 0; c < 128; c++) {
+	for (GLubyte c = 32; c < 128; c++) {
 		// load character glyph
 		if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
 			std::cerr << "ERROR::FREETYPE: Failed to load Glyph" << std::endl;
