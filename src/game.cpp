@@ -2,9 +2,11 @@
 
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "engine/objects/game_object.hpp"
 #include "engine/resource_manager.hpp"
 
 void Game::Init() {
+	background = new GameObject({0, 0}, {width, width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
 }
 
 void Game::ProcessInput(float dt) {
@@ -96,10 +98,11 @@ void Game::Update(float dt) {
 }
 
 void Game::Render() {
+	spriteRenderer->Draw(background);
+	textRenderer->RenderText("hello", 100, 100, 1, ResourceManager::GetFont("default"));
 	for (CardObject& card : Cards) {
 		spriteRenderer->Draw(&card);
 	}
-	textRenderer->RenderText("hello", 100, 100, 1, ResourceManager::GetFont("default"));
 }
 
 CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {

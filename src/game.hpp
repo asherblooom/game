@@ -10,6 +10,7 @@
 class Game : public BaseGame {
 public:
 	Game(unsigned int width, unsigned int height) : BaseGame(width, height) {}
+	~Game() { delete background; }
 	// initialize game state
 	void Init() override;
 	// game loop
@@ -23,6 +24,8 @@ private:
 	// set to nullptr if no card is hovered over
 	CardObject* selectedCard = nullptr;
 	CardObject& makeCard(CardValue value, CardSuit suit, glm::vec2 pos);
+
+	GameObject* background;
 
 	// used for iterating through all the cards
 	int cardCount = 0;

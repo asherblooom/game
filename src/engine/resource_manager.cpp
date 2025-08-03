@@ -15,6 +15,8 @@ std::map<std::string, Texture2D> ResourceManager::Textures;
 std::map<std::string, Font> ResourceManager::Fonts;
 
 Shader &ResourceManager::GetShader(std::string name) {
+	if (!Shaders.contains(name))
+		std::cerr << "ERROR: Can't find shader: " << name << "\n";
 	return Shaders.at(name);
 }
 
@@ -177,6 +179,8 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, std::string ddsFile
 }
 
 Texture2D &ResourceManager::GetTexture(std::string name) {
+	if (!Textures.contains(name))
+		std::cerr << "ERROR: Can't find texture: " << name << "\n";
 	return Textures.at(name);
 }
 
@@ -245,6 +249,8 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 }
 
 Font &ResourceManager::GetFont(std::string name) {
+	if (!Fonts.contains(name))
+		std::cerr << "ERROR: Can't find font: " << name << "\n";
 	return Fonts.at(name);
 }
 
