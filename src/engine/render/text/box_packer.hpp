@@ -17,35 +17,36 @@ public:
 	}
 
 	// TODO: handle box not fitting!!
-	// TODO: DO EXTRA OPTIMISATION!! study rules on website carefully!
 
 	// returns bottom left position??
 	// is that what we want????
 	Position addBox(glm::vec2 size) {
-		std::cout << "starting ";
-		std::list<Node>::iterator bottomLeft = packBox(size);
+		std::list<Node>::iterator pos = packBox(size);
 		std::cout << "box packed ";
-		Node botLef = *bottomLeft;
-		Node topLeft = {bottomLeft->x, bottomLeft->y + size.y};
-		Node bottomRight = {bottomLeft->x + size.x, bottomLeft->y};
+		Node bottomLeft = *pos;
+		Node topLeft = {pos->x, pos->y + size.y};
+		Node bottomRight = {pos->x + size.x, pos->y};
 
-		skyline.insert(bottomLeft, topLeft);
+		skyline.insert(pos, topLeft);
 		// insert new bottomRight node
-		if (overlappingNodesEnd->y < bottomRight.y) {
-			Node newNode = {bottomRight.x, overlappingNodesEnd->y};
-			skyline.insert(bottomLeft, newNode);
-		} else if (overlappingNodesEnd->x == bottomRight.x && overlappingNodesEnd->y > bottomRight.y) {
-			Node newNode = {bottomRight.x, overlappingNodesEnd->y};
-			skyline.insert(bottomLeft, newNode);
+		if (bottomRight.x == width) {
+			// don't add a bottomRight node
+		} else if (overlappingNodesEnd->x == bottomRight.x) {
+			// leave that node (with same x as bottom right) untouched, and don't add a bottomRight
+			overlappingNodesEnd--;
+		} else if (overlappingNodesEnd->y < bottomRight.y) {
+			// make our bottomRight go all the way down
+			Node newBR = {bottomRight.x, overlappingNodesEnd->y};
+			skyline.insert(pos, newBR);
 		} else
-			skyline.insert(bottomLeft, bottomRight);
+			skyline.insert(pos, bottomRight);
 		// delete all nodes that have x coords overlapping with our new box
-		skyline.erase(bottomLeft, ++overlappingNodesEnd);
+		skyline.erase(pos, ++overlappingNodesEnd);
 
 		// TODO: generate texture:
 		// https://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Tutorial_Text_Rendering_02
 
-		return botLef;
+		return bottomLeft;
 	}
 
 private:

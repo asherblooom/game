@@ -11,13 +11,25 @@ void Game::Init() {
 	background = new GameObject({0, 0}, {width, width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
 	BoxPacker pack(100, 100);
 	glm::vec2 loc;
-	std::cout << "hi ";
+	loc = pack.addBox({80, 10});
+	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
+	std::cout << "box: (" << 80 << ", " << 10 << ")\n";
+
+	loc = pack.addBox({10, 5});
+	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
+	std::cout << "box: (" << 10 << ", " << 5 << ")\n";
+
 	loc = pack.addBox({10, 10});
-	std::cout << "(" << loc.x << ", " << loc.y << ")\n";
-	loc = pack.addBox({10, 10});
-	std::cout << "(" << loc.x << ", " << loc.y << ")\n";
-	loc = pack.addBox({10, 10});
-	std::cout << "(" << loc.x << ", " << loc.y << ")\n";
+	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
+	std::cout << "box: (" << 10 << ", " << 10 << ")\n";
+
+	loc = pack.addBox({80, 10});
+	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
+	std::cout << "box: (" << 80 << ", " << 10 << ")\n";
+
+	loc = pack.addBox({80, 10});
+	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
+	std::cout << "box: (" << 80 << ", " << 10 << ")\n";
 }
 
 void Game::ProcessInput(float dt) {
