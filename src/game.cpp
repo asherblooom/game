@@ -11,23 +11,23 @@ void Game::Init() {
 	background = new GameObject({0, 0}, {width, width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
 	BoxPacker pack(100, 100);
 	glm::vec2 loc;
-	loc = pack.addBox({80, 10});
+	loc = pack.AddBox({80, 10});
 	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
 	std::cout << "box: (" << 80 << ", " << 10 << ")\n";
 
-	loc = pack.addBox({10, 5});
+	loc = pack.AddBox({10, 5});
 	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
 	std::cout << "box: (" << 10 << ", " << 5 << ")\n";
 
-	loc = pack.addBox({10, 10});
+	loc = pack.AddBox({10, 10});
 	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
 	std::cout << "box: (" << 10 << ", " << 10 << ")\n";
 
-	loc = pack.addBox({80, 10});
+	loc = pack.AddBox({80, 10});
 	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
 	std::cout << "box: (" << 80 << ", " << 10 << ")\n";
 
-	loc = pack.addBox({80, 10});
+	loc = pack.AddBox({80, 10});
 	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
 	std::cout << "box: (" << 80 << ", " << 10 << ")\n";
 }
