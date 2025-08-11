@@ -1,4 +1,5 @@
 #include "box_packer.hpp"
+#include <iostream>
 
 BoxPacker::BoxPacker(unsigned int width, unsigned int height)
 	: width{width}, height{height} {

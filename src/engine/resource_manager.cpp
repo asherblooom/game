@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "render/text/box_packer.hpp"
 #include FT_FREETYPE_H
 
 // Instantiate (global) static variables
@@ -200,45 +201,80 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 			std::cerr << "ERROR::FREETYPE: Failed to load font" << std::endl;
 		}
 	}
-	// set size to load glyphs as
 	FT_Set_Pixel_Sizes(face, 0, defaultFontSize);
+
+	// initialise texture atlas
+	Font font;
+	// should be big enough for most fonts...
+	unsigned int width = 256;
+	unsigned int height = 256;
+	glGenTextures(1, &font.TextureAtlas);
+	glBindTexture(GL_TEXTURE_2D, font.TextureAtlas);
 	// disable byte-alignment restriction
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	// then for the first 128 ASCII characters, pre-load/compile their characters and store them
-	Font font;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height,
+				 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
+	BoxPacker packer{width, height};
+
+	// for the first 128 ASCII characters, pre-load/compile their characters and store them
 	for (GLubyte c = 32; c < 128; c++) {
 		// load character glyph
 		if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
 			std::cerr << "ERROR::FREETYPE: Failed to load Glyph" << std::endl;
 			continue;
 		}
-		// generate texture
-		unsigned int texture;
-		glGenTextures(1, &texture);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glTexImage2D(
-			GL_TEXTURE_2D,
-			0,
-			GL_RED,
-			face->glyph->bitmap.width,
-			face->glyph->bitmap.rows,
-			0,
-			GL_RED,
-			GL_UNSIGNED_BYTE,
-			face->glyph->bitmap.buffer);
-		// set texture options
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		// // generate texture
+		// unsigned int texture;
+		// glGenTextures(1, &texture);
+		// glBindTexture(GL_TEXTURE_2D, texture);
+		// glTexImage2D(
+		// 	GL_TEXTURE_2D,
+		// 	0,
+		// 	GL_RED,
+		// 	face->glyph->bitmap.width,
+		// 	face->glyph->bitmap.rows,
+		// 	0,
+		// 	GL_RED,
+		// 	GL_UNSIGNED_BYTE,
+		// 	face->glyph->bitmap.buffer);
+		// // set texture options
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		// now store character for later use
+		glm::vec2 position = packer.AddBox({face->glyph->bitmap.width, face->glyph->bitmap.rows});
 		CharacterData characterData = {
-			texture,
+			position,
 			glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
 			glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
 			(unsigned int)face->glyph->advance.x};
-		font[c] = characterData;
+		font.Characters[c] = characterData;
+
+		// if character doesn't fit into current texture atlas
+		if (packer.Width() > width) {
+			// need a bigger texture
+			GLuint biggerTex;
+			glGenTextures(1, &biggerTex);
+			glBindTexture(GL_TEXTURE_2D, biggerTex);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, packer.Width(),
+						 packer.Height(), 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
+
+			// copy data from old texture onto bigger texture
+			glCopyImageSubData(font.TextureAtlas, GL_TEXTURE_2D, 0, 0, 0, 0,
+							   biggerTex, GL_TEXTURE_2D, 0, 0, 0, 0,
+							   width + characterData.Size.x, height + characterData.Size.y, 1);
+
+			// delete old texture
+			glDeleteTextures(1, &font.TextureAtlas);
+			font.TextureAtlas = biggerTex;
+			width = packer.Width();
+			height = packer.Height();
+		}
+
+		glTexSubImage2D(GL_TEXTURE_2D,
+						0, position.x, position.y, characterData.Size.x, characterData.Size.y,
+						GL_ALPHA, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
 	}
 	Fonts[name] = font;
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -265,7 +301,7 @@ void ResourceManager::Clear() {
 	}
 	// (properly) delete all font textures
 	for (auto &font : Fonts) {
-		for (auto &c : font.second)
-			glDeleteTextures(1, &c.second.TextureID);
+		// for (auto &c : font.second)
+		// glDeleteTextures(1, &c.second.TextureID);
 	}
 }

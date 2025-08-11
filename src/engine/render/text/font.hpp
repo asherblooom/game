@@ -1,16 +1,21 @@
 #ifndef FONT_HPP
 #define FONT_HPP
+
+#include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <map>
 
 /// Holds all state information relevant to a character as loaded using FreeType
 struct CharacterData {
-	unsigned int TextureID;	 // ID handle of the glyph texture
-	glm::ivec2 Size;		 // size of glyph
-	glm::ivec2 Bearing;		 // offset from baseline to left/top of glyph
-	unsigned int Advance;	 // horizontal offset to advance to next glyph
+	glm::ivec2 Position;   // position of glyph texture in texture atlas
+	glm::ivec2 Size;	   // size of glyph
+	glm::ivec2 Bearing;	   // offset from baseline to left/top of glyph
+	unsigned int Advance;  // horizontal offset to advance to next glyph
 };
 
-using Font = std::map<char, CharacterData>;
+struct Font {
+	std::map<char, CharacterData> Characters;
+	GLuint TextureAtlas;
+};
 
 #endif

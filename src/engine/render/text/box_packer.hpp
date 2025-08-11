@@ -14,6 +14,9 @@ public:
 	// is that what we want????
 	Position AddBox(glm::vec2 size);
 
+	unsigned int Width() const { return width; }
+	unsigned int Height() const { return height; }
+
 private:
 	std::list<Node> skyline;
 	unsigned int width, height;
