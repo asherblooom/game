@@ -7,7 +7,7 @@
 
 /// Holds all state information relevant to a character as loaded using FreeType
 struct CharacterData {
-	glm::ivec2 Position;   // position of glyph texture in texture atlas
+	glm::vec2 TexPos;	   // position of glyph texture in texture atlas
 	glm::ivec2 Size;	   // size of glyph
 	glm::ivec2 Bearing;	   // offset from baseline to left/top of glyph
 	unsigned int Advance;  // horizontal offset to advance to next glyph
@@ -16,6 +16,7 @@ struct CharacterData {
 struct Font {
 	std::map<char, CharacterData> Characters;
 	GLuint TextureAtlas;
+	glm::ivec2 AtlasSize;
 };
 
 #endif

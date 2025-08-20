@@ -3,33 +3,11 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include "engine/objects/game_object.hpp"
-#include "engine/render/text/box_packer.hpp"
 #include "engine/resource_manager.hpp"
 
 void Game::Init() {
 	ResourceManager::LoadDDSTexture("background", "background.dds");
 	background = new GameObject({0, 0}, {width, width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
-	BoxPacker pack(100, 100);
-	glm::vec2 loc;
-	loc = pack.AddBox({80, 10});
-	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
-	std::cout << "box: (" << 80 << ", " << 10 << ")\n";
-
-	loc = pack.AddBox({10, 5});
-	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
-	std::cout << "box: (" << 10 << ", " << 5 << ")\n";
-
-	loc = pack.AddBox({10, 10});
-	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
-	std::cout << "box: (" << 10 << ", " << 10 << ")\n";
-
-	loc = pack.AddBox({80, 10});
-	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
-	std::cout << "box: (" << 80 << ", " << 10 << ")\n";
-
-	loc = pack.AddBox({80, 10});
-	std::cout << "position: (" << loc.x << ", " << loc.y << ") ";
-	std::cout << "box: (" << 80 << ", " << 10 << ")\n";
 }
 
 void Game::ProcessInput(float dt) {
@@ -122,7 +100,8 @@ void Game::Update(float dt) {
 
 void Game::Render() {
 	spriteRenderer->Draw(background);
-	textRenderer->RenderText("hello", 100, 100, 1, ResourceManager::GetFont("default"));
+	textRenderer->RenderText("abcdefghijklmnopqrstuvwxyz", 100, 100, 1, ResourceManager::GetFont("default"));
+	textRenderer->RenderText("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 100, 150, 1, ResourceManager::GetFont("default"));
 	for (CardObject& card : Cards) {
 		spriteRenderer->Draw(&card);
 	}

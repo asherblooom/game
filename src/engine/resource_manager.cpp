@@ -206,14 +206,15 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 	// initialise texture atlas
 	Font font;
 	// should be big enough for most fonts...
-	unsigned int width = 256;
-	unsigned int height = 256;
+	unsigned int width = 256 * 1;
+	unsigned int height = 256 * 1;
 	glGenTextures(1, &font.TextureAtlas);
 	glBindTexture(GL_TEXTURE_2D, font.TextureAtlas);
-	// disable byte-alignment restriction
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);	// disable byte-alignment restriction
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height,
-				 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
+				 0, GL_RED, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	BoxPacker packer{width, height};
 
 	// for the first 128 ASCII characters, pre-load/compile their characters and store them
@@ -244,6 +245,9 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		glm::vec2 position = packer.AddBox({face->glyph->bitmap.width, face->glyph->bitmap.rows});
+		std::cout << c << "\n";
+		std::cout << position.x << ", " << position.y;
+		std::cout << " size: " << face->glyph->bitmap.width << ", " << face->glyph->bitmap.rows << "\n";
 		CharacterData characterData = {
 			position,
 			glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
@@ -253,12 +257,13 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 
 		// if character doesn't fit into current texture atlas
 		if (packer.Width() > width) {
+			std::cout << " " << packer.Width();
 			// need a bigger texture
 			GLuint biggerTex;
 			glGenTextures(1, &biggerTex);
 			glBindTexture(GL_TEXTURE_2D, biggerTex);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, packer.Width(),
-						 packer.Height(), 0, GL_ALPHA, GL_UNSIGNED_BYTE, 0);
+						 packer.Height(), 0, GL_RED, GL_UNSIGNED_BYTE, 0);
 
 			// copy data from old texture onto bigger texture
 			glCopyImageSubData(font.TextureAtlas, GL_TEXTURE_2D, 0, 0, 0, 0,
@@ -274,8 +279,9 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 
 		glTexSubImage2D(GL_TEXTURE_2D,
 						0, position.x, position.y, characterData.Size.x, characterData.Size.y,
-						GL_ALPHA, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+						GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
 	}
+	font.AtlasSize = {packer.Width(), packer.Height()};
 	Fonts[name] = font;
 	glBindTexture(GL_TEXTURE_2D, 0);
 	// destroy FreeType once we're finished
