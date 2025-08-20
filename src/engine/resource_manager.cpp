@@ -1,173 +1,223 @@
 #include "resource_manager.hpp"
 
-#include <cstdio>
-#include <cstring>
-#include <exception>
-#include <fstream>
 #include <iostream>
 #include <sstream>
+#include <fstream>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
-// Instantiate (global) static variables
-std::map<std::string, Shader> ResourceManager::Shaders;
-std::map<std::string, Texture2D> ResourceManager::Textures;
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
-Shader &ResourceManager::GetShader(std::string name) {
-	return Shaders.at(name);
+// Define missing DDS texture format constants
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 0x83F1
+#endif
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
+#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
+#endif
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
+#endif
+
+// Define FourCC codes for DDS file parsing
+#ifndef FOURCC_DXT1
+#define FOURCC_DXT1 0x31545844 // "DXT1"
+#endif
+#ifndef FOURCC_DXT3
+#define FOURCC_DXT3 0x33545844 // "DXT3"
+#endif
+#ifndef FOURCC_DXT5
+#define FOURCC_DXT5 0x35545844 // "DXT5"
+#endif
+
+// Instantiate static variables
+std::map<std::string, Texture2D>    ResourceManager::Textures;
+std::map<std::string, Shader>       ResourceManager::Shaders;
+
+
+Shader& ResourceManager::LoadShader(std::string name, const char *vShaderFile, const char *fShaderFile, const char *gShaderFile)
+{
+    Shaders[name] = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
+    return Shaders[name];
 }
 
-Shader &ResourceManager::LoadShader(std::string name, const char *vShaderFile, const char *fShaderFile, const char *gShaderFile) {
-	// 1. retrieve the vertex/fragment source code from filePath
-	std::string vertexCode;
-	std::string fragmentCode;
-	std::string geometryCode;
-	try {
-		// open files
-		std::ifstream vertexShaderFile{vShaderFile};
-		std::ifstream fragmentShaderFile{fShaderFile};
-		if (!vertexShaderFile)
-			std::cout << "ERROR::SHADER: Vertex shader file not found" << std::endl;
-		if (!fragmentShaderFile)
-			std::cout << "ERROR::SHADER: Fragment shader file not found" << std::endl;
-
-		std::stringstream vShaderStream, fShaderStream;
-		// read file's buffer contents into streams
-		vShaderStream << vertexShaderFile.rdbuf();
-		fShaderStream << fragmentShaderFile.rdbuf();
-		// close file handlers
-		vertexShaderFile.close();
-		fragmentShaderFile.close();
-		// convert stream into string
-		vertexCode = vShaderStream.str();
-		fragmentCode = fShaderStream.str();
-		// if geometry shader path is present, also load a geometry shader
-		if (gShaderFile != nullptr) {
-			std::ifstream geometryShaderFile(gShaderFile);
-			if (!geometryShaderFile)
-				std::cout << "ERROR::SHADER: Geometry shader file not found" << std::endl;
-			std::stringstream gShaderStream;
-			gShaderStream << geometryShaderFile.rdbuf();
-			geometryShaderFile.close();
-			geometryCode = gShaderStream.str();
-		}
-	} catch (std::exception_ptr p) {
-		std::cout << "ERROR::SHADER: Failed to read shader files" << std::endl;
-	}
-	const char *vShaderCode = vertexCode.c_str();
-	const char *fShaderCode = fragmentCode.c_str();
-	const char *gShaderCode = geometryCode.c_str();
-	// 2. now create shader object from source code
-	Shader shader;
-	shader.Compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
-	Shaders[name] = shader;
-	return Shaders.at(name);
+Shader& ResourceManager::GetShader(std::string name)
+{
+    return Shaders[name];
 }
 
-Texture2D &ResourceManager::LoadDDSTexture(std::string name, const char *ddsFile, bool mipmaps) {
-	// allocate new unsigned char space with 4 (file code) + 124 (header size) bytes
-	unsigned char *header = new unsigned char[128];
-
-	unsigned int width;
-	unsigned int height;
-	unsigned int mipMapCount;
-
-	unsigned int blockSize;
-	unsigned int format;
-
-	unsigned char *buffer = 0;
-
-	std::FILE *f = std::fopen(ddsFile, "rb");
-
-	try {
-		// open the DDS file for binary reading and get file size
-		if (f == nullptr) {
-			std::cerr << ddsFile << " ";
-			throw "ERROR::TEXTURE: incorrect file name";
-		}
-		std::fseek(f, 0, SEEK_END);
-		long file_size = ftell(f);
-		std::fseek(f, 0, SEEK_SET);
-
-		// read in 128 bytes from the file
-		std::fread(header, 1, 128, f);
-
-		// compare the `DDS ` signature
-		if (std::memcmp(header, "DDS ", 4) != 0) {
-			throw "ERROR::TEXTURE: incorrect DDS signature";
-		}
-
-		// extract height, width, and amount of mipmaps - yes it is stored height then width
-		height = (header[12]) | (header[13] << 8) | (header[14] << 16) | (header[15] << 24);
-		width = (header[16]) | (header[17] << 8) | (header[18] << 16) | (header[19] << 24);
-		if (mipmaps)
-			mipMapCount = (header[28]) | (header[29] << 8) | (header[30] << 16) | (header[31] << 24);
-		else
-			mipMapCount = 1;
-
-		// figure out what format to use for what fourCC file type it is
-		// block size is about physical chunk storage of compressed data in file (important)
-		if (header[84] == 'D') {
-			switch (header[87]) {
-				case '1':  // DXT1
-					format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-					blockSize = 8;
-					break;
-				case '3':  // DXT3
-					format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-					blockSize = 16;
-					break;
-				case '5':  // DXT5
-					format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-					blockSize = 16;
-					break;
-				case '0':  // DX10
-						   // unsupported, else will error
-						   // as it adds sizeof(struct DDS_HEADER_DXT10) between pixels
-						   // so, buffer = malloc((file_size - 128) - sizeof(struct DDS_HEADER_DXT10));
-				default:
-					throw "ERROR::TEXTURE: unsupported compression";
-			}
-		} else {  // BC4U/BC4S/ATI2/BC55/R8G8_B8G8/G8R8_G8B8/UYVY-packed/YUY2-packed unsupported
-			throw "ERROR::TEXTURE: unsupported compression";
-		}
-
-		// read rest of file
-		buffer = new unsigned char[file_size - 128];
-		if (buffer == 0) {
-			throw "ERROR::TEXTURE: memory allocation failed";
-		}
-		fread(buffer, 1, file_size, f);
-
-		// now generate texture
-		Texture2D texture;
-		texture.Generate(width, height, format, mipMapCount, blockSize, buffer);
-		Textures[name] = texture;
-
-		delete[] (buffer);
-		delete[] (header);
-		fclose(f);
-		return Textures.at(name);
-
-	} catch (const char *e) {
-		delete[] (buffer);
-		delete[] (header);
-		if (f) fclose(f);
-		std::cerr << e << "\n";
-		throw(e);
-	}
+Texture2D& ResourceManager::LoadTexture(std::string name, const char *file, bool alpha)
+{
+    Textures[name] = loadTextureFromFile(file, alpha);
+    return Textures[name];
 }
 
-Texture2D &ResourceManager::GetTexture(std::string name) {
-	return Textures.at(name);
+Texture2D& ResourceManager::LoadDDSTexture(std::string name, const char* file, bool mipmaps)
+{
+    (void)mipmaps; // Unused parameter
+    Textures[name] = loadDDSFromFile(file);
+    return Textures[name];
 }
 
-void ResourceManager::Clear() {
-	// (properly) delete all shaders
-	for (auto &shader : Shaders) {
-		glDeleteProgram(shader.second.ID());
-	}
+Texture2D& ResourceManager::GetTexture(std::string name)
+{
+    return Textures[name];
+}
 
-	// (properly) delete all textures
-	for (auto &texture : Textures) {
-		glDeleteTextures(1, &texture.second.ID());
-	}
+void ResourceManager::Clear()
+{
+    for (auto iter : Shaders)
+        glDeleteProgram(iter.second.ID()); // Correct: Call ID() as a function
+    for (auto iter : Textures)
+        glDeleteTextures(1, &iter.second.ID_); // Correct: Access ID_ via friend status
+}
+
+Shader ResourceManager::loadShaderFromFile(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile)
+{
+    std::string vertexCode;
+    std::string fragmentCode;
+    std::string geometryCode;
+    try
+    {
+        std::ifstream vertexShaderFile(vShaderFile);
+        std::ifstream fragmentShaderFile(fShaderFile);
+        std::stringstream vShaderStream, fShaderStream;
+        vShaderStream << vertexShaderFile.rdbuf();
+        fShaderStream << fragmentShaderFile.rdbuf();
+        vertexShaderFile.close();
+        fragmentShaderFile.close();
+        vertexCode = vShaderStream.str();
+        fragmentCode = fShaderStream.str();
+        if (gShaderFile != nullptr)
+        {
+            std::ifstream geometryShaderFile(gShaderFile);
+            std::stringstream gShaderStream;
+            gShaderStream << geometryShaderFile.rdbuf();
+            geometryShaderFile.close();
+            geometryCode = gShaderStream.str();
+        }
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "ERROR::SHADER: Failed to read shader files: " << e.what() << std::endl;
+    }
+    const char *vShaderCode = vertexCode.c_str();
+    const char *fShaderCode = fragmentCode.c_str();
+    const char *gShaderCode = geometryCode.c_str();
+    Shader shader;
+    shader.Compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
+    return shader;
+}
+
+Texture2D ResourceManager::loadTextureFromFile(const char *file, bool alpha)
+{
+    Texture2D texture;
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load(file, &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        if (nrChannels == 4 && alpha)
+        {
+            texture.internalFormat = GL_RGBA;
+            texture.imageFormat = GL_RGBA;
+        }
+        else
+        {
+            texture.internalFormat = GL_RGB;
+            texture.imageFormat = GL_RGB;
+        }
+        texture.Generate(width, height, data);
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Failed to load texture from file: " << file << std::endl;
+    }
+    return texture;
+}
+
+Texture2D ResourceManager::loadDDSFromFile(const char* file) {
+    unsigned char header[124];
+    FILE *fp;
+
+    fp = fopen(file, "rb");
+    if (fp == NULL){
+        printf("%s could not be opened.\n", file);
+        return Texture2D();
+    }
+
+    char filecode[4];
+    fread(filecode, 1, 4, fp);
+    if (strncmp(filecode, "DDS ", 4) != 0) {
+        fclose(fp);
+        printf("Not a DDS file: %s\n", file);
+        return Texture2D();
+    }
+
+    fread(&header, 124, 1, fp);
+
+    unsigned int height      = *(unsigned int*)&(header[8]);
+    unsigned int width         = *(unsigned int*)&(header[12]);
+    unsigned int linearSize  = *(unsigned int*)&(header[16]);
+    unsigned int mipMapCount = *(unsigned int*)&(header[24]);
+    unsigned int fourCC      = *(unsigned int*)&(header[80]);
+
+    unsigned char *buffer;
+    unsigned int bufsize;
+    bufsize = mipMapCount > 1 ? linearSize * 2 : linearSize;
+    buffer = (unsigned char*)malloc(bufsize * sizeof(unsigned char));
+    fread(buffer, 1, bufsize, fp);
+    fclose(fp);
+
+    unsigned int format;
+    switch(fourCC)
+    {
+    case FOURCC_DXT1:
+        format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+        break;
+    case FOURCC_DXT3:
+        format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+        break;
+    case FOURCC_DXT5:
+        format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+        break;
+    default:
+        free(buffer);
+        printf("Unsupported DDS format in %s\n", file);
+        return Texture2D();
+    }
+
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    unsigned int blockSize = (format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ? 8 : 16;
+    unsigned int offset = 0;
+
+    for (unsigned int level = 0; level < mipMapCount && (width || height); ++level)
+    {
+        unsigned int size = ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
+        glCompressedTexImage2D(GL_TEXTURE_2D, level, format, width, height, 0, size, buffer + offset);
+        offset += size;
+        width  /= 2;
+        height /= 2;
+        if(width < 1) width = 1;
+        if(height < 1) height = 1;
+    }
+
+    free(buffer);
+
+    Texture2D texture;
+    texture.ID_ = textureID; // Correct: Assign to the private member via friend status
+    
+    glBindTexture(GL_TEXTURE_2D, texture.ID());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    return texture;
 }

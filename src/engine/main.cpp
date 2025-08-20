@@ -26,9 +26,11 @@ Game cardGame(SCR_WIDTH, SCR_HEIGHT);
 int main() {
 	// Initialise glfw and set options
 	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); // minimal version
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // required on Mac/WSLg
+
 
 	// create window
 	GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Card Game", NULL, NULL);
@@ -40,7 +42,7 @@ int main() {
 	glfwMakeContextCurrent(window);
 
 	// initialise GLAD - manages function pointers for OpenGL
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+	if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD\n";
 		glfwTerminate();
 		return -1;
