@@ -7,7 +7,7 @@
 
 #include "engine/objects/card_object.hpp"
 #include "engine/render/sprite_renderer.hpp"
-#include "engine/render/text/text_renderer.hpp"
+#include "engine/render/text_renderer.hpp"
 #include "engine/resource_manager.hpp"
 
 class BaseGame {

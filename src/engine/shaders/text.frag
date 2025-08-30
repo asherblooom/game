@@ -7,9 +7,6 @@ uniform vec3 textColor;
 
 void main() {
 	ivec2 coords = ivec2(vertTexCoords.x, vertTexCoords.y);
-    // vec4 sampled = vec4(1.0, 1.0, 1.0, texelFetch(text, coords, 0).r);
-    // vec4 sampled = vec4( texelFetch(text, coords, 0).r, texelFetch(text, coords, 0).r, texelFetch(text, coords, 0).r, texelFetch(text, coords, 0).r);
     vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, vertTexCoords).r);
-    // vec4 sampled = vec4(texture(text, vertTexCoords).r, texture(text, vertTexCoords).r, texture(text, vertTexCoords).r, texture(text, vertTexCoords).r);
     color = vec4(textColor, 1.0) * sampled;
 }

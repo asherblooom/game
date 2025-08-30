@@ -7,7 +7,6 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include "render/text/box_packer.hpp"
 #include FT_FREETYPE_H
 
 // Instantiate (global) static variables
@@ -205,83 +204,43 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 
 	// initialise texture atlas
 	Font font;
-	// should be big enough for most fonts...
-	unsigned int width = 256 * 1;
-	unsigned int height = 256 * 1;
+	unsigned int width = 0;
+	unsigned int height = 0;
+	for (GLubyte c = 32; c < 128; c++) {
+		if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+			std::cerr << "ERROR::FREETYPE: Failed to load Glyph" << std::endl;
+			continue;
+		}
+		if (face->glyph->bitmap.rows > height) height = face->glyph->bitmap.rows;
+		width += (face->glyph->bitmap.width + 1);
+	}
+	font.AtlasSize = {width, height};
 	glGenTextures(1, &font.TextureAtlas);
 	glBindTexture(GL_TEXTURE_2D, font.TextureAtlas);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);	// disable byte-alignment restriction
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height,
 				 0, GL_RED, GL_UNSIGNED_BYTE, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	BoxPacker packer{width, height};
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// for the first 128 ASCII characters, pre-load/compile their characters and store them
+	int pos = 0;
 	for (GLubyte c = 32; c < 128; c++) {
-		// load character glyph
-		if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
-			std::cerr << "ERROR::FREETYPE: Failed to load Glyph" << std::endl;
-			continue;
-		}
-		// // generate texture
-		// unsigned int texture;
-		// glGenTextures(1, &texture);
-		// glBindTexture(GL_TEXTURE_2D, texture);
-		// glTexImage2D(
-		// 	GL_TEXTURE_2D,
-		// 	0,
-		// 	GL_RED,
-		// 	face->glyph->bitmap.width,
-		// 	face->glyph->bitmap.rows,
-		// 	0,
-		// 	GL_RED,
-		// 	GL_UNSIGNED_BYTE,
-		// 	face->glyph->bitmap.buffer);
-		// // set texture options
-		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		if (FT_Load_Char(face, c, FT_LOAD_RENDER)) continue;
 
-		glm::vec2 position = packer.AddBox({face->glyph->bitmap.width, face->glyph->bitmap.rows});
-		std::cout << c << "\n";
-		std::cout << position.x << ", " << position.y;
-		std::cout << " size: " << face->glyph->bitmap.width << ", " << face->glyph->bitmap.rows << "\n";
 		CharacterData characterData = {
-			position,
+			{pos, 0},
 			glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
 			glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
 			(unsigned int)face->glyph->advance.x};
 		font.Characters[c] = characterData;
 
-		// if character doesn't fit into current texture atlas
-		if (packer.Width() > width) {
-			std::cout << " " << packer.Width();
-			// need a bigger texture
-			GLuint biggerTex;
-			glGenTextures(1, &biggerTex);
-			glBindTexture(GL_TEXTURE_2D, biggerTex);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, packer.Width(),
-						 packer.Height(), 0, GL_RED, GL_UNSIGNED_BYTE, 0);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, pos, 0, characterData.Size.x,
+						characterData.Size.y, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
 
-			// copy data from old texture onto bigger texture
-			glCopyImageSubData(font.TextureAtlas, GL_TEXTURE_2D, 0, 0, 0, 0,
-							   biggerTex, GL_TEXTURE_2D, 0, 0, 0, 0,
-							   width + characterData.Size.x, height + characterData.Size.y, 1);
-
-			// delete old texture
-			glDeleteTextures(1, &font.TextureAtlas);
-			font.TextureAtlas = biggerTex;
-			width = packer.Width();
-			height = packer.Height();
-		}
-
-		glTexSubImage2D(GL_TEXTURE_2D,
-						0, position.x, position.y, characterData.Size.x, characterData.Size.y,
-						GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+		// prevent issues with linear filtering pulling from next character's texture
+		pos += (characterData.Size.x + 1);
 	}
-	font.AtlasSize = {packer.Width(), packer.Height()};
 	Fonts[name] = font;
 	glBindTexture(GL_TEXTURE_2D, 0);
 	// destroy FreeType once we're finished

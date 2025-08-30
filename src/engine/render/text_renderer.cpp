@@ -4,10 +4,10 @@
 #include <vector>
 #include FT_FREETYPE_H
 
-#include "../../resource_manager.hpp"
-#include "../vertex.hpp"
+#include "../resource_manager.hpp"
 #include "font.hpp"
 #include "text_renderer.hpp"
+#include "vertex.hpp"
 
 TextRenderer::TextRenderer(unsigned int width, unsigned int height) {
 	// load and configure shader
@@ -48,42 +48,20 @@ void TextRenderer::RenderText(std::string text, float x, float y, float scale, F
 
 		float w = ch.Size.x * scale;
 		float h = ch.Size.y * scale;
-		// update VBO for each character
-		// std::vector<Vertex> vertices = {
-		// 	{xpos, ypos + h, 0.0f, 1.0f},
-		// 	{xpos + w, ypos, 1.0f, 0.0f},
-		// 	{xpos, ypos, 0.0f, 0.0f},
-		//
-		// 	{xpos, ypos + h, 0.0f, 1.0f},
-		// 	{xpos + w, ypos + h, 1.0f, 1.0f},
-		// 	{xpos + w, ypos, 1.0f, 0.0f}};
-		//
-		// std::vector<Vertex> vertices = {
-		// 	{xpos, ypos + h, 0.0f, (float)font.AtlasSize.y},
-		// 	{xpos + w, ypos, (float)font.AtlasSize.x, 0.0f},
-		// 	{xpos, ypos, 0.0f, 0.0f},
-		//
-		// 	{xpos, ypos + h, 0.0f, (float)font.AtlasSize.y},
-		// 	{xpos + w, ypos + h, (float)font.AtlasSize.x, (float)font.AtlasSize.y},
-		// 	{xpos + w, ypos, (float)font.AtlasSize.x, 0.0f}};
-		//
-		std::vector<Vertex> vertices = {
-			{xpos, ypos + h, ch.TexPos.x / font.AtlasSize.x, (ch.TexPos.y + ch.Size.y) / font.AtlasSize.y},
-			{xpos + w, ypos, (ch.TexPos.x + ch.Size.x) / font.AtlasSize.x, ch.TexPos.y / font.AtlasSize.y},
-			{xpos, ypos, ch.TexPos.x / font.AtlasSize.x, ch.TexPos.y / font.AtlasSize.y},
 
-			{xpos, ypos + h, ch.TexPos.x / font.AtlasSize.x, (ch.TexPos.y + ch.Size.y) / font.AtlasSize.y},
-			{xpos + w, ypos + h, (ch.TexPos.x + ch.Size.x) / font.AtlasSize.x, (ch.TexPos.y + ch.Size.y) / font.AtlasSize.y},
-			{xpos + w, ypos, (ch.TexPos.x + ch.Size.x) / font.AtlasSize.x, ch.TexPos.y / font.AtlasSize.y}};
-		//
-		// std::vector<Vertex> vertices = {
-		// 	{xpos, ypos + h, (float)ch.TexPos.x, (float)(ch.TexPos.y + ch.Size.y)},
-		// 	{xpos + w, ypos, (float)(ch.TexPos.x + ch.Size.x), (float)ch.TexPos.y},
-		// 	{xpos, ypos, (float)ch.TexPos.x, (float)ch.TexPos.y},
-		//
-		// 	{xpos, ypos + h, (float)ch.TexPos.x, (float)(ch.TexPos.y + ch.Size.y)},
-		// 	{xpos + w, ypos + h, (float)(ch.TexPos.x + ch.Size.x), (float)(ch.TexPos.y + ch.Size.y)},
-		// 	{xpos + w, ypos, (float)(ch.TexPos.x + ch.Size.x), (float)ch.TexPos.y}};
+		// update VBO for each character
+		float minTexX = ch.TexPos.x / font.AtlasSize.x;
+		float minTexY = ch.TexPos.y / font.AtlasSize.y;
+		float maxTexX = (ch.TexPos.x + ch.Size.x) / font.AtlasSize.x;
+		float maxTexY = (ch.TexPos.y + ch.Size.y) / font.AtlasSize.y;
+		std::vector<Vertex> vertices = {
+			{xpos, ypos + h, minTexX, maxTexY},
+			{xpos + w, ypos, maxTexX, minTexY},
+			{xpos, ypos, minTexX, minTexY},
+
+			{xpos, ypos + h, minTexX, maxTexY},
+			{xpos + w, ypos + h, maxTexX, maxTexY},
+			{xpos + w, ypos, maxTexX, minTexY}};
 
 		// update content of VBO memory
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
