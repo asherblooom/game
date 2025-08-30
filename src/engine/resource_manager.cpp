@@ -7,11 +7,13 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "render/texture.hpp"
 #include FT_FREETYPE_H
 
 // Instantiate (global) static variables
 std::map<std::string, Shader> ResourceManager::Shaders;
 std::map<std::string, Texture2D> ResourceManager::Textures;
+std::map<std::string, Texture2DArray> ResourceManager::TextureArrays;
 std::map<std::string, Font> ResourceManager::Fonts;
 
 Shader &ResourceManager::GetShader(std::string name) {
@@ -184,6 +186,150 @@ Texture2D &ResourceManager::GetTexture(std::string name) {
 	return Textures.at(name);
 }
 
+Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string name, std::vector<std::string> ddsFiles, bool mipmaps) {
+	unsigned int width;
+	unsigned int height;
+	unsigned int mipMapCount;
+
+	unsigned int blockSize;
+	unsigned int format;
+
+	std::vector<unsigned char *> data;
+
+	for (std::size_t i = 0; i < ddsFiles.size(); i++) {
+		std::string file = ddsFiles.at(i);
+		// allocate new unsigned char space with 4 (file code) + 124 (header size) bytes
+		unsigned char *header = new unsigned char[128];
+		unsigned char *buffer = 0;
+
+		// open the DDS file for binary reading and get file size
+		// first try to open with default path
+		std::string defaultPath = "media/textures/";
+		std::FILE *f = std::fopen((defaultPath + file).c_str(), "rb");
+		try {
+			if (f == nullptr) {
+				// otherwise assume input is a full path itself and try to open
+				f = std::fopen(file.c_str(), "rb");
+				if (f == nullptr) {
+					std::cerr << file << " ";
+					throw "ERROR::TEXTURE: incorrect file name";
+				}
+			}
+			std::fseek(f, 0, SEEK_END);
+			long file_size = ftell(f);
+			std::fseek(f, 0, SEEK_SET);
+
+			// read in 128 bytes from the file
+			std::fread(header, 1, 128, f);
+
+			// compare the `DDS ` signature
+			if (std::memcmp(header, "DDS ", 4) != 0) {
+				throw "ERROR::TEXTURE: incorrect DDS signature";
+			}
+
+			// for first texture,
+			// extract height, width, and amount of mipmaps - yes it is stored height then width
+			if (i == 0) {
+				height = (header[12]) | (header[13] << 8) | (header[14] << 16) | (header[15] << 24);
+				width = (header[16]) | (header[17] << 8) | (header[18] << 16) | (header[19] << 24);
+				if (mipmaps)
+					mipMapCount = (header[28]) | (header[29] << 8) | (header[30] << 16) | (header[31] << 24);
+				else
+					mipMapCount = 1;
+
+				// figure out what format to use for what fourCC file type it is
+				// block size is about physical chunk storage of compressed data in file (important)
+				if (header[84] == 'D') {
+					switch (header[87]) {
+						case '1':  // DXT1
+							format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+							blockSize = 8;
+							break;
+						case '3':  // DXT3
+							format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+							blockSize = 16;
+							break;
+						case '5':  // DXT5
+							format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+							blockSize = 16;
+							break;
+						case '0':  // DX10
+								   // unsupported, else will error
+								   // as it adds sizeof(struct DDS_HEADER_DXT10) between pixels
+								   // so, buffer = malloc((file_size - 128) - sizeof(struct DDS_HEADER_DXT10));
+						default:
+							throw "ERROR::TEXTURE: unsupported compression";
+					}
+				} else {  // BC4U/BC4S/ATI2/BC55/R8G8_B8G8/G8R8_G8B8/UYVY-packed/YUY2-packed unsupported
+					throw "ERROR::TEXTURE: unsupported compression";
+				}
+			}
+			// check if all other textures match size/mip map count/format
+			else {
+				if (height != (unsigned int)((header[12]) | (header[13] << 8) | (header[14] << 16) | (header[15] << 24)) ||
+					width != (unsigned int)((header[16]) | (header[17] << 8) | (header[18] << 16) | (header[19] << 24)))
+					throw "ERROR::TEXTURE: all textures in an array must have same size";
+				if (mipMapCount != (unsigned int)((header[28]) | (header[29] << 8) | (header[30] << 16) | (header[31] << 24)))
+					throw "ERROR::TEXTURE: all textures in an array must have same mip map count";
+				if (header[84] == 'D') {
+					switch (header[87]) {
+						case '1':  // DXT1
+							if (format != GL_COMPRESSED_RGBA_S3TC_DXT1_EXT)
+								throw "ERROR::TEXTURE: all textures in an array must use same compression format";
+							break;
+						case '3':  // DXT3
+							if (format != GL_COMPRESSED_RGBA_S3TC_DXT3_EXT)
+								throw "ERROR::TEXTURE: all textures in an array must use same compression format";
+							break;
+						case '5':  // DXT5
+							if (format != GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)
+								throw "ERROR::TEXTURE: all textures in an array must use same compression format";
+							break;
+						default:
+							throw "ERROR::TEXTURE: unsupported compression";
+					}
+				} else {  // BC4U/BC4S/ATI2/BC55/R8G8_B8G8/G8R8_G8B8/UYVY-packed/YUY2-packed unsupported
+					throw "ERROR::TEXTURE: unsupported compression";
+				}
+			}
+
+			// read rest of file
+			buffer = new unsigned char[file_size - 128];
+			if (buffer == 0) {
+				throw "ERROR::TEXTURE: memory allocation failed";
+			}
+			fread(buffer, 1, file_size, f);
+			data.emplace_back(buffer);
+
+			delete[] (header);
+			fclose(f);
+
+		} catch (const char *e) {
+			for (unsigned char *buff : data)
+				delete[] (buff);
+			delete[] (header);
+			if (f) fclose(f);
+			std::cerr << e << "\n";
+			throw(e);
+		}
+	}
+	// now generate texture array
+	Texture2DArray textureArray;
+	textureArray.Generate(width, height, format, mipMapCount, blockSize, data);
+	TextureArrays[name] = textureArray;
+
+	for (unsigned char *buffer : data)
+		delete[] (buffer);
+
+	return TextureArrays.at(name);
+}
+
+Texture2DArray &ResourceManager::GetTextureArray(std::string name) {
+	if (!TextureArrays.contains(name))
+		std::cerr << "ERROR: Can't find texture array: " << name << "\n";
+	return TextureArrays.at(name);
+}
+
 Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned int defaultFontSize) {
 	// initialize and load the FreeType library
 	FT_Library ft;
@@ -264,9 +410,12 @@ void ResourceManager::Clear() {
 	for (auto &texture : Textures) {
 		glDeleteTextures(1, &texture.second.ID());
 	}
+	// (properly) delete all texture arrays
+	for (auto &textureArr : TextureArrays) {
+		glDeleteTextures(1, &textureArr.second.ID());
+	}
 	// (properly) delete all font textures
 	for (auto &font : Fonts) {
-		// for (auto &c : font.second)
-		// glDeleteTextures(1, &c.second.TextureID);
+		glDeleteTextures(1, &font.second.TextureAtlas);
 	}
 }

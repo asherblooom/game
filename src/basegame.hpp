@@ -45,14 +45,16 @@ protected:
 
 	// basic utility functions for loading and getting card textures
 	void LoadCardTextures() {
-		ResourceManager::LoadDDSTexture("JOKER-BLACKJOKER", "JOKER-BLACKJOKER.dds");
-		ResourceManager::LoadDDSTexture("JOKER-REDJOKER", "JOKER-REDJOKER.dds");
+		std::vector<std::string> fileNames = {"JOKER_BLACKJOKER.dds", "JOKER_REDJOKER.dds"};
+		// ResourceManager::LoadDDSTexture("JOKER-BLACKJOKER", "JOKER-BLACKJOKER.dds");
+		// ResourceManager::LoadDDSTexture("JOKER-REDJOKER", "JOKER-REDJOKER.dds");
 		std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
 		std::string values[] = {"ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
 								"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
 		for (std::string suit : suits) {
 			for (std::string value : values) {
 				std::string name = value + "-" + suit;
+				// FIXME: ahhh we need to be able to load individual textures by name!!!
 				ResourceManager::LoadDDSTexture(name, (name + ".dds"), false);
 			}
 		}
