@@ -33,11 +33,11 @@ SpriteRenderer::SpriteRenderer(unsigned int width, unsigned int height) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-	glDeleteBuffers(1, &VBO);
+	// glDeleteBuffers(1, &VBO);
 }
 
 SpriteRenderer::~SpriteRenderer() {
-	glDeleteVertexArrays(1, &VAO);
+	// glDeleteVertexArrays(1, &VAO);
 }
 
 void SpriteRenderer::Draw(GameObject* object) {
@@ -56,14 +56,16 @@ void SpriteRenderer::Draw(GameObject* object) {
 
 	shader.SetVector3f("spriteColor", object->Color);
 
-	glActiveTexture(GL_TEXTURE0);
+	shader.SetInteger("image", 0);
+	shader.SetInteger("textureArray", 1);
 	if (object->Texture) {
+		glActiveTexture(GL_TEXTURE0);
 		object->Texture->Bind();
-		shader.SetInteger("texIndex", -1);
-		//TODO: add bool flag to shader so it can handle both
+		shader.SetInteger("textureIndex", -1);
 	} else if (object->TextureArray) {
+		glActiveTexture(GL_TEXTURE1);
 		object->TextureArray->Bind();
-		shader.SetInteger("texIndex", object->TextureIndex);
+		shader.SetInteger("textureIndex", object->TextureIndex);
 	} else {
 		std::cerr << "ERROR::RENDERER: cannot render object that has no texture";
 		return;

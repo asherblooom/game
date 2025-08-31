@@ -115,23 +115,21 @@ void Texture2DArray::Generate(unsigned int width, unsigned int height, unsigned 
 	this->height = height;
 	this->internalFormat = format;
 
-	// prepare some variables
-	unsigned int offset = 0;
-	unsigned int size = 0;
-	unsigned int w = this->width;
-	unsigned int h = this->height;
-
 	// bind the texture and allocate storage
 	// make it complete by specifying all needed parameters and ensuring all mipmaps are filled
 	glBindTexture(GL_TEXTURE_2D_ARRAY, this->ID_);
 	glTexStorage3D(GL_TEXTURE_2D_ARRAY, mipMapCount - 1, internalFormat, width, height, data.size());
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, mipMapCount - 1);  // opengl likes array length of mipmaps
 
 	// loop through sending block at a time with the magic formula
 	// upload to opengl properly, note the offset transverses the pointer
 	// assumes each mipmap is 1/2 the size of the previous mipmap
 	for (std::size_t i = 0; i < data.size(); i++) {
+		// prepare some variables
+		unsigned int offset = 0;
+		unsigned int size = 0;
+		unsigned int w = this->width;
+		unsigned int h = this->height;
 		for (unsigned int j = 0; j < mipMapCount; j++) {
 			if (w == 0 || h == 0) {	 // discard any odd mipmaps 0x1 0x2 resolutions
 				mipMapCount--;

@@ -60,7 +60,7 @@ protected:
 				// ResourceManager::LoadDDSTexture(name, (name + ".dds"), false);
 			}
 		}
-		ResourceManager::LoadDDSTextureArray("cards", names, fileNames, false);
+		ResourceManager::LoadDDSTextureArray("cards", names, fileNames, true);
 	}
 	int GetCardTextureIndex(CardValue value, CardSuit suit) {
 		if (value == JOKER) {
