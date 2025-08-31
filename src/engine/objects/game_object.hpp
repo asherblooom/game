@@ -2,6 +2,7 @@
 #define GAMEOBJECT_HPP
 
 #include <glm/glm.hpp>
+#include <optional>
 
 #include "../render/texture.hpp"
 
@@ -14,9 +15,13 @@ public:
 	glm::vec2 Size;
 	glm::vec2 Position;
 	float Rotation;
-	Texture2D Texture;
+	// an object can either have its own texture or have its texture as part of a texture array
+	std::optional<Texture2D> Texture;
+	std::optional<Texture2DArray> TextureArray;
+	int TextureIndex;
 
 	GameObject(glm::vec2 pos, glm::vec2 size, Texture2D texture, glm::vec3 color = glm::vec3(1.0f));
+	GameObject(glm::vec2 pos, glm::vec2 size, Texture2DArray textureArray, int textureIndex, glm::vec3 color = glm::vec3(1.0f));
 
 	bool DetectMouseOver(glm::vec2 mousePos);
 };

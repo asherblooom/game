@@ -108,7 +108,8 @@ void Game::Render() {
 }
 
 CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
-	Texture2D cardTex = GetCardTexture(value, suit);
+	Texture2DArray cardTexArray = ResourceManager::GetTextureArray("cards");
+	int cardIndex = GetCardTextureIndex(value, suit);
 	if (selectedCard) {
 		int selectedLoc = 0;
 		for (size_t i = 0; i < Cards.size(); i++) {
@@ -117,9 +118,9 @@ CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 				selectedCard = nullptr;
 			}
 		}
-		Cards.emplace_back(value, suit, cardTex, pos);
+		Cards.emplace_back(value, suit, cardTexArray, cardIndex, pos);
 		selectedCard = &Cards.at(selectedLoc);
 	} else
-		Cards.emplace_back(value, suit, cardTex, pos);
+		Cards.emplace_back(value, suit, cardTexArray, cardIndex, pos);
 	return Cards.back();
 }

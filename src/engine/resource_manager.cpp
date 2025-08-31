@@ -14,6 +14,7 @@
 std::map<std::string, Shader> ResourceManager::Shaders;
 std::map<std::string, Texture2D> ResourceManager::Textures;
 std::map<std::string, Texture2DArray> ResourceManager::TextureArrays;
+std::map<std::string, std::map<std::string, int>> ResourceManager::ArrayItemNames;
 std::map<std::string, Font> ResourceManager::Fonts;
 
 Shader &ResourceManager::GetShader(std::string name) {
@@ -186,27 +187,33 @@ Texture2D &ResourceManager::GetTexture(std::string name) {
 	return Textures.at(name);
 }
 
-Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string name, std::vector<std::string> ddsFiles, bool mipmaps) {
+Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string arrayName, std::vector<std::string> itemNames, std::vector<std::string> ddsFiles, bool mipmaps) {
 	unsigned int width;
 	unsigned int height;
 	unsigned int mipMapCount;
-
 	unsigned int blockSize;
 	unsigned int format;
-
+	std::FILE *f;
 	std::vector<unsigned char *> data;
+	unsigned char *header;
+	unsigned char *buffer;
+	std::map<std::string, int> indexMap{};
 
-	for (std::size_t i = 0; i < ddsFiles.size(); i++) {
-		std::string file = ddsFiles.at(i);
-		// allocate new unsigned char space with 4 (file code) + 124 (header size) bytes
-		unsigned char *header = new unsigned char[128];
-		unsigned char *buffer = 0;
+	try {
+		if (itemNames.size() != ddsFiles.size()) {
+			throw "ERROR::TEXTURE: itemNames must be same size as ddsFiles for texture arrays";
+		}
 
-		// open the DDS file for binary reading and get file size
-		// first try to open with default path
-		std::string defaultPath = "media/textures/";
-		std::FILE *f = std::fopen((defaultPath + file).c_str(), "rb");
-		try {
+		for (std::size_t i = 0; i < ddsFiles.size(); i++) {
+			std::string file = ddsFiles.at(i);
+			// allocate new unsigned char space with 4 (file code) + 124 (header size) bytes
+			header = new unsigned char[128];
+			buffer = 0;
+
+			// open the DDS file for binary reading and get file size
+			// first try to open with default path
+			std::string defaultPath = "media/textures/";
+			f = std::fopen((defaultPath + file).c_str(), "rb");
 			if (f == nullptr) {
 				// otherwise assume input is a full path itself and try to open
 				f = std::fopen(file.c_str(), "rb");
@@ -300,34 +307,41 @@ Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string name, std::vect
 			}
 			fread(buffer, 1, file_size, f);
 			data.emplace_back(buffer);
+			indexMap.emplace(itemNames.at(i), i);
 
 			delete[] (header);
 			fclose(f);
-
-		} catch (const char *e) {
-			for (unsigned char *buff : data)
-				delete[] (buff);
-			delete[] (header);
-			if (f) fclose(f);
-			std::cerr << e << "\n";
-			throw(e);
 		}
+		// now generate texture array
+		Texture2DArray textureArray;
+		textureArray.Generate(width, height, format, mipMapCount, blockSize, data);
+		TextureArrays[arrayName] = textureArray;
+		ArrayItemNames[arrayName] = std::move(indexMap);
+
+		for (unsigned char *buffer : data)
+			delete[] (buffer);
+		return TextureArrays.at(arrayName);
+
+	} catch (const char *e) {
+		for (unsigned char *buff : data)
+			delete[] (buff);
+		if (header) delete[] (header);
+		if (f) fclose(f);
+		std::cerr << e << "\n";
+		throw(e);
 	}
-	// now generate texture array
-	Texture2DArray textureArray;
-	textureArray.Generate(width, height, format, mipMapCount, blockSize, data);
-	TextureArrays[name] = textureArray;
-
-	for (unsigned char *buffer : data)
-		delete[] (buffer);
-
-	return TextureArrays.at(name);
 }
 
 Texture2DArray &ResourceManager::GetTextureArray(std::string name) {
 	if (!TextureArrays.contains(name))
 		std::cerr << "ERROR: Can't find texture array: " << name << "\n";
 	return TextureArrays.at(name);
+}
+
+int ResourceManager::GetArrayItemIndex(std::string arrayName, std::string itemName) {
+	if (!TextureArrays.contains(arrayName))
+		std::cerr << "ERROR: Can't find texture array: " << arrayName << "\n";
+	return ArrayItemNames.at(arrayName).at(itemName);
 }
 
 Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned int defaultFontSize) {

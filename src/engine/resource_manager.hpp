@@ -20,6 +20,7 @@ public:
 	static std::map<std::string, Shader> Shaders;
 	static std::map<std::string, Texture2D> Textures;
 	static std::map<std::string, Texture2DArray> TextureArrays;
+	static std::map<std::string, std::map<std::string, int>> ArrayItemNames;
 	static std::map<std::string, Font> Fonts;
 
 	// loads (and generates) a shader program from file loading vertex, fragment (and geometry) shader's source code.
@@ -34,9 +35,11 @@ public:
 	static Texture2D &GetTexture(std::string name);
 
 	// loads (and generates) an array texture from file
-	static Texture2DArray &LoadDDSTextureArray(std::string name, std::vector<std::string> ddsFiles, bool mipmaps = true);
+	static Texture2DArray &LoadDDSTextureArray(std::string arrayName, std::vector<std::string> itemNames, std::vector<std::string> ddsFiles, bool mipmaps);
 	// retrieves a stored array texture
 	static Texture2DArray &GetTextureArray(std::string name);
+	// retrives the index of a texture in the given texture array
+	static int GetArrayItemIndex(std::string arrayName, std::string itemName);
 
 	// loads (and generates) a font from file
 	static Font &LoadFont(std::string name, std::string fontFile, unsigned int defaultFontSize);

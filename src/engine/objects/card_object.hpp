@@ -38,7 +38,8 @@ public:
 
 	CardObject(CardValue value,
 			   CardSuit suit,
-			   Texture2D texture,
+			   Texture2DArray textureArray,
+			   int textureIndex,
 			   glm::vec2 pos,
 			   glm::vec2 size = {216, 313.6},
 			   glm::vec3 color = glm::vec3(1.0f));
