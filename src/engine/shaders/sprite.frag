@@ -9,6 +9,7 @@ uniform vec3 spriteColor;
 
 void main()
 {
+	//set as -1 in sprite_renderer.cpp if we want to use "image" sampler 
 	if (textureIndex < 0){
 		color = vec4(spriteColor, 1.0) * texture(image, vertTexCoords);
 	} else {

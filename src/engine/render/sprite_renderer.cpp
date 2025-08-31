@@ -33,11 +33,11 @@ SpriteRenderer::SpriteRenderer(unsigned int width, unsigned int height) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-	// glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &VBO);
 }
 
 SpriteRenderer::~SpriteRenderer() {
-	// glDeleteVertexArrays(1, &VAO);
+	glDeleteVertexArrays(1, &VAO);
 }
 
 void SpriteRenderer::Draw(GameObject* object) {
@@ -56,12 +56,13 @@ void SpriteRenderer::Draw(GameObject* object) {
 
 	shader.SetVector3f("spriteColor", object->Color);
 
+	// set uniform variables to the correct texture locations
 	shader.SetInteger("image", 0);
 	shader.SetInteger("textureArray", 1);
 	if (object->Texture) {
 		glActiveTexture(GL_TEXTURE0);
 		object->Texture->Bind();
-		shader.SetInteger("textureIndex", -1);
+		shader.SetInteger("textureIndex", -1);	//-1 means shader will know to use "image" sampler instead of "textureArray"
 	} else if (object->TextureArray) {
 		glActiveTexture(GL_TEXTURE1);
 		object->TextureArray->Bind();
