@@ -3,12 +3,12 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <iostream>
-#include "../game.hpp"
+#include "../state_manager.hpp"
 #include "input_manager.hpp"
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
-Game *cardGame;
+StateManager *manager;
 
 // used to calculate change in mouse position
 glm::vec2 oldMousePosWorld = {0, 0};  // world space position
@@ -53,11 +53,12 @@ int main() {
 	framebuffer_size_callback(window, width, height);
 
 	// here width and height are the max values for the x and y coords respectively
-	cardGame = new Game(SCR_WIDTH, SCR_HEIGHT);
+	manager = new StateManager(SCR_WIDTH, SCR_HEIGHT);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
-	cardGame->Init();
+
+	manager->Start();
 
 	float deltaTime, lastFrame = 0.0f;
 	double xpos, ypos;
@@ -79,22 +80,22 @@ int main() {
 		} else {
 			InputManager::ChangeInMousePos = glm::vec2(0);
 		}
-		cardGame->ProcessInput(deltaTime);
+		manager->ProcessInput(deltaTime);
 
 		// update game state
 		// -----------------
-		cardGame->Update(deltaTime);
+		manager->Update(deltaTime);
 
 		// render
 		// ------
 		glClearColor(0, 0, 0, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		cardGame->Render();
+		manager->Render();
 
 		glfwSwapBuffers(window);
 	}
 	ResourceManager::Clear();
-	delete cardGame;
+	delete manager;
 	glfwTerminate();
 	return 0;
 }

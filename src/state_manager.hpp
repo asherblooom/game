@@ -26,13 +26,22 @@ public:
 		// create default renderers
 		spriteRenderer = new SpriteRenderer(width, height);
 		textRenderer = new TextRenderer(width, height);
-		// load assets needed across all states
-		ResourceManager::LoadFont("default", "OpenSans-Regular.ttf", 32);
 	}
 	virtual ~StateManager() {
 		delete spriteRenderer;
 		delete textRenderer;
 	}
+
+	void Start();  // TODO: load all textures/fonts here!!?!?!?!
+	// TODO: get rid of input manager????
+
+	void ChangeState(StateInterface* state);
+	// TODO: add cleanup functions to each state?
+	// implement this function!
+
+	void ProcessInput(float dt) { currentState->ProcessInput(dt); }
+	void Update(float dt) { currentState->Update(dt); }
+	void Render() { currentState->Render(); }
 
 private:
 	StateInterface* currentState;

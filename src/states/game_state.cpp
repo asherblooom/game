@@ -1,12 +1,11 @@
 #include "game_state.hpp"
 
 #include <GLFW/glfw3.h>
-#include <iostream>
 #include "../engine/input_manager.hpp"
-#include "../engine/objects/game_object.hpp"
 #include "../engine/resource_manager.hpp"
 
-void GameState::Init() {
+GameState::GameState(const StateManager& manager) : manager{manager} {
+	background = GameObject({0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
 }
 
 void GameState::ProcessInput(float dt) {
@@ -122,4 +121,17 @@ CardObject& GameState::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 	} else
 		cards.emplace_back(value, suit, cardTexArray, cardIndex, pos);
 	return cards.back();
+}
+
+int GameState::GetCardTextureIndex(CardValue value, CardSuit suit) {
+	if (value == JOKER) {
+		if (suit == BLACKJOKER)
+			return ResourceManager::GetArrayItemIndex("cards", "JOKER-BLACKJOKER");
+		else if (suit == REDJOKER)
+			return ResourceManager::GetArrayItemIndex("cards", "JOKER-REDJOKER");
+	}
+	std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
+	std::string values[] = {"JOKER", "ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
+							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
+	return ResourceManager::GetArrayItemIndex("cards", values[value] + "-" + suits[suit]);
 }
