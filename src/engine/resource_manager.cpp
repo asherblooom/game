@@ -29,6 +29,11 @@ Shader &ResourceManager::LoadShader(std::string name, std::string vShaderFile, s
 	std::string fragmentCode;
 	std::string geometryCode;
 	try {
+		if (Shaders.contains(name)) {
+			std::cerr << "ERROR::SHADER: There already exists a shader with name '" << name << "'\n";
+			throw;
+		}
+
 		// open files
 		// first try to open with default path
 		std::string defaultPath = "src/engine/shaders/";
@@ -40,9 +45,9 @@ Shader &ResourceManager::LoadShader(std::string name, std::string vShaderFile, s
 			std::ifstream fragmentShaderFile{fShaderFile};
 			// otherwise error
 			if (!vertexShaderFile)
-				std::cout << "ERROR::SHADER: Vertex shader file not found: " << vShaderFile << std::endl;
+				std::cerr << "ERROR::SHADER: Vertex shader file not found: " << vShaderFile << "\n";
 			if (!fragmentShaderFile)
-				std::cout << "ERROR::SHADER: Fragment shader file not found: " << fShaderFile << std::endl;
+				std::cerr << "ERROR::SHADER: Fragment shader file not found: " << fShaderFile << "\n";
 		}
 
 		std::stringstream vShaderStream, fShaderStream;
@@ -62,15 +67,15 @@ Shader &ResourceManager::LoadShader(std::string name, std::string vShaderFile, s
 			if (!geometryShaderFile) {
 				std::ifstream geometryShaderFile{gShaderFile};
 				if (!geometryShaderFile)
-					std::cout << "ERROR::SHADER: Geometry shader file not found: " << gShaderFile << std::endl;
+					std::cerr << "ERROR::SHADER: Geometry shader file not found: " << gShaderFile << "\n";
 			}
 			std::stringstream gShaderStream;
 			gShaderStream << geometryShaderFile.rdbuf();
 			geometryShaderFile.close();
 			geometryCode = gShaderStream.str();
 		}
-	} catch (std::exception_ptr p) {
-		std::cout << "ERROR::SHADER: Failed to read shader files" << std::endl;
+	} catch (std::exception e) {
+		std::cerr << "ERROR::SHADER: Failed to read shader files \n";
 	}
 	const char *vShaderCode = vertexCode.c_str();
 	const char *fShaderCode = fragmentCode.c_str();
@@ -100,6 +105,9 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, std::string ddsFile
 	std::string defaultPath = "media/textures/";
 	std::FILE *f = std::fopen((defaultPath + ddsFile).c_str(), "rb");
 	try {
+		if (Textures.contains(name))
+			throw("ERROR::TEXTURE: There already exists a texture with name '" + name + "'\n");
+
 		if (f == nullptr) {
 			// otherwise assume input is a full path itself and try to open
 			f = std::fopen(ddsFile.c_str(), "rb");
@@ -200,9 +208,10 @@ Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string arrayName, std:
 	std::map<std::string, int> indexMap{};
 
 	try {
-		if (itemNames.size() != ddsFiles.size()) {
+		if (TextureArrays.contains(arrayName))
+			throw("ERROR::TEXTURE: There already exists a texture array with name '" + arrayName + "'\n");
+		if (itemNames.size() != ddsFiles.size())
 			throw "ERROR::TEXTURE: itemNames must be same size as ddsFiles for texture arrays";
-		}
 
 		for (std::size_t i = 0; i < ddsFiles.size(); i++) {
 			std::string file = ddsFiles.at(i);
@@ -345,10 +354,15 @@ int ResourceManager::GetArrayItemIndex(std::string arrayName, std::string itemNa
 }
 
 Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned int defaultFontSize) {
+	if (Fonts.contains(name)) {
+		std::cerr << "ERROR::FONT: There already exists a font with name '" << name << "'\n";
+		throw;
+	}
+
 	// initialize and load the FreeType library
 	FT_Library ft;
 	if (FT_Init_FreeType(&ft)) {  // all functions return a value different than 0 whenever an error occurred
-		std::cerr << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
+		std::cerr << "ERROR::FREETYPE: Could not init FreeType Library \n";
 	}
 	// load font as face
 	FT_Face face;
@@ -357,7 +371,7 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 	if (FT_New_Face(ft, (defaultPath + fontFile).c_str(), 0, &face)) {
 		// otherwise assume input is a full path itself and try to open
 		if (FT_New_Face(ft, fontFile.c_str(), 0, &face)) {
-			std::cerr << "ERROR::FREETYPE: Failed to load font" << std::endl;
+			std::cerr << "ERROR::FREETYPE: Failed to load font \n";
 		}
 	}
 	FT_Set_Pixel_Sizes(face, 0, defaultFontSize);
@@ -368,7 +382,7 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 	unsigned int height = 0;
 	for (GLubyte c = 32; c < 128; c++) {
 		if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
-			std::cerr << "ERROR::FREETYPE: Failed to load Glyph" << std::endl;
+			std::cerr << "ERROR::FREETYPE: Failed to load Glyph \n";
 			continue;
 		}
 		if (face->glyph->bitmap.rows > height) height = face->glyph->bitmap.rows;

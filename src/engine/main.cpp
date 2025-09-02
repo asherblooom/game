@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include "../game.hpp"
+#include "input_manager.hpp"
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -76,7 +77,7 @@ int main() {
 		if (xpos - xposOld != 0 && ypos - yposOld != 0) {
 			updateMousePosition(window, xpos, ypos);
 		} else {
-			cardGame->ChangeInMousePos = glm::vec2(0);
+			InputManager::ChangeInMousePos = glm::vec2(0);
 		}
 		cardGame->ProcessInput(deltaTime);
 
@@ -140,9 +141,9 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 		glfwSetWindowShouldClose(window, true);
 	if (key >= 0 && key < 1024) {
 		if (action == GLFW_PRESS)
-			cardGame->Keys[key] = true;
+			InputManager::Keys[key] = true;
 		else if (action == GLFW_RELEASE)
-			cardGame->Keys[key] = false;
+			InputManager::Keys[key] = false;
 	}
 }
 
@@ -162,8 +163,8 @@ void updateMousePosition(GLFWwindow *window, double xpos, double ypos) {
 	double yRatio = SCR_HEIGHT / gameHeight;
 	glm::vec2 mousePos = {xpos * xRatio, ypos * yRatio};
 
-	cardGame->MousePos = mousePos;
-	cardGame->ChangeInMousePos = mousePos - oldMousePosWorld;
+	InputManager::MousePos = mousePos;
+	InputManager::ChangeInMousePos = mousePos - oldMousePosWorld;
 	oldMousePosWorld = mousePos;
 }
 
@@ -171,8 +172,8 @@ void updateMousePosition(GLFWwindow *window, double xpos, double ypos) {
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
 	if (button >= 0 && button <= 2) {
 		if (action == GLFW_PRESS)
-			cardGame->MouseButtons[button] = true;
+			InputManager::MouseButtons[button] = true;
 		else if (action == GLFW_RELEASE)
-			cardGame->MouseButtons[button] = false;
+			InputManager::MouseButtons[button] = false;
 	}
 }

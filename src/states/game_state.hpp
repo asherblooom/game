@@ -1,47 +1,35 @@
-#ifndef GAMEBASE_HPP
-#define GAMEBASE_HPP
-#include <glad/glad.h>
+#ifndef GAME_STATE_HPP
+#define GAME_STATE_HPP
 
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
+#include <memory>
+#include "../engine/objects/card_object.hpp"
+#include "../state_manager.hpp"
+#include "state_interface.hpp"
 
-#include "engine/objects/card_object.hpp"
-#include "engine/render/sprite_renderer.hpp"
-#include "engine/render/text_renderer.hpp"
-#include "engine/resource_manager.hpp"
-
-class BaseGame {
+class GameState : public StateInterface {
 public:
-	bool Keys[1024];
-	bool MouseButtons[3];
-	glm::vec2 MousePos;
-	glm::vec2 ChangeInMousePos;
-	BaseGame(unsigned int width, unsigned int height)
-		: width{width}, height{height} {
-		// create default renderers
-		spriteRenderer = new SpriteRenderer(width, height);
-		textRenderer = new TextRenderer(width, height);
-		// load default assets
+	GameState(const StateManager& manager) : manager{manager} {
 		LoadCardTextures();
-		ResourceManager::LoadFont("default", "OpenSans-Regular.ttf", 32);
-	}
-	virtual ~BaseGame() {
-		delete spriteRenderer;
-		delete textRenderer;
+		ResourceManager::LoadDDSTexture("background", "background.dds");
+		background = GameObject({0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
 	}
 
-	virtual void Init() = 0;
-	virtual void ProcessInput(float dt) = 0;
-	virtual void Update(float dt) = 0;
-	virtual void Render() = 0;
+	void Init() override;
+	void ProcessInput(float dt) override;
+	void Update(float dt) override;
+	void Render() override;
 
-protected:
-	// the max values in the coordinate system for x and y respectively
-	unsigned int width, height;
-	// renderers
-	// these are pointers so that we can choose when to destruct them (that is, before glfwTerminate is called)
-	SpriteRenderer* spriteRenderer;
-	TextRenderer* textRenderer;
+private:
+	const StateManager& manager;
+
+	std::vector<CardObject> cards;
+	// stores a pointer to the card in the cards vector when said card is hovered over
+	// set to nullptr if no card is hovered over
+	CardObject* selectedCard = nullptr;
+	GameObject background;
+	// used for iterating through all the cards
+	int cardCount = 0;
+	int suitCount = 0;
 
 	// basic utility functions for loading and getting card textures
 	void LoadCardTextures() {
@@ -74,5 +62,7 @@ protected:
 								"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
 		return ResourceManager::GetArrayItemIndex("cards", values[value] + "-" + suits[suit]);
 	}
+	CardObject& makeCard(CardValue value, CardSuit suit, glm::vec2 pos);
 };
+
 #endif
