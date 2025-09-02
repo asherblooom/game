@@ -19,7 +19,7 @@ std::map<std::string, Font> ResourceManager::Fonts;
 
 Shader &ResourceManager::GetShader(std::string name) {
 	if (!Shaders.contains(name))
-		std::cerr << "ERROR: Can't find shader: " << name << "\n";
+		std::cerr << "ERROR::SHADER: Can't find shader: " << name << "\n";
 	return Shaders.at(name);
 }
 
@@ -74,7 +74,7 @@ Shader &ResourceManager::LoadShader(std::string name, std::string vShaderFile, s
 			geometryShaderFile.close();
 			geometryCode = gShaderStream.str();
 		}
-	} catch (std::exception e) {
+	} catch (std::exception_ptr p) {
 		std::cerr << "ERROR::SHADER: Failed to read shader files \n";
 	}
 	const char *vShaderCode = vertexCode.c_str();
@@ -191,7 +191,7 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, std::string ddsFile
 
 Texture2D &ResourceManager::GetTexture(std::string name) {
 	if (!Textures.contains(name))
-		std::cerr << "ERROR: Can't find texture: " << name << "\n";
+		std::cerr << "ERROR::TEXTURE: Can't find texture: " << name << "\n";
 	return Textures.at(name);
 }
 
@@ -343,13 +343,15 @@ Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string arrayName, std:
 
 Texture2DArray &ResourceManager::GetTextureArray(std::string name) {
 	if (!TextureArrays.contains(name))
-		std::cerr << "ERROR: Can't find texture array: " << name << "\n";
+		std::cerr << "ERROR::TEXTURE: Can't find texture array: " << name << "\n";
 	return TextureArrays.at(name);
 }
 
 int ResourceManager::GetArrayItemIndex(std::string arrayName, std::string itemName) {
 	if (!TextureArrays.contains(arrayName))
-		std::cerr << "ERROR: Can't find texture array: " << arrayName << "\n";
+		std::cerr << "ERROR::TEXTURE: Can't find texture array: " << arrayName << "\n";
+	if (!ArrayItemNames.at(arrayName).contains(itemName))
+		std::cerr << "ERROR::TEXTURE: Can't find item: " << itemName << " in texture array: " << arrayName << "\n";
 	return ArrayItemNames.at(arrayName).at(itemName);
 }
 
@@ -425,7 +427,7 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 
 Font &ResourceManager::GetFont(std::string name) {
 	if (!Fonts.contains(name))
-		std::cerr << "ERROR: Can't find font: " << name << "\n";
+		std::cerr << "ERROR::FONT: Can't find font: " << name << "\n";
 	return Fonts.at(name);
 }
 

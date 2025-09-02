@@ -8,7 +8,7 @@
 
 #include "engine/render/sprite_renderer.hpp"
 #include "engine/render/text_renderer.hpp"
-#include "engine/resource_manager.hpp"
+#include "resource_loader.hpp"
 #include "states/state_interface.hpp"
 
 class StateManager {
@@ -16,23 +16,19 @@ public:
 	std::vector<std::unique_ptr<StateInterface>> States;
 	// the max values in the coordinate system for x and y respectively
 	unsigned int Width, Height;
-	// renderers
-	// these are pointers so that we can choose when to destruct them (that is, before glfwTerminate is called)
-	SpriteRenderer* spriteRenderer;
-	TextRenderer* textRenderer;
+	SpriteRenderer spriteRenderer;
+	TextRenderer textRenderer;
 
 	StateManager(unsigned int width, unsigned int height)
-		: Width{width}, Height{height} {
-		// create default renderers
-		spriteRenderer = new SpriteRenderer(width, height);
-		textRenderer = new TextRenderer(width, height);
-	}
-	virtual ~StateManager() {
-		delete spriteRenderer;
-		delete textRenderer;
+		: Width{width}, Height{height}, spriteRenderer{SpriteRenderer(width, height)}, textRenderer{TextRenderer(width, height)} {
+		// TODO: make these static??? they only use width/height for projection matrix.... put that somewhere else??
+		// Then we don't need to initialise? what about destructing them before glfwTerminate?...
 	}
 
-	void Start();  // TODO: load all textures/fonts here!!?!?!?!
+	void Start(StateInterface* startState) {
+		currentState = startState;
+	}
+	// TODO: load all textures/fonts here!!?!?!?!
 	// TODO: get rid of input manager????
 
 	void ChangeState(StateInterface* state);

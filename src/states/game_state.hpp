@@ -7,14 +7,14 @@
 
 class GameState : public StateInterface {
 public:
-	GameState(const StateManager& manager);
+	GameState(StateManager& manager);
 
 	void ProcessInput(float dt) override;
 	void Update(float dt) override;
 	void Render() override;
 
 private:
-	const StateManager& manager;
+	StateManager& manager;
 
 	std::vector<CardObject> cards;
 	// stores a pointer to the card in the cards vector when said card is hovered over

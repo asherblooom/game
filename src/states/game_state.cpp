@@ -4,7 +4,7 @@
 #include "../engine/input_manager.hpp"
 #include "../engine/resource_manager.hpp"
 
-GameState::GameState(const StateManager& manager) : manager{manager} {
+GameState::GameState(StateManager& manager) : manager{manager} {
 	background = GameObject({0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
 }
 
@@ -97,11 +97,11 @@ void GameState::Update(float dt) {
 }
 
 void GameState::Render() {
-	manager.spriteRenderer->Draw(&background);
-	manager.textRenderer->RenderText("abcdefghijklmnopqrstuvwxyz", 100, 100, 1, ResourceManager::GetFont("default"));
-	manager.textRenderer->RenderText("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 100, 150, 1, ResourceManager::GetFont("default"));
+	manager.spriteRenderer.Draw(&background);
+	manager.textRenderer.RenderText("abcdefghijklmnopqrstuvwxyz", 100, 100, 1, ResourceManager::GetFont("default"));
+	manager.textRenderer.RenderText("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 100, 150, 1, ResourceManager::GetFont("default"));
 	for (CardObject& card : cards) {
-		manager.spriteRenderer->Draw(&card);
+		manager.spriteRenderer.Draw(&card);
 	}
 }
 

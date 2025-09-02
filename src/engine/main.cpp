@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include "../state_manager.hpp"
+#include "../states/game_state.hpp"
 #include "input_manager.hpp"
 
 const unsigned int SCR_WIDTH = 1920;
@@ -58,7 +59,8 @@ int main() {
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
-	manager->Start();
+	ResourceLoader::LoadAll();
+	manager->Start(new GameState(*manager));
 
 	float deltaTime, lastFrame = 0.0f;
 	double xpos, ypos;
