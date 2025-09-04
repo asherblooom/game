@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include "../engine/input_manager.hpp"
 #include "../engine/resource_manager.hpp"
+#include "state_interface.hpp"
 
 GameState::GameState(StateManager& manager) : manager{manager} {
 	background = GameObject({0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
@@ -89,11 +90,12 @@ void GameState::ProcessInput(float dt) {
 	}
 }
 
-void GameState::Update(float dt) {
+StateInterface* GameState::Update(float dt) {
 	// if there is a selected card and the mouse is down, make it follow the mouse pointer
 	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
 		selectedCard->Position += InputManager::ChangeInMousePos;
 	}
+	return nullptr;
 }
 
 void GameState::Render() {

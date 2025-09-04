@@ -4,16 +4,16 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <memory>
 
 #include "engine/render/sprite_renderer.hpp"
 #include "engine/render/text_renderer.hpp"
 #include "resource_loader.hpp"
 #include "states/state_interface.hpp"
 
+class GameState;
+
 class StateManager {
 public:
-	std::vector<std::unique_ptr<StateInterface>> States;
 	// the max values in the coordinate system for x and y respectively
 	unsigned int Width, Height;
 	SpriteRenderer spriteRenderer;
@@ -25,18 +25,24 @@ public:
 		// Then we don't need to initialise? what about destructing them before glfwTerminate?...
 	}
 
-	void Start(StateInterface* startState) {
-		currentState = startState;
+	void Start() {
+		ResourceLoader::LoadAll();
+		currentState = new GameState(*this);
 	}
 	// TODO: load all textures/fonts here!!?!?!?!
 	// TODO: get rid of input manager????
 
-	void ChangeState(StateInterface* state);
 	// TODO: add cleanup functions to each state?
-	// implement this function!
 
 	void ProcessInput(float dt) { currentState->ProcessInput(dt); }
-	void Update(float dt) { currentState->Update(dt); }
+	void Update(float dt) {
+		StateInterface* newState = currentState->Update(dt);
+		// done like this so we don't delete the currentState until we have returned from it's method
+		if (newState != nullptr) {
+			delete currentState;
+			currentState = newState;
+		}
+	}
 	void Render() { currentState->Render(); }
 
 private:

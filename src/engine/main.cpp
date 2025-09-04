@@ -59,7 +59,6 @@ int main() {
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
-	ResourceLoader::LoadAll();
 	manager->Start(new GameState(*manager));
 
 	float deltaTime, lastFrame = 0.0f;
