@@ -22,22 +22,27 @@ struct Window {
 	bool ShouldClose();
 	float GetElapsedFrameTime();
 	void PollEvents();
-	// TODO: can we turn this into a callback especially now that input manager is it's own thing???
-	void UpdateMousePosition();
 	void SetBackground(float red, float green, float blue);
 	void SwapBuffers();
 
+	// getters for variables that relate to size and position of screen inside of (black) bounding bars
+	// gets the top left x coordinate of usable screen space
+	const unsigned int &XStart() const { return xStart; }
+	// gets the top left y coordinate of usable screen space
+	const unsigned int &YStart() const { return yStart; }
+	// gets the width of usable screen space
+	const unsigned int &Width() const { return scrWidth; }
+	// gets the height of usable screen space
+	const unsigned int &Height() const { return scrHeight; }
+
 private:
 	GLFWwindow *window;
-	const unsigned int width;
-	const unsigned int height;
+	static unsigned int scrWidth;
+	static unsigned int scrHeight;
+	static unsigned int xStart;
+	static unsigned int yStart;
 
 	float lastFrameTime = 0.0f;
-
-	// used to calculate change in mouse position
-	glm::vec2 oldMousePosWorld = {0, 0};  // world space position
-	double xposOld, yposOld;			  // screen space position
-	double xpos, ypos;
 
 	// callback for updating window size
 	static void framebufferSizeCallback(GLFWwindow *window, int width, int height);
@@ -45,6 +50,8 @@ private:
 	static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mode);
 	// callback for processing mouse input
 	static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
+	// callback for processing mouse movement
+	static void cursorPosCallback(GLFWwindow *window, double xpos, double ypos);
 	// calculates the boundaries of the screen space needed to maintain a constant
 	// aspect ratio and keep everything displayed
 	static RenderBounds calculateRenderBounds(int windowWidth, int windowHeight);

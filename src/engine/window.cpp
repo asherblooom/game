@@ -1,10 +1,17 @@
 #include "window.hpp"
+#include <GLFW/glfw3.h>
 #include <iostream>
 #include "input_manager.hpp"
 #include "resource_manager.hpp"
 
-Window::Window(std::string name, unsigned int width, unsigned int height)
-	: width{width}, height{height} {
+unsigned int Window::scrWidth = 0;
+unsigned int Window::scrHeight = 0;
+unsigned int Window::xStart = 0;
+unsigned int Window::yStart = 0;
+
+Window::Window(std::string name, unsigned int width, unsigned int height) {
+	scrWidth = width;
+	scrHeight = height;
 	// Initialise glfw and set options
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -38,6 +45,7 @@ Window::Window(std::string name, unsigned int width, unsigned int height)
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 	glfwSetKeyCallback(window, keyCallback);
 	glfwSetMouseButtonCallback(window, mouseButtonCallback);
+	glfwSetCursorPosCallback(window, cursorPosCallback);
 }
 
 Window::~Window() {
@@ -60,31 +68,34 @@ void Window::PollEvents() {
 	glfwPollEvents();
 }
 
-void Window::UpdateMousePosition() {
-	glfwGetCursorPos(window, &xpos, &ypos);
-	if (xpos - xposOld != 0 && ypos - yposOld != 0) {
-		int currentW, currentH;
-		glfwGetWindowSize(window, &currentW, &currentH);
-		RenderBounds bounds = calculateRenderBounds(currentW, currentH);
-
-		// transform coordinates from screen space into world space
-
-		// move top left to match beginning of render area
-		xpos = xpos - bounds.x;
-		ypos = ypos - bounds.y;
-		// we know world space has coordinates (0, 0) to (SCR_WIDTH, SCR_HEIGHT)
-		//  as those constants are what we used to construct our Game object with
-		double xRatio = width / bounds.width;
-		double yRatio = height / bounds.height;
-		glm::vec2 mousePos = {xpos * xRatio, ypos * yRatio};
-
-		InputManager::MousePos = mousePos;
-		InputManager::ChangeInMousePos = mousePos - oldMousePosWorld;
-		oldMousePosWorld = mousePos;
-	} else {
-		InputManager::ChangeInMousePos = glm::vec2(0);
-	}
+void Window::cursorPosCallback(GLFWwindow *window, double xpos, double ypos) {
+	InputManager::ScreenMousePos = {xpos, ypos};
 }
+
+// void Window::updateMousePosition(GLFWwindow *window, double xpos, double ypos) {
+// 	// if (xpos - xposOld != 0 && ypos - yposOld != 0) {
+// 	int currentW, currentH;
+// 	glfwGetWindowSize(window, &currentW, &currentH);
+// 	RenderBounds bounds = calculateRenderBounds(currentW, currentH);
+//
+// 	// transform coordinates from screen space into world space
+//
+// 	// move top left to match beginning of render area
+// 	xpos = xpos - bounds.x;
+// 	ypos = ypos - bounds.y;
+// 	// we know world space has coordinates (0, 0) to (width, height)
+// 	//  as those constants are what we used to construct our window with
+// 	double xRatio = width / bounds.width;
+// 	double yRatio = height / bounds.height;
+// 	glm::vec2 mousePos = {xpos * xRatio, ypos * yRatio};
+//
+// 	InputManager::MousePos = mousePos;
+// 	InputManager::ChangeInMousePos = mousePos - oldMousePosWorld;
+// 	oldMousePosWorld = mousePos;
+// 	// } else {
+// 	// InputManager::ChangeInMousePos = glm::vec2(0);
+// 	// }
+// }
 
 void Window::SetBackground(float red, float green, float blue) {
 	glClearColor(red, green, blue, 1.0f);
@@ -97,6 +108,10 @@ void Window::SwapBuffers() {
 
 void Window::framebufferSizeCallback(GLFWwindow *window, int width, int height) {
 	RenderBounds bounds = calculateRenderBounds(width, height);
+	scrWidth = bounds.width;
+	scrHeight = bounds.height;
+	xStart = bounds.x;
+	yStart = bounds.y;
 	glViewport(bounds.x, bounds.y, bounds.width, bounds.height);
 }
 
