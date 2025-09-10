@@ -10,7 +10,7 @@
 
 class SpriteRenderer {
 public:
-	SpriteRenderer(unsigned int width, unsigned int height);
+	SpriteRenderer(unsigned int gameWidth, unsigned int gameHeight);
 	~SpriteRenderer();
 	// Renders a defined quad textured with given texture using the renderer's shader
 	void Draw(GameObject* object);

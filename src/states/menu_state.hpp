@@ -5,12 +5,13 @@
 #include "state_interface.hpp"
 
 class MenuState : public StateInterface {
+public:
 	MenuState(const StateManager& manager) : manager{manager} {
 		background = GameObject({0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
 	}
 
 	void ProcessInput(float dt) override;
-	void Update(float dt) override;
+	StateInterface* Update(float dt) override;
 	void Render() override;
 
 private:

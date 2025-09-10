@@ -19,7 +19,7 @@ Window::Window(std::string name, unsigned int width, unsigned int height) {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// create window
-	GLFWwindow *window = glfwCreateWindow(width, height, name.c_str(), NULL, NULL);
+	window = glfwCreateWindow(width, height, name.c_str(), NULL, NULL);
 	if (window == NULL) {
 		std::cout << "Failed to create GLFW window\n";
 		glfwTerminate();
@@ -69,7 +69,7 @@ void Window::PollEvents() {
 }
 
 void Window::cursorPosCallback(GLFWwindow *window, double xpos, double ypos) {
-	InputManager::ScreenMousePos = {xpos, ypos};
+	InputManager::SetScreenMousePos(xpos, ypos);
 }
 
 // void Window::updateMousePosition(GLFWwindow *window, double xpos, double ypos) {

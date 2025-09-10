@@ -8,7 +8,7 @@ public:
 	// otherwise should return nullptr
 	virtual StateInterface* Update(float dt) = 0;
 	virtual void Render() = 0;
-	virtual ~StateInterface();
+	virtual ~StateInterface() {}
 };
 
 #endif

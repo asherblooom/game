@@ -4,9 +4,9 @@
 #include "../resource_manager.hpp"
 #include "vertex.hpp"
 
-SpriteRenderer::SpriteRenderer(unsigned int width, unsigned int height) {
+SpriteRenderer::SpriteRenderer(unsigned int gameWidth, unsigned int gameHeight) {
 	shader = ResourceManager::LoadShader("sprite", "sprite.vert", "sprite.frag");
-	shader.SetMatrix4("projection", glm::ortho(0.0f, (float)(width), (float)(height), 0.0f, -1.0f, 1.0f), true);
+	shader.SetMatrix4("projection", glm::ortho(0.0f, (float)(gameWidth), (float)(gameHeight), 0.0f, -1.0f, 1.0f), true);
 	// configure VAO/VBO
 	unsigned int VBO;
 	std::vector<Vertex> vertices = {

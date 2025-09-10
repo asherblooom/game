@@ -3,7 +3,6 @@
 #include <GLFW/glfw3.h>
 #include "../engine/input_manager.hpp"
 #include "../engine/resource_manager.hpp"
-#include "state_interface.hpp"
 
 GameState::GameState(StateManager& manager) : manager{manager} {
 	background = GameObject({0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));

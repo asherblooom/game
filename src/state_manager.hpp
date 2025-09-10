@@ -7,48 +7,34 @@
 
 #include "engine/render/sprite_renderer.hpp"
 #include "engine/render/text_renderer.hpp"
-#include "resource_loader.hpp"
 #include "states/state_interface.hpp"
-
-class GameState;
 
 class StateManager {
 public:
 	// the max values in the coordinate system for x and y respectively
 	unsigned int Width, Height;
+	// used by all states so stored here
 	SpriteRenderer spriteRenderer;
 	TextRenderer textRenderer;
 
-	StateManager(unsigned int width, unsigned int height)
-		: Width{width}, Height{height}, spriteRenderer{SpriteRenderer(width, height)}, textRenderer{TextRenderer(width, height)} {
-		// TODO: make these static??? they only use width/height for projection matrix.... put that somewhere else??
-		// Then we don't need to initialise? what about destructing them before glfwTerminate?...
-	}
+	StateManager(unsigned int gameWidth, unsigned int gameHeight);
+	~StateManager();
 
-	void Start() {
-		ResourceLoader::LoadAll();
-		currentState = new GameState(*this);
-	}
-	// TODO: load all textures/fonts here!!?!?!?!
-	// TODO: get rid of input manager????
+	// pass heap allocated states for the manager to use
+	// will be freed by the manager on destruction
+	void Add(std::string name, StateInterface* state);
+	void SetStart(std::string stateName);
 
-	// TODO: add cleanup functions to each state?
+	// TODO: add start and cleanup functions to each state
+	// TODO: stop making new states etc. for each change!
+	// TODO: add a state stack!
 
-	void ProcessInput(float dt) { currentState->ProcessInput(dt); }
-	void Update(float dt) {
-		StateInterface* newState = currentState->Update(dt);
-		// done like this so we don't delete the currentState until we have returned from it's method
-		if (newState != nullptr) {
-			delete currentState;
-			currentState = newState;
-		}
-	}
-	void Render() { currentState->Render(); }
+	void ProcessInput(float dt);
+	void Update(float dt);
+	void Render();
 
 private:
+	std::map<std::string, StateInterface*> states;
 	StateInterface* currentState;
-
-	void initialiseStates() {
-	};
 };
 #endif

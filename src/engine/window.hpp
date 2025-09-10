@@ -15,7 +15,6 @@ struct RenderBounds {
 };
 
 struct Window {
-	// here width and height are the max values for the x and y coords respectively
 	Window(std::string name, unsigned int width = 1920, unsigned int height = 1080);
 	~Window();
 
@@ -26,6 +25,7 @@ struct Window {
 	void SwapBuffers();
 
 	// getters for variables that relate to size and position of screen inside of (black) bounding bars
+
 	// gets the top left x coordinate of usable screen space
 	const unsigned int &XStart() const { return xStart; }
 	// gets the top left y coordinate of usable screen space
