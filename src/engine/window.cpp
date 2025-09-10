@@ -68,35 +68,6 @@ void Window::PollEvents() {
 	glfwPollEvents();
 }
 
-void Window::cursorPosCallback(GLFWwindow *window, double xpos, double ypos) {
-	InputManager::SetScreenMousePos(xpos, ypos);
-}
-
-// void Window::updateMousePosition(GLFWwindow *window, double xpos, double ypos) {
-// 	// if (xpos - xposOld != 0 && ypos - yposOld != 0) {
-// 	int currentW, currentH;
-// 	glfwGetWindowSize(window, &currentW, &currentH);
-// 	RenderBounds bounds = calculateRenderBounds(currentW, currentH);
-//
-// 	// transform coordinates from screen space into world space
-//
-// 	// move top left to match beginning of render area
-// 	xpos = xpos - bounds.x;
-// 	ypos = ypos - bounds.y;
-// 	// we know world space has coordinates (0, 0) to (width, height)
-// 	//  as those constants are what we used to construct our window with
-// 	double xRatio = width / bounds.width;
-// 	double yRatio = height / bounds.height;
-// 	glm::vec2 mousePos = {xpos * xRatio, ypos * yRatio};
-//
-// 	InputManager::MousePos = mousePos;
-// 	InputManager::ChangeInMousePos = mousePos - oldMousePosWorld;
-// 	oldMousePosWorld = mousePos;
-// 	// } else {
-// 	// InputManager::ChangeInMousePos = glm::vec2(0);
-// 	// }
-// }
-
 void Window::SetBackground(float red, float green, float blue) {
 	glClearColor(red, green, blue, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -134,6 +105,10 @@ void Window::mouseButtonCallback(GLFWwindow *window, int button, int action, int
 		else if (action == GLFW_RELEASE)
 			InputManager::MouseButtons[button] = false;
 	}
+}
+
+void Window::cursorPosCallback(GLFWwindow *window, double xpos, double ypos) {
+	InputManager::SetScreenMousePos(xpos, ypos);
 }
 
 RenderBounds Window::calculateRenderBounds(int windowWidth, int windowHeight) {
