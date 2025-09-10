@@ -10,7 +10,7 @@ public:
 	GameState(StateManager& manager);
 
 	void ProcessInput(float dt) override;
-	StateInterface* Update(float dt) override;
+	void Update(float dt) override;
 	void Render() override;
 
 private:

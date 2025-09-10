@@ -15,7 +15,7 @@ int main() {
 	StateManager manager{GAME_WIDTH, GAME_HEIGHT};
 	// manager.Add("main menu", new MenuState(manager));
 	manager.Add("game", new GameState(manager));
-	manager.SetStart("game");
+	manager.PushState("game");
 
 	while (!window.ShouldClose()) {
 		float dt = window.GetElapsedFrameTime();

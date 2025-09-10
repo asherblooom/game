@@ -4,6 +4,8 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <list>
+#include <map>
 
 #include "engine/render/sprite_renderer.hpp"
 #include "engine/render/text_renderer.hpp"
@@ -23,11 +25,12 @@ public:
 	// pass heap allocated states for the manager to use
 	// will be freed by the manager on destruction
 	void Add(std::string name, StateInterface* state);
-	void SetStart(std::string stateName);
+	// sets currentState to pushed state
+	void PushState(std::string stateName);
+	// returns the state that is popped; sets currentState to top state
+	StateInterface* PopState();
 
 	// TODO: add start and cleanup functions to each state
-	// TODO: stop making new states etc. for each change!
-	// TODO: add a state stack!
 
 	void ProcessInput(float dt);
 	void Update(float dt);
@@ -35,6 +38,8 @@ public:
 
 private:
 	std::map<std::string, StateInterface*> states;
+	std::list<StateInterface*> stack;
+	// pointer to the top of stack
 	StateInterface* currentState;
 };
 #endif

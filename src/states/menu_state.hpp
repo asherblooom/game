@@ -1,21 +1,22 @@
 #ifndef MENU_STATE_HPP
 #define MENU_STATE_HPP
 
+#include "../engine/resource_manager.hpp"
 #include "../state_manager.hpp"
 #include "state_interface.hpp"
 
 class MenuState : public StateInterface {
 public:
-	MenuState(const StateManager& manager) : manager{manager} {
+	MenuState(StateManager& manager) : manager{manager} {
 		background = GameObject({0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
 	}
 
 	void ProcessInput(float dt) override;
-	StateInterface* Update(float dt) override;
+	void Update(float dt) override;
 	void Render() override;
 
 private:
-	const StateManager& manager;
+	StateManager& manager;
 
 	GameObject background;
 };
