@@ -1,35 +1,81 @@
-# A Game??????
-
-Hopefully
+# A 2D Card Game Engine
 
 ## Setup instructions
 
+### Linux
+
+<details>
+<summary>Prerequisites</summary>
+  
 - [Install GLFW](https://www.glfw.org/download.html)
+- Ensure the openGL, x11, xInput and xrandr development libraries are installed
+  
+  - _on ubuntu you can run_
+
+    ```
+    sudo apt install libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev
+    ```
+
+  - _on fedora you can run_
+
+    ```
+    sudo dnf install libglvnd-devel mesa-libGL-devel libXi-devel libX11-devel libXrandr-devel glfw-devel
+    ```
+
+</details>
+
+<details>
+<summary>Building and running your game</summary>
+
 - Clone the repository
+- Run `make` in the root directory
+- Run the resulting `game` file (located in the root directory)
 
-### Building the game
+</details>
 
-- Run `make` in the root directory\
-_Note: this has only been tested on linux_
-- Run the resulting `game` file (located in the home directory)
+### Windows
 
-### Building the examples
+<details>
+<summary>Prerequisites</summary>
+  
+- [Install GLFW](https://www.glfw.org/download.html)
+- Something else?
 
-- Run `make examples`\
-_Note: this has only been tested on linux_
-- The example programs will be created in the `examples` directory
+</details>
+
+<details>
+<summary>Building and running your game</summary>
+
+- Clone the repository
+- Something else?
+
+</details>
+
+## Demo Game instructions
+
+Press:
+
+- 'Left mouse button' while cursor is not over a card to create a new card at cursor position
+- 'Right mouse button' while cursor is over a card to delete it
+- '+' while cursor is over a card to make it bigger
+- '-' while cursor is over a card to make it smaller
+- 'c' to clear all cards
+- 'q' or 'esc' to exit the game
+
+Click and drag to move cards around
+
+_Note: the cards are currently rendered without mipmaps, as the mipmaps need some touching up before they will look good_
 
 ## Learning OpenGL and C++
 
 ### OpenGL
 
-- [This website](https://www.learnopengl.com/) teaches OpenGl ver. 3 (but is still very good and widely recommended)
-_Note: the boilerplate code for the examples (and the accompanying libraries, i.e. GLAD and glfw) and the maths library (GLM) are
-both taken from this website. Everything else is from the book below_
+- [This website](https://www.learnopengl.com/) teaches OpenGl ver. 3 (but is still very good and widely recommended) \
+_Note: the boilerplate code (and the accompanying libraries, i.e. GLAD and glfw) and the maths library (GLM) are
+both taken from this website_
 
 - [This book](https://linker2.worldcat.org/?jHome=https%3A%2F%2Fbris.idm.oclc.org%2Flogin%3Furl%3Dhttps%3A%2F%2Flearning.oreilly.com%2Flibrary%2Fview%2F~%2F9780133365023%2F%3Far%26orpq%26email%3D%5Eu&linktype=best&jHomeSig=18d1b86a967d5206742890e689759fabdaea0ebe6659ddee4ef995593108d486)
-teaches up to date OpenGL (ver. 4.5) - it is somewhat detailed and
-is also what the examples are based on. \
+teaches up to date OpenGL (ver. 4.5) - it is somewhat detailed \
 _Note: the link should take you to a sign-in page for UoB which will then direct
 you to the **6th edition** e-book. You can access the **7th edition** (most recent edition) by scrolling down and selecting it_
 
