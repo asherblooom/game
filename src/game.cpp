@@ -2,17 +2,12 @@
 
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "engine/objects/game_object.hpp"
+#include "engine/resource_manager.hpp"
 
 void Game::Init() {
-	ResourceManager::LoadShader("sprite", "src/shaders/sprite.vert", "src/shaders/sprite.frag");
-
-	glm::mat4 projection = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f);
-	Shader& spriteShader = ResourceManager::GetShader("sprite");
-	spriteShader.Use();
-	spriteShader.SetMatrix4("projection", projection);
-
-	renderer = new SpriteRenderer(spriteShader);
-	LoadCardTextures();
+	ResourceManager::LoadDDSTexture("background", "background.dds");
+	background = new GameObject({0, 0}, {width, width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
 }
 
 void Game::ProcessInput(float dt) {
@@ -104,8 +99,10 @@ void Game::Update(float dt) {
 }
 
 void Game::Render() {
+	spriteRenderer->Draw(background);
+	textRenderer->RenderText("hello", 100, 100, 1, ResourceManager::GetFont("default"));
 	for (CardObject& card : Cards) {
-		renderer->Draw(&card);
+		spriteRenderer->Draw(&card);
 	}
 }
 
@@ -124,31 +121,4 @@ CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 	} else
 		Cards.emplace_back(value, suit, cardTex, pos);
 	return Cards.back();
-}
-
-void Game::LoadCardTextures() {
-	ResourceManager::LoadDDSTexture("JOKER-BLACKJOKER", "media/textures/JOKER-BLACKJOKER.dds");
-	ResourceManager::LoadDDSTexture("JOKER-REDJOKER", "media/textures/JOKER-REDJOKER.dds");
-	std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
-	std::string values[] = {"ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
-							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
-	for (std::string suit : suits) {
-		for (std::string value : values) {
-			std::string name = value + "-" + suit;
-			ResourceManager::LoadDDSTexture(name, ("media/textures/" + name + ".dds").c_str(), false);
-		}
-	}
-}
-
-Texture2D Game::GetCardTexture(CardValue value, CardSuit suit) {
-	if (value == JOKER) {
-		if (suit == BLACKJOKER)
-			return ResourceManager::GetTexture("JOKER-BLACKJOKER");
-		else if (suit == REDJOKER)
-			return ResourceManager::GetTexture("JOKER-REDJOKER");
-	}
-	std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
-	std::string values[] = {"JOKER", "ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
-							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
-	return ResourceManager::GetTexture(values[value] + "-" + suits[suit]);
 }

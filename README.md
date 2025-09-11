@@ -7,19 +7,18 @@
 <details>
 <summary>Prerequisites</summary>
   
-- [Install GLFW](https://www.glfw.org/download.html)
-- Ensure the openGL, x11, xInput and xrandr development libraries are installed
+- Ensure the glfw, freetype, openGL, x11, xInput and xrandr development libraries are installed
   
   - _on ubuntu you can run_
 
     ```
-    sudo apt install libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev
+    sudo apt install libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev libfreetype6-dev
     ```
 
   - _on fedora you can run_
 
     ```
-    sudo dnf install libglvnd-devel mesa-libGL-devel libXi-devel libX11-devel libXrandr-devel glfw-devel
+    sudo dnf install libglvnd-devel mesa-libGL-devel libXi-devel libX11-devel libXrandr-devel glfw-devel freetype-devel
     ```
 
 </details>
@@ -39,6 +38,7 @@
 <summary>Prerequisites</summary>
   
 - [Install GLFW](https://www.glfw.org/download.html)
+- [Install freetype](https://freetype.org/download.html)
 - Something else?
 
 </details>

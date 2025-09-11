@@ -1,4 +1,3 @@
-
 #ifndef SPRITE_RENDERER_HPP
 #define SPRITE_RENDERER_HPP
 
@@ -9,18 +8,9 @@
 #include "../objects/game_object.hpp"
 #include "shader.hpp"
 
-struct Vertex {
-	// Position
-	float x;
-	float y;
-	//Texture coordinates
-	float s;
-	float t;
-};
-
 class SpriteRenderer {
 public:
-	SpriteRenderer(Shader shader);
+	SpriteRenderer(unsigned int width, unsigned int height);
 	~SpriteRenderer();
 	// Renders a defined quad textured with given texture using the renderer's shader
 	void Draw(GameObject* object);
@@ -28,8 +18,6 @@ public:
 private:
 	Shader shader;
 	unsigned int VAO;
-	// Initializes and configures VAO
-	void initRenderData();
 };
 
 #endif
