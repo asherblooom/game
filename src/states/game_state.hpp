@@ -5,6 +5,8 @@
 #include "../state_manager.hpp"
 #include "state_interface.hpp"
 
+#include <vector>
+
 class GameState : public StateInterface {
 public:
 	GameState(StateManager& manager);

@@ -7,6 +7,7 @@ class ResourceLoader {
 public:
 	static void LoadAll() {
 		ResourceManager::LoadDDSTexture("background", "background.dds");
+		ResourceManager::LoadDDSTexture("button", "button.dds");
 		LoadCardTextures();
 		ResourceManager::LoadFont("default", "OpenSans-Regular.ttf", 32);
 	}

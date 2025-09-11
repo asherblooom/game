@@ -13,9 +13,9 @@ int main() {
 	ResourceLoader::LoadAll();
 
 	StateManager manager{GAME_WIDTH, GAME_HEIGHT};
-	// manager.Add("main menu", new MenuState(manager));
+	manager.Add("main menu", new MenuState(manager));
 	manager.Add("game", new GameState(manager));
-	manager.PushState("game");
+	manager.PushState("main menu");
 
 	while (!window.ShouldClose()) {
 		float dt = window.GetElapsedFrameTime();
