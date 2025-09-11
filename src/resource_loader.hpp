@@ -6,10 +6,14 @@
 class ResourceLoader {
 public:
 	static void LoadAll() {
-		ResourceManager::LoadDDSTexture("background", "background.dds");
-		ResourceManager::LoadDDSTexture("button", "button.dds");
+		ResourceManager::LoadDDSTexture("background0", "background0.dds");
+		ResourceManager::LoadDDSTexture("play-button", "play-button.dds");
+		ResourceManager::LoadDDSTexture("pause-button", "pause-button.dds");
+		ResourceManager::LoadDDSTexture("return-button", "return-button.dds");
+		ResourceManager::LoadFont("default-100", "OpenSans-Regular.ttf", 100);
+		ResourceManager::LoadFont("default-50", "OpenSans-Regular.ttf", 50);
+		ResourceManager::LoadFont("default-25", "OpenSans-Regular.ttf", 25);
 		LoadCardTextures();
-		ResourceManager::LoadFont("default", "OpenSans-Regular.ttf", 32);
 	}
 
 private:

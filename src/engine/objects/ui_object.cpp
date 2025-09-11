@@ -16,8 +16,16 @@ void Button::Update() {
 			InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT] = false;
 		} else {
 			State = HOVERED;
+			if (colorChanged == false) {
+				Color -= glm::vec3(0.2);
+				colorChanged = true;
+			}
 		}
 	} else {
 		State = INACTIVE;
+		if (colorChanged == true) {
+			Color += glm::vec3(0.2);
+			colorChanged = false;
+		}
 	}
 }

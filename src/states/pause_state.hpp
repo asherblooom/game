@@ -1,5 +1,5 @@
-#ifndef MENU_STATE_HPP
-#define MENU_STATE_HPP
+#ifndef PAUSE_STATE_HPP
+#define PAUSE_STATE_HPP
 
 #include "../engine/objects/ui_object.hpp"
 #include "../state_manager.hpp"
@@ -7,9 +7,9 @@
 
 #include <map>
 
-class MenuState : public StateInterface {
+class PauseState : public StateInterface {
 public:
-	MenuState(StateManager& manager);
+	PauseState(StateManager& manager);
 
 	void ProcessInput(float dt) override;
 	void Update(float dt) override;

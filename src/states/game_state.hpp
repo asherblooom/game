@@ -2,6 +2,7 @@
 #define GAME_STATE_HPP
 
 #include "../engine/objects/card_object.hpp"
+#include "../engine/objects/ui_object.hpp"
 #include "../state_manager.hpp"
 #include "state_interface.hpp"
 
@@ -23,6 +24,7 @@ private:
 	// set to nullptr if no card is hovered over
 	CardObject* selectedCard = nullptr;
 	GameObject background;
+	Button pauseButton;
 	// used for iterating through all the cards
 	int cardCount = 0;
 	int suitCount = 0;

@@ -5,11 +5,20 @@
 #include "../engine/input_manager.hpp"
 #include "../engine/resource_manager.hpp"
 
-GameState::GameState(StateManager& manager) : manager{manager} {
-	background = GameObject({0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background"));
+GameState::GameState(StateManager& manager)
+	: manager{manager},
+	  pauseButton{glm::vec2{manager.Width - 65, 20},
+				  glm::vec2{40, 57},
+				  ResourceManager::GetTexture("pause-button")} {
+	background = GameObject({0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background0"));
 }
 
 void GameState::ProcessInput(float dt) {
+	pauseButton.Update();
+	if (pauseButton.State == ACTIVE) {
+		manager.PushState(PAUSE_MENU);
+		return;
+	}
 	// add new card
 	if (InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT] && !selectedCard) {
 		cardCount += 1;
@@ -99,11 +108,10 @@ void GameState::Update(float dt) {
 
 void GameState::Render() {
 	manager.spriteRenderer.Draw(&background);
-	manager.textRenderer.RenderText("abcdefghijklmnopqrstuvwxyz", 100, 100, 1, ResourceManager::GetFont("default"));
-	manager.textRenderer.RenderText("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 100, 150, 1, ResourceManager::GetFont("default"));
 	for (CardObject& card : cards) {
 		manager.spriteRenderer.Draw(&card);
 	}
+	manager.spriteRenderer.Draw(&pauseButton);
 }
 
 CardObject& GameState::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {

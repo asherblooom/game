@@ -26,6 +26,9 @@ public:
 	using UIObject::UIObject;
 
 	void Update() override;
+
+private:
+	bool colorChanged = false;
 };
 
 class TextBox : public UIObject {

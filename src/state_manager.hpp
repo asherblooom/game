@@ -13,7 +13,8 @@
 
 enum States {
 	MAIN_MENU,
-	GAME
+	GAME,
+	PAUSE_MENU
 };
 
 class StateManager {
