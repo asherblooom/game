@@ -13,11 +13,11 @@ StateManager::~StateManager() {
 	}
 }
 
-void StateManager::Add(std::string name, StateInterface* state) {
+void StateManager::Add(States name, StateInterface* state) {
 	states.emplace(name, state);
 }
 
-void StateManager::PushState(std::string stateName) {
+void StateManager::PushState(States stateName) {
 	StateInterface* state = states.at(stateName);
 	stack.push_back(state);
 	currentState = state;
@@ -39,12 +39,6 @@ void StateManager::ProcessInput(float dt) {
 }
 
 void StateManager::Update(float dt) {
-	// StateInterface* newState = currentState->Update(dt);
-	// // done like this so we don't delete the currentState until we have returned from it's method
-	// if (newState != nullptr) {
-	// 	delete currentState;
-	// 	currentState = newState;
-	// }
 	currentState->Update(dt);
 }
 

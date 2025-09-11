@@ -13,6 +13,7 @@ void Button::Update() {
 	if (DetectMouseOver()) {
 		if (InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
 			State = ACTIVE;
+			InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT] = false;
 		} else {
 			State = HOVERED;
 		}

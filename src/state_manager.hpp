@@ -11,6 +11,11 @@
 #include "engine/render/text_renderer.hpp"
 #include "states/state_interface.hpp"
 
+enum States {
+	MAIN_MENU,
+	GAME
+};
+
 class StateManager {
 public:
 	// the max values in the coordinate system for x and y respectively
@@ -24,9 +29,9 @@ public:
 
 	// pass heap allocated states for the manager to use
 	// will be freed by the manager on destruction
-	void Add(std::string name, StateInterface* state);
+	void Add(States name, StateInterface* state);
 	// sets currentState to pushed state
-	void PushState(std::string stateName);
+	void PushState(States stateName);
 	// returns the state that is popped; sets currentState to top state
 	StateInterface* PopState();
 
@@ -37,7 +42,7 @@ public:
 	void Render();
 
 private:
-	std::map<std::string, StateInterface*> states;
+	std::map<States, StateInterface*> states;
 	std::list<StateInterface*> stack;
 	// pointer to the top of stack
 	StateInterface* currentState;
