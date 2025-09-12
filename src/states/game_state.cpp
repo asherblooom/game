@@ -106,6 +106,7 @@ void GameState::Update(float dt) {
 	}
 	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT]) {
 		selectedCard->Flip();
+		Animations.emplace_back(std::make_unique<MoveToAnimation>(selectedCard, glm::vec2(100), 4));
 		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
 	}
 }

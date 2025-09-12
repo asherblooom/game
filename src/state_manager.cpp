@@ -40,6 +40,13 @@ void StateManager::ProcessInput(float dt) {
 
 void StateManager::Update(float dt) {
 	currentState->Update(dt);
+	for (auto iter = currentState->Animations.begin(); iter < currentState->Animations.end(); iter++) {
+		auto& animation = *iter;
+		if (animation->Finished)
+			currentState->Animations.erase(iter);
+		else
+			animation->Run();
+	}
 }
 
 void StateManager::Render() {
