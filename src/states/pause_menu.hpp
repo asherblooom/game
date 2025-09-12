@@ -1,5 +1,5 @@
-#ifndef PAUSE_STATE_HPP
-#define PAUSE_STATE_HPP
+#ifndef PAUSE_HPP
+#define PAUSE_HPP
 
 #include "../engine/objects/ui_object.hpp"
 #include "../state_manager.hpp"
@@ -7,13 +7,16 @@
 
 #include <map>
 
-class PauseState : public StateInterface {
+class PauseMenu : public StateInterface {
 public:
-	PauseState(StateManager& manager);
+	PauseMenu(StateManager& manager);
 
 	void ProcessInput(float dt) override;
 	void Update(float dt) override;
 	void Render() override;
+
+	void OnEnter() override {}
+	void OnExit() override {}
 
 private:
 	StateManager& manager;

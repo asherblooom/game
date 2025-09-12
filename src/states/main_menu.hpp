@@ -1,5 +1,5 @@
-#ifndef MENU_STATE_HPP
-#define MENU_STATE_HPP
+#ifndef MAIN_MENU_HPP
+#define MAIN_MENU_HPP
 
 #include "../engine/objects/ui_object.hpp"
 #include "../state_manager.hpp"
@@ -7,13 +7,16 @@
 
 #include <map>
 
-class MenuState : public StateInterface {
+class MainMenu : public StateInterface {
 public:
-	MenuState(StateManager& manager);
+	MainMenu(StateManager& manager);
 
 	void ProcessInput(float dt) override;
 	void Update(float dt) override;
 	void Render() override;
+
+	void OnEnter() override {}
+	void OnExit() override {}
 
 private:
 	StateManager& manager;

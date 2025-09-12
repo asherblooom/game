@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <list>
 #include <map>
+#include <memory>
 
 #include "engine/render/sprite_renderer.hpp"
 #include "engine/render/text_renderer.hpp"
@@ -26,24 +27,20 @@ public:
 	TextRenderer textRenderer;
 
 	StateManager(unsigned int gameWidth, unsigned int gameHeight);
-	~StateManager();
 
 	// pass heap allocated states for the manager to use
 	// will be freed by the manager on destruction
-	void Add(States name, StateInterface* state);
+	void Add(States name, std::unique_ptr<StateInterface> state);
 	// sets currentState to pushed state
 	void PushState(States stateName);
-	// returns the state that is popped; sets currentState to top state
-	StateInterface* PopState();
-
-	// TODO: add start and cleanup functions to each state
+	void PopState();
 
 	void ProcessInput(float dt);
 	void Update(float dt);
 	void Render();
 
 private:
-	std::map<States, StateInterface*> states;
+	std::map<States, std::unique_ptr<StateInterface>> states;
 	std::list<StateInterface*> stack;
 	// pointer to the top of stack
 	StateInterface* currentState;

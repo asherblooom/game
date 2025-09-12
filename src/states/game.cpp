@@ -1,11 +1,11 @@
-#include "game_state.hpp"
+#include "game.hpp"
 
 #include <GLFW/glfw3.h>
 
 #include "../engine/input_manager.hpp"
 #include "../engine/resource_manager.hpp"
 
-GameState::GameState(StateManager& manager)
+Game::Game(StateManager& manager)
 	: manager{manager},
 	  pauseButton{glm::vec2{manager.Width - 65, 20},
 				  glm::vec2{40, 57},
@@ -13,7 +13,7 @@ GameState::GameState(StateManager& manager)
 	background = GameObject({0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background0"));
 }
 
-void GameState::ProcessInput(float dt) {
+void Game::ProcessInput(float dt) {
 	pauseButton.Update();
 	if (pauseButton.State == ACTIVE) {
 		manager.PushState(PAUSE_MENU);
@@ -99,14 +99,14 @@ void GameState::ProcessInput(float dt) {
 	}
 }
 
-void GameState::Update(float dt) {
+void Game::Update(float dt) {
 	// if there is a selected card and the mouse is down, make it follow the mouse pointer
 	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
 		selectedCard->Position += InputManager::ChangeInMousePos;
 	}
 }
 
-void GameState::Render() {
+void Game::Render() {
 	manager.spriteRenderer.Draw(&background);
 	for (CardObject& card : cards) {
 		manager.spriteRenderer.Draw(&card);
@@ -114,7 +114,7 @@ void GameState::Render() {
 	manager.spriteRenderer.Draw(&pauseButton);
 }
 
-CardObject& GameState::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
+CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 	Texture2DArray cardTexArray = ResourceManager::GetTextureArray("cards");
 	int cardIndex = GetCardTextureIndex(value, suit);
 	if (selectedCard) {
@@ -132,7 +132,7 @@ CardObject& GameState::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 	return cards.back();
 }
 
-int GameState::GetCardTextureIndex(CardValue value, CardSuit suit) {
+int Game::GetCardTextureIndex(CardValue value, CardSuit suit) {
 	if (value == JOKER) {
 		if (suit == BLACKJOKER)
 			return ResourceManager::GetArrayItemIndex("cards", "JOKER-BLACKJOKER");
@@ -143,4 +143,11 @@ int GameState::GetCardTextureIndex(CardValue value, CardSuit suit) {
 	std::string values[] = {"JOKER", "ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
 							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
 	return ResourceManager::GetArrayItemIndex("cards", values[value] + "-" + suits[suit]);
+}
+
+void Game::Clear() {
+	selectedCard = nullptr;
+	cards.clear();
+	cardCount = 0;
+	suitCount = 0;
 }

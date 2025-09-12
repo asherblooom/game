@@ -3,12 +3,13 @@
 
 class StateInterface {
 public:
+	// called when state is pushed to stack
+	virtual void OnEnter() = 0;
 	virtual void ProcessInput(float dt) = 0;
-	// can return a pointer to a new (heap allocated) state if the state should change
-	// otherwise should return nullptr
 	virtual void Update(float dt) = 0;
 	virtual void Render() = 0;
-	virtual ~StateInterface() {}
+	// called when state is popped from stack
+	virtual void OnExit() = 0;
 };
 
 #endif

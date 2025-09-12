@@ -1,5 +1,5 @@
-#ifndef GAME_STATE_HPP
-#define GAME_STATE_HPP
+#ifndef GAME_HPP
+#define GAME_HPP
 
 #include "../engine/objects/card_object.hpp"
 #include "../engine/objects/ui_object.hpp"
@@ -8,13 +8,17 @@
 
 #include <vector>
 
-class GameState : public StateInterface {
+class Game : public StateInterface {
 public:
-	GameState(StateManager& manager);
+	Game(StateManager& manager);
 
 	void ProcessInput(float dt) override;
 	void Update(float dt) override;
 	void Render() override;
+
+	void OnEnter() override {}
+	void OnExit() override { Clear(); }
+	void Clear();
 
 private:
 	StateManager& manager;
