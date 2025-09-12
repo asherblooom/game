@@ -114,7 +114,7 @@ void GameState::Update(float dt) {
 	}
 	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT]) {
 		selectedCard->Flip();
-		selectedCard->MoveTo(glm::vec2(100), 4);
+		selectedCard->MoveTo(glm::vec2(100), 10);
 		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
 	}
 }

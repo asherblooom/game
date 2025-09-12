@@ -33,7 +33,7 @@ public:
 	bool HasAnimations();
 
 protected:
-	std::map<std::string, std::unique_ptr<Animation>> animations;
+	std::map<AnimationType, std::unique_ptr<Animation>> animations;
 };
 
 #endif

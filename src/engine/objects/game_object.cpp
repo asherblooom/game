@@ -21,7 +21,7 @@ bool GameObject::DetectMouseOver() {
 }
 
 void GameObject::MoveTo(glm::vec2 location, float speed) {
-	animations["MoveTo"] = (std::make_unique<MoveToAnimation>(Position, location, speed));
+	animations[MOVETO] = std::make_unique<MoveToAnimation>(Position, location, speed);
 }
 
 void GameObject::Animate() {

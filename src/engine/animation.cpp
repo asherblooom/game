@@ -1,4 +1,5 @@
 #include "animation.hpp"
+#include <iostream>
 #include "glm/detail/func_geometric.hpp"
 
 MoveToAnimation::MoveToAnimation(glm::vec2& position, glm::vec2 targetLocation, float speed)
@@ -33,4 +34,26 @@ void MoveToAnimation::Run() {
 		position = nextPos;
 	else if (Finished == true)
 		position = targetLocation;
+}
+
+FlipAnimation::FlipAnimation(glm::vec2& position, glm::vec2& size, int& textureIndex, int cardTexIndex, int backTexIndex, float speed)
+	: position{position}, size{size}, textureIndex{textureIndex}, originalSize{size}, cardTexIndex{cardTexIndex}, backTexIndex{backTexIndex}, speed{speed} {}
+
+void FlipAnimation::Run() {
+	if (size.x > 0 && size.x <= originalSize.x) {
+		size.x += sign * speed;
+		position.x -= (sign * speed) / 2;
+	} else if (size.x <= 0) {
+		sign = 1;
+		size.x = 1;
+		if (textureIndex == cardTexIndex) {
+			textureIndex = backTexIndex;
+		} else {
+			textureIndex = cardTexIndex;
+		}
+	}
+	if (size.x >= originalSize.x) {
+		size.x = originalSize.x;
+		Finished = true;
+	}
 }
