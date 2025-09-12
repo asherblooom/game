@@ -9,9 +9,6 @@ UIObject::UIObject(glm::vec2 pos, glm::vec2 size, Texture2D texture, glm::vec3 c
 UIObject::UIObject(glm::vec2 pos, glm::vec2 size, Texture2DArray textureArray, int textureIndex, glm::vec3 color)
 	: GameObject{pos, size, textureArray, textureIndex, color}, State{INACTIVE} {}
 
-Button::Button(glm::vec2 pos, glm::vec2 size, Texture2D texture, glm::vec3 color)
-	: UIObject(pos, size, texture, color) {}
-
 void Button::Update() {
 	if (DetectMouseOver()) {
 		if (InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
