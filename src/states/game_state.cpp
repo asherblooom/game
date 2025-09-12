@@ -103,6 +103,7 @@ void GameState::Update(float dt) {
 	// if there is a selected card and the mouse is down, make it follow the mouse pointer
 	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
 		selectedCard->Position += InputManager::ChangeInMousePos;
+		selectedCard->TextureIndex = ResourceManager::GetArrayItemIndex("cards", "BACK");
 	}
 }
 

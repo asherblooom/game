@@ -1,7 +1,6 @@
 #ifndef CARDOBJECT_HPP
 #define CARDOBJECT_HPP
 
-#include "../render/shader.hpp"
 #include "../render/texture.hpp"
 #include "game_object.hpp"
 
@@ -41,7 +40,7 @@ public:
 			   Texture2DArray textureArray,
 			   int textureIndex,
 			   glm::vec2 pos,
-			   glm::vec2 size = {216, 313.6},
+			   glm::vec2 size = {200, 280},
 			   glm::vec3 color = glm::vec3(1.0f));
 };
 
