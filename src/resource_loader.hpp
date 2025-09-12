@@ -17,9 +17,14 @@ public:
 	}
 
 private:
-	static void LoadCardTextures() {
+	static void LoadCardTextures(bool highRes = false) {
+		std::string path;
+		if (highRes)
+			path = "high-res-cards/";
+		else
+			path = "cards/";
 		std::vector<std::string> names{"BACK", "JOKER-BLACKJOKER", "JOKER-REDJOKER"};
-		std::vector<std::string> fileNames{"cards/BACK.dds", "cards/JOKER-BLACKJOKER.dds", "cards/JOKER-REDJOKER.dds"};
+		std::vector<std::string> fileNames{path + "BACK.dds", path + "JOKER-BLACKJOKER.dds", path + "JOKER-REDJOKER.dds"};
 
 		std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
 		std::string values[] = {"ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
@@ -28,7 +33,7 @@ private:
 			for (std::string value : values) {
 				std::string name = value + "-" + suit;
 				names.emplace_back(name);
-				fileNames.emplace_back("cards/" + name + ".dds");
+				fileNames.emplace_back(path + name + ".dds");
 			}
 		}
 		ResourceManager::LoadDDSTextureArray("cards", names, fileNames, false);

@@ -60,7 +60,7 @@ void GameState::ProcessInput(float dt) {
 		InputManager::Keys[GLFW_KEY_MINUS] = false;
 	}
 	// delete selected card
-	if (InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT]) {
+	if (InputManager::Keys[GLFW_KEY_D]) {
 		if (selectedCard) {
 			for (size_t i = 0; i < cards.size(); i++) {
 				if (&cards.at(i) == selectedCard) {
@@ -69,7 +69,7 @@ void GameState::ProcessInput(float dt) {
 				}
 			}
 		}
-		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
+		InputManager::Keys[GLFW_KEY_D] = false;
 	}
 	if (InputManager::Keys[GLFW_KEY_C]) {
 		selectedCard = nullptr;
@@ -103,7 +103,10 @@ void GameState::Update(float dt) {
 	// if there is a selected card and the mouse is down, make it follow the mouse pointer
 	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
 		selectedCard->Position += InputManager::ChangeInMousePos;
-		selectedCard->TextureIndex = ResourceManager::GetArrayItemIndex("cards", "BACK");
+	}
+	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT]) {
+		selectedCard->Flip();
+		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
 	}
 }
 
@@ -126,10 +129,10 @@ CardObject& GameState::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 				selectedCard = nullptr;
 			}
 		}
-		cards.emplace_back(value, suit, cardTexArray, cardIndex, pos);
+		cards.emplace_back(value, suit, cardTexArray, cardIndex, pos, FACEUP);
 		selectedCard = &cards.at(selectedLoc);
 	} else
-		cards.emplace_back(value, suit, cardTexArray, cardIndex, pos);
+		cards.emplace_back(value, suit, cardTexArray, cardIndex, pos, FACEUP);
 	return cards.back();
 }
 

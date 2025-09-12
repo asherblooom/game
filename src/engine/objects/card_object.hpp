@@ -30,18 +30,32 @@ enum CardSuit {
 	REDJOKER
 };
 
+enum CardSide {
+	FACEUP,
+	FACEDOWN
+};
+
 class CardObject : public GameObject {
 public:
 	CardValue Value;
 	CardSuit Suit;
+	CardSide Side;
 
 	CardObject(CardValue value,
 			   CardSuit suit,
 			   Texture2DArray textureArray,
 			   int textureIndex,
 			   glm::vec2 pos,
-			   glm::vec2 size = {200, 280},
-			   glm::vec3 color = glm::vec3(1.0f));
+			   CardSide side = FACEDOWN,
+			   glm::vec3 color = glm::vec3(1.0f),
+			   glm::vec2 size = {200, 280});
+
+	void Flip();
+	void FlipTo(CardSide side);
+
+private:
+	int cardIndex;
+	int backIndex;
 };
 
 #endif
