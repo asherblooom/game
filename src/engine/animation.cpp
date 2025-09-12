@@ -1,5 +1,4 @@
 #include "animation.hpp"
-#include <iostream>
 #include "glm/detail/func_geometric.hpp"
 
 MoveToAnimation::MoveToAnimation(glm::vec2& position, glm::vec2 targetLocation, float speed)
