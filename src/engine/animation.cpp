@@ -1,36 +1,36 @@
 #include "animation.hpp"
 #include "glm/detail/func_geometric.hpp"
 
-void Animation::updateTargetLocation(GameObject* target) {
-}
-
-MoveToAnimation::MoveToAnimation(GameObject* target, glm::vec2 location, float speed)
-	: Animation{target}, location{location}, speed{speed} {
-	direction = glm::normalize(location - target->Position);
+MoveToAnimation::MoveToAnimation(glm::vec2& position, glm::vec2 targetLocation, float speed)
+	: position{position}, targetLocation{targetLocation}, speed{speed} {
+	if (targetLocation == position)
+		Finished = true;
+	else {
+		direction = glm::normalize(targetLocation - position);
+	}
 }
 
 void MoveToAnimation::Run() {
+	glm::vec2 nextPos = position + speed * direction;
 	if (direction.x < 0 && direction.y > 0) {
-		if (target->Position.x <= location.x || target->Position.y >= location.y) {
+		if (nextPos.x <= targetLocation.x || nextPos.y >= targetLocation.y) {
 			Finished = true;
 		}
 	} else if (direction.x > 0 && direction.y < 0) {
-		if (target->Position.x >= location.x || target->Position.y <= location.y) {
+		if (nextPos.x >= targetLocation.x || nextPos.y <= targetLocation.y) {
 			Finished = true;
 		}
 	} else if (direction.x > 0 && direction.y > 0) {
-		if (target->Position.x >= location.x || target->Position.y >= location.y) {
+		if (nextPos.x >= targetLocation.x || nextPos.y >= targetLocation.y) {
 			Finished = true;
 		}
 	} else if (direction.x < 0 && direction.y < 0) {
-		if (target->Position.x <= location.x || target->Position.y <= location.y) {
+		if (nextPos.x <= targetLocation.x || nextPos.y <= targetLocation.y) {
 			Finished = true;
 		}
 	}
 	if (Finished == false)
-		target->Position += speed * direction;
+		position = nextPos;
 	else if (Finished == true)
-		target->Position = location;
-
-	// TODO: if array changes size, pointer to object changes size as well!
+		position = targetLocation;
 }

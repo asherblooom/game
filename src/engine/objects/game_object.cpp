@@ -1,4 +1,5 @@
 #include "game_object.hpp"
+#include <memory>
 #include "../input_manager.hpp"
 
 GameObject::GameObject() : Color{0}, Size{0}, Position{0}, Rotation{0} {}
@@ -17,4 +18,23 @@ bool GameObject::DetectMouseOver() {
 		return true;
 	} else
 		return false;
+}
+
+void GameObject::MoveTo(glm::vec2 location, float speed) {
+	animations["MoveTo"] = (std::make_unique<MoveToAnimation>(Position, location, speed));
+}
+
+void GameObject::Animate() {
+	for (auto iter = animations.begin(), nextIter = iter; iter != animations.end(); iter = nextIter) {
+		++nextIter;
+		auto& animation = iter->second;
+		if (animation->Finished)
+			animations.erase(iter);
+		else
+			animation->Run();
+	}
+}
+
+bool GameObject::HasAnimations() {
+	return !animations.empty();
 }

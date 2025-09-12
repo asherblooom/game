@@ -18,7 +18,7 @@ public:
 private:
 	StateManager& manager;
 
-	std::map<std::string, Button> buttons;
+	std::map<std::string, std::unique_ptr<Button>> buttons;
 	GameObject background;
 };
 

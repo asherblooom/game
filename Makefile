@@ -2,7 +2,7 @@ TARGET_EXEC := game
 CXX:=g++
 CC:=gcc
 INC_DIR:=lib
-CXXFLAGS:=-I$(INC_DIR) -march=native -Wall -Wextra -Wno-unused-parameter -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl $(shell pkg-config --cflags --libs freetype2) -std=c++20
+CXXFLAGS:=-I$(INC_DIR) -march=native -Wall -Wextra -Wno-unused-parameter -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl $(shell pkg-config --cflags --libs freetype2) -std=c++20 -fsanitize=address -static-libasan
 OBJ_DIR:=./obj
 SRC_DIR:=./src
 

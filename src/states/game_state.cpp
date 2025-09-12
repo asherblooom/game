@@ -1,16 +1,20 @@
 #include "game_state.hpp"
 
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 #include "../engine/input_manager.hpp"
 #include "../engine/resource_manager.hpp"
 
 GameState::GameState(StateManager& manager)
 	: manager{manager},
-	  pauseButton{glm::vec2{manager.Width - 65, 20},
-				  glm::vec2{40, 57},
+	  background{{0, 0},
+				 {manager.Width, manager.Width * (9.0 / 16.0)},
+				 ResourceManager::GetTexture("background0")},
+	  pauseButton{{manager.Width - 65, 20},
+				  {40, 57},
 				  ResourceManager::GetTexture("pause-button")} {
-	background = GameObject({0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background0"));
+	cards.reserve(MAX_CARDS);
 }
 
 void GameState::ProcessInput(float dt) {
@@ -21,6 +25,9 @@ void GameState::ProcessInput(float dt) {
 	}
 	// add new card
 	if (InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT] && !selectedCard) {
+		if (cards.size() == MAX_CARDS)
+			// don't make a card
+			return;
 		cardCount += 1;
 		// draw jokers once end of normal cards is reached
 		if (cardCount == 14 && suitCount == 3) {
@@ -85,10 +92,11 @@ void GameState::ProcessInput(float dt) {
 	}
 	// if no card currently selected, select a card which is over the mouse pointer
 	// loop through cards in reverse order, so as to pick the one on top (drawn last) if any overlap
+	// do not select the card if it is in the middle of an animation
 	if (!selectedCard) {
 		for (int i = cards.size() - 1; i >= 0; i--) {
 			CardObject& card = cards[i];
-			if (card.DetectMouseOver()) {
+			if (card.DetectMouseOver() && !card.HasAnimations()) {
 				selectedCard = &card;
 				// make selected card darker
 				card.Color -= glm::vec3(0.2);
@@ -106,7 +114,7 @@ void GameState::Update(float dt) {
 	}
 	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT]) {
 		selectedCard->Flip();
-		Animations.emplace_back(std::make_unique<MoveToAnimation>(selectedCard, glm::vec2(100), 4));
+		selectedCard->MoveTo(glm::vec2(100), 4);
 		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
 	}
 }
@@ -120,20 +128,13 @@ void GameState::Render() {
 }
 
 CardObject& GameState::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
+	if (cards.size() == MAX_CARDS) {
+		std::cerr << "Card limit reached, cannot create more cards\n";
+		throw;
+	}
 	Texture2DArray cardTexArray = ResourceManager::GetTextureArray("cards");
 	int cardIndex = GetCardTextureIndex(value, suit);
-	if (selectedCard) {
-		int selectedLoc = 0;
-		for (size_t i = 0; i < cards.size(); i++) {
-			if (&cards.at(i) == selectedCard) {
-				selectedLoc = i;
-				selectedCard = nullptr;
-			}
-		}
-		cards.emplace_back(value, suit, cardTexArray, cardIndex, pos, FACEUP);
-		selectedCard = &cards.at(selectedLoc);
-	} else
-		cards.emplace_back(value, suit, cardTexArray, cardIndex, pos, FACEUP);
+	cards.emplace_back(value, suit, cardTexArray, cardIndex, pos, FACEUP);
 	return cards.back();
 }
 
