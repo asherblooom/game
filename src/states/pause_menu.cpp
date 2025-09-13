@@ -1,8 +1,8 @@
-#include "pause_state.hpp"
+#include "pause_menu.hpp"
 
 #include "../engine/resource_manager.hpp"
 
-PauseState::PauseState(StateManager& manager)
+PauseMenu::PauseMenu(StateManager& manager)
 	: manager{manager},
 	  background{{0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background0"), glm::vec3(0.8)} {
 	buttons["resume"] = std::make_unique<Button>(glm::vec2{manager.Width / 2 - 168 / 2, manager.Height / 2 - 88 / 2},
@@ -13,9 +13,9 @@ PauseState::PauseState(StateManager& manager)
 												 ResourceManager::GetTexture("return-button"));
 }
 
-void PauseState::ProcessInput(float dt) {
+void PauseMenu::ProcessInput(float dt) {
 }
-void PauseState::Update(float dt) {
+void PauseMenu::Update(float dt) {
 	for (auto& pair : buttons) {
 		auto& button = pair.second;
 		button->Update();
@@ -31,7 +31,7 @@ void PauseState::Update(float dt) {
 		}
 	}
 }
-void PauseState::Render() {
+void PauseMenu::Render() {
 	manager.spriteRenderer.Draw(&background);
 	for (auto& pair : buttons) {
 		manager.spriteRenderer.Draw(&*pair.second);

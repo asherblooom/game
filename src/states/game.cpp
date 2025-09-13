@@ -1,4 +1,4 @@
-#include "game_state.hpp"
+#include "game.hpp"
 
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -6,7 +6,7 @@
 #include "../engine/input_manager.hpp"
 #include "../engine/resource_manager.hpp"
 
-GameState::GameState(StateManager& manager)
+Game::Game(StateManager& manager)
 	: manager{manager},
 	  background{{0, 0},
 				 {manager.Width, manager.Width * (9.0 / 16.0)},
@@ -17,7 +17,7 @@ GameState::GameState(StateManager& manager)
 	cards.reserve(MAX_CARDS);
 }
 
-void GameState::ProcessInput(float dt) {
+void Game::ProcessInput(float dt) {
 	pauseButton.Update();
 	if (pauseButton.State == ACTIVE) {
 		manager.PushState(PAUSE_MENU);
@@ -129,10 +129,10 @@ void GameState::ProcessInput(float dt) {
 	}
 }
 
-void GameState::Update(float dt) {
+void Game::Update(float dt) {
 }
 
-void GameState::Render() {
+void Game::Render() {
 	manager.spriteRenderer.Draw(&background);
 	for (CardObject& card : cards) {
 		manager.spriteRenderer.Draw(&card);
@@ -140,7 +140,7 @@ void GameState::Render() {
 	manager.spriteRenderer.Draw(&pauseButton);
 }
 
-CardObject& GameState::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
+CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 	if (cards.size() == MAX_CARDS) {
 		std::cerr << "Card limit reached, cannot create more cards\n";
 		throw;
@@ -151,7 +151,7 @@ CardObject& GameState::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
 	return cards.back();
 }
 
-int GameState::GetCardTextureIndex(CardValue value, CardSuit suit) {
+int Game::GetCardTextureIndex(CardValue value, CardSuit suit) {
 	if (value == JOKER) {
 		if (suit == BLACKJOKER)
 			return ResourceManager::GetArrayItemIndex("cards", "JOKER-BLACKJOKER");

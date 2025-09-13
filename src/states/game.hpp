@@ -1,5 +1,5 @@
-#ifndef GAME_STATE_HPP
-#define GAME_STATE_HPP
+#ifndef GAME_HPP
+#define GAME_HPP
 
 #include "../engine/objects/card_object.hpp"
 #include "../engine/objects/ui_object.hpp"
@@ -12,9 +12,9 @@
 // (MAX_CARDS space is reserved on construction of GameState so no reallocation will occur)
 const unsigned int MAX_CARDS = 54;
 
-class GameState : public StateInterface {
+class Game : public StateInterface {
 public:
-	GameState(StateManager& manager);
+	Game(StateManager& manager);
 
 	void ProcessInput(float dt) override;
 	void Update(float dt) override;

@@ -2,9 +2,9 @@
 #include "engine/window.hpp"
 #include "resource_loader.hpp"
 #include "state_manager.hpp"
-#include "states/game_state.hpp"
-#include "states/menu_state.hpp"
-#include "states/pause_state.hpp"
+#include "states/game.hpp"
+#include "states/main_menu.hpp"
+#include "states/pause_menu.hpp"
 
 int main() {
 	// size for game world; also initial size of window
@@ -14,9 +14,9 @@ int main() {
 	ResourceLoader::LoadAll();
 
 	StateManager manager{GAME_WIDTH, GAME_HEIGHT};
-	manager.Add(MAIN_MENU, new MenuState(manager));
-	manager.Add(GAME, new GameState(manager));
-	manager.Add(PAUSE_MENU, new PauseState(manager));
+	manager.Add(MAIN_MENU, new MainMenu(manager));
+	manager.Add(GAME, new Game(manager));
+	manager.Add(PAUSE_MENU, new PauseMenu(manager));
 	manager.PushState(MAIN_MENU);
 
 	while (!window.ShouldClose()) {

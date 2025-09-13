@@ -1,8 +1,8 @@
-#include "menu_state.hpp"
+#include "main_menu.hpp"
 
 #include "../engine/resource_manager.hpp"
 
-MenuState::MenuState(StateManager& manager)
+MainMenu::MainMenu(StateManager& manager)
 	: manager{manager},
 	  background{{0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background0")} {
 	buttons["play"] = std::make_unique<Button>(glm::vec2{manager.Width / 2 - 168 / 2, manager.Height / 2 - 88 / 2},
@@ -10,9 +10,9 @@ MenuState::MenuState(StateManager& manager)
 											   ResourceManager::GetTexture("play-button"));
 }
 
-void MenuState::ProcessInput(float dt) {
+void MainMenu::ProcessInput(float dt) {
 }
-void MenuState::Update(float dt) {
+void MainMenu::Update(float dt) {
 	for (auto& pair : buttons) {
 		auto& button = pair.second;
 		button->Update();
@@ -26,7 +26,7 @@ void MenuState::Update(float dt) {
 		}
 	}
 }
-void MenuState::Render() {
+void MainMenu::Render() {
 	manager.spriteRenderer.Draw(&background);
 	for (auto& pair : buttons) {
 		manager.spriteRenderer.Draw(&*pair.second);
