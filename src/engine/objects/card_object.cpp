@@ -19,20 +19,20 @@ CardObject::CardObject(CardValue value,
 		TextureIndex = backIndex;
 }
 
-void CardObject::Flip() {
-	animations[FLIP] = std::make_unique<FlipAnimation>(Position, Size, TextureIndex, cardIndex, backIndex, 20);
+void CardObject::Flip(float speed) {
+	animations[FLIP] = std::make_unique<FlipAnimation>(Position, Size, TextureIndex, cardIndex, backIndex, speed);
 	if (Side == FACEUP) {
 		Side = FACEDOWN;
 	} else if (Side == FACEDOWN) {
 		Side = FACEUP;
 	}
 }
-void CardObject::FlipTo(CardSide side) {
+void CardObject::FlipTo(CardSide side, float speed) {
 	if (side == FACEDOWN && Side == FACEUP) {
-		animations[FLIP] = std::make_unique<FlipAnimation>(Position, Size, TextureIndex, cardIndex, backIndex, 20);
+		animations[FLIP] = std::make_unique<FlipAnimation>(Position, Size, TextureIndex, cardIndex, backIndex, speed);
 		Side = FACEDOWN;
 	} else if (side == FACEUP && Side == FACEDOWN) {
-		animations[FLIP] = std::make_unique<FlipAnimation>(Position, Size, TextureIndex, cardIndex, backIndex, 20);
+		animations[FLIP] = std::make_unique<FlipAnimation>(Position, Size, TextureIndex, cardIndex, backIndex, speed);
 		Side = FACEUP;
 	}
 }

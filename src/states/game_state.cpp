@@ -90,6 +90,10 @@ void GameState::ProcessInput(float dt) {
 		selectedCard->Color += glm::vec3(0.2);
 		selectedCard = nullptr;
 	}
+	// if there is a selected card and the mouse is down, make it follow the mouse pointer
+	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
+		selectedCard->Position += InputManager::ChangeInMousePos;
+	}
 	// if no card currently selected, select a card which is over the mouse pointer
 	// loop through cards in reverse order, so as to pick the one on top (drawn last) if any overlap
 	// do not select the card if it is in the middle of an animation
@@ -105,18 +109,23 @@ void GameState::ProcessInput(float dt) {
 			}
 		}
 	}
-}
 
-void GameState::Update(float dt) {
-	// if there is a selected card and the mouse is down, make it follow the mouse pointer
-	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
-		selectedCard->Position += InputManager::ChangeInMousePos;
-	}
 	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT]) {
-		selectedCard->Flip();
+		selectedCard->Flip(20);
 		selectedCard->MoveTo(glm::vec2(100), 10);
 		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
 	}
+	if (selectedCard && InputManager::Keys[GLFW_KEY_F]) {
+		selectedCard->Flip(20);
+		InputManager::Keys[GLFW_KEY_F] = false;
+	}
+	if (selectedCard && InputManager::Keys[GLFW_KEY_M]) {
+		selectedCard->MoveTo(glm::vec2(100), 10);
+		InputManager::Keys[GLFW_KEY_M] = false;
+	}
+}
+
+void GameState::Update(float dt) {
 }
 
 void GameState::Render() {

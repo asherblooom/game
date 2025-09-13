@@ -28,7 +28,7 @@ public:
 	GameObject(glm::vec2 pos, glm::vec2 size, Texture2DArray textureArray, int textureIndex, glm::vec3 color = glm::vec3(1.0f));
 
 	bool DetectMouseOver();
-	void MoveTo(glm::vec2 location, float speed);
+	void MoveTo(glm::vec2 location, float speed = 10);
 	void Animate();
 	bool HasAnimations();
 

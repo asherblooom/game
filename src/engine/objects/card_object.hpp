@@ -50,8 +50,8 @@ public:
 			   glm::vec3 color = glm::vec3(1.0f),
 			   glm::vec2 size = {200, 280});
 
-	void Flip();
-	void FlipTo(CardSide side);
+	void Flip(float speed = 20);
+	void FlipTo(CardSide side, float speed = 20);
 
 private:
 	int cardIndex;

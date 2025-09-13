@@ -50,10 +50,13 @@ FlipAnimation::FlipAnimation(glm::vec2& position, glm::vec2& size, int& textureI
 
 void FlipAnimation::Run() {
 	if (size.x > 0 && size.x <= originalSize.x) {
+		// decrease/increase size (depending on sign) until we get to 0 or original size
 		size.x += sign * speed;
-		// FIXME: bug with modifying position here! affects MoveTo :( :(
+		// modify position so that object looks like it is turning around its center rather than its left side
+		// (as positions describe the top left coordinate of an object)
 		position.x -= (sign * speed) / 2;
 	} else if (size.x <= 0) {
+		// when we get to 0, reverse direction, and change texture
 		sign = 1;
 		size.x = 1;
 		if (textureIndex == cardTexIndex) {

@@ -56,10 +56,13 @@
 Press:
 
 - 'Left mouse button' while cursor is not over a card to create a new card at cursor position
-- 'Right mouse button' while cursor is over a card to flip it
-- '+' while cursor is over a card to make it bigger
-- '-' while cursor is over a card to make it smaller
-- 'd' while cursor is over a card to delete it
+- while cursor is over a card:
+  - 'f' to flip it
+  - 'm' to make it move to the top left of the screen
+  - 'Right mouse button' to move and flip it at the same time
+  - '+' to make it bigger
+  - '-' to make it smaller
+  - 'd' to delete it
 - 'c' to clear all cards
 - 'q' or 'esc' to exit the game
 
