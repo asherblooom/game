@@ -18,13 +18,15 @@ public:
 
 class MoveToAnimation : public Animation {
 public:
-	MoveToAnimation(glm::vec2& position, glm::vec2 targetLocation, float speed);
+	MoveToAnimation(glm::vec2& position, glm::vec2& size, glm::vec2 targetLocation, float speed);
 	void Run() override;
 
 private:
 	glm::vec2& position;
+	glm::vec2& size;
 	glm::vec2 targetLocation;
 	glm::vec2 direction;
+	glm::vec2 originalSize;
 	float speed;
 };
 
