@@ -11,52 +11,34 @@ MoveToAnimation::MoveToAnimation(glm::vec2& position, glm::vec2& size, glm::vec2
 }
 
 void MoveToAnimation::Run() {
-	bool setX = false, setY = false;
-	// if card is flipping
-	glm::vec2 nextPos;
-	// only snap if size is original size??
-	if (size != originalSize) {
-		nextPos = position - (originalSize - size) / glm::vec2(2) + speed * direction;
-	} else
-		nextPos = position + speed * direction;
+	bool finishX = false, finishY = false;
+	// If size has changed since MoveTo was started, change nextPos
+	// so that it is where the top left of the object would be if the card had original size.
+	// This is so that objects end up centered on the target location if their size is smaller than original,
+	// instead of aligned on the top left corner.
+	// This is done to prevent issues with this animation interacting with flipping animation
+	glm::vec2 nextPos = position - (originalSize - size) / glm::vec2(2) + speed * direction;
 	glm::vec2 toMove = position + speed * direction;
 
-	if (direction.x <= 0 && direction.y >= 0) {
-		if (nextPos.x <= targetLocation.x) {
-			setX = true;
-		}
-		if (nextPos.y >= targetLocation.y) {
-			setY = true;
-		}
-	} else if (direction.x >= 0 && direction.y <= 0) {
-		if (nextPos.x >= targetLocation.x) {
-			setX = true;
-		}
-		if (nextPos.y <= targetLocation.y) {
-			setY = true;
-		}
-	} else if (direction.x >= 0 && direction.y >= 0) {
-		if (nextPos.x >= targetLocation.x) {
-			setX = true;
-		}
-		if (nextPos.y >= targetLocation.y) {
-			setY = true;
-		}
-	} else if (direction.x <= 0 && direction.y <= 0) {
-		if (nextPos.x <= targetLocation.x) {
-			setX = true;
-		}
-		if (nextPos.y <= targetLocation.y) {
-			setY = true;
-		}
+	if (direction.x <= 0) {
+		if (nextPos.x <= targetLocation.x) finishX = true;
+	} else if (direction.x > 0) {
+		if (nextPos.x > targetLocation.x) finishX = true;
 	}
-	if (setX && setY) {
+	if (direction.y <= 0) {
+		if (nextPos.y <= targetLocation.y) finishY = true;
+	} else if (direction.y > 0) {
+		if (nextPos.y > targetLocation.y) finishY = true;
+	}
+
+	if (finishX && finishY) {
 		Finished = true;
+		// snap to center position, instead of top left aligned position (see above for explanation)
 		position = targetLocation + (originalSize - size) / glm::vec2(2);
-	} else if (setX) {
+	} else if (finishX) {
 		position.x = targetLocation.x + (originalSize.x - size.x) / 2;
 		position.y = toMove.y;
-	} else if (setY) {
+	} else if (finishY) {
 		position.y = targetLocation.y + (originalSize.y - size.y) / 2;
 		position.x = toMove.x;
 	} else
