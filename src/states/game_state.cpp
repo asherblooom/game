@@ -78,6 +78,7 @@ void GameState::ProcessInput(float dt) {
 		}
 		InputManager::Keys[GLFW_KEY_D] = false;
 	}
+	// clear all cards
 	if (InputManager::Keys[GLFW_KEY_C]) {
 		selectedCard = nullptr;
 		cards.clear();
@@ -85,6 +86,23 @@ void GameState::ProcessInput(float dt) {
 		suitCount = 0;
 		InputManager::Keys[GLFW_KEY_C] = false;
 	}
+	// move and flip card
+	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT]) {
+		selectedCard->Flip(20);
+		selectedCard->MoveTo(glm::vec2(100), 10);
+		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
+	}
+	// just flip
+	if (selectedCard && InputManager::Keys[GLFW_KEY_F]) {
+		selectedCard->Flip(20);
+		InputManager::Keys[GLFW_KEY_F] = false;
+	}
+	// just move
+	if (selectedCard && InputManager::Keys[GLFW_KEY_M]) {
+		selectedCard->MoveTo(glm::vec2(100), 10);
+		InputManager::Keys[GLFW_KEY_M] = false;
+	}
+
 	// if there is a selected card and the mouse button is released, deselect it
 	if (selectedCard && !InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
 		selectedCard->Color += glm::vec3(0.2);
@@ -108,20 +126,6 @@ void GameState::ProcessInput(float dt) {
 				break;
 			}
 		}
-	}
-
-	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT]) {
-		selectedCard->Flip(20);
-		selectedCard->MoveTo(glm::vec2(100), 10);
-		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
-	}
-	if (selectedCard && InputManager::Keys[GLFW_KEY_F]) {
-		selectedCard->Flip(20);
-		InputManager::Keys[GLFW_KEY_F] = false;
-	}
-	if (selectedCard && InputManager::Keys[GLFW_KEY_M]) {
-		selectedCard->MoveTo(glm::vec2(100), 10);
-		InputManager::Keys[GLFW_KEY_M] = false;
 	}
 }
 
