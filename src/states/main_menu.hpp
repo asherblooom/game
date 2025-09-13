@@ -14,7 +14,10 @@ public:
 	void ProcessInput(float dt) override;
 	void Update(float dt) override;
 	void Render() override;
-
+  
+  void OnEnter() override {}
+	void OnExit() override {}
+  
 private:
 	StateManager& manager;
 

@@ -11,10 +11,10 @@ PauseMenu::PauseMenu(StateManager& manager)
 	buttons["return"] = std::make_unique<Button>(glm::vec2{manager.Width / 2 - 56 / 2, manager.Height / 2 - 57 / 2 + 200},
 												 glm::vec2{56, 57},
 												 ResourceManager::GetTexture("return-button"));
+
 }
 
-void PauseMenu::ProcessInput(float dt) {
-}
+void PauseMenu::ProcessInput(float dt) {}
 void PauseMenu::Update(float dt) {
 	for (auto& pair : buttons) {
 		auto& button = pair.second;

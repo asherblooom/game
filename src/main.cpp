@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "engine/input_manager.hpp"
 #include "engine/window.hpp"
 #include "resource_loader.hpp"
@@ -14,9 +16,10 @@ int main() {
 	ResourceLoader::LoadAll();
 
 	StateManager manager{GAME_WIDTH, GAME_HEIGHT};
-	manager.Add(MAIN_MENU, new MainMenu(manager));
-	manager.Add(GAME, new Game(manager));
-	manager.Add(PAUSE_MENU, new PauseMenu(manager));
+
+	manager.Add(MAIN_MENU, std::make_unique<MainMenu>(manager));
+	manager.Add(GAME, std::make_unique<Game>(manager));
+	manager.Add(PAUSE_MENU, std::make_unique<PauseMenu>(manager));
 	manager.PushState(MAIN_MENU);
 
 	while (!window.ShouldClose()) {

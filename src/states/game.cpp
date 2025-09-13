@@ -1,7 +1,6 @@
 #include "game.hpp"
 
 #include <GLFW/glfw3.h>
-#include <iostream>
 
 #include "../engine/input_manager.hpp"
 #include "../engine/resource_manager.hpp"
@@ -102,13 +101,13 @@ void Game::ProcessInput(float dt) {
 		selectedCard->MoveTo(glm::vec2(100), 10);
 		InputManager::Keys[GLFW_KEY_M] = false;
 	}
-
+  
 	// if there is a selected card and the mouse button is released, deselect it
 	if (selectedCard && !InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
 		selectedCard->Color += glm::vec3(0.2);
 		selectedCard = nullptr;
 	}
-	// if there is a selected card and the mouse is down, make it follow the mouse pointer
+  // if there is a selected card and the mouse is down, make it follow the mouse pointer
 	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
 		selectedCard->Position += InputManager::ChangeInMousePos;
 	}
@@ -162,4 +161,11 @@ int Game::GetCardTextureIndex(CardValue value, CardSuit suit) {
 	std::string values[] = {"JOKER", "ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
 							"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
 	return ResourceManager::GetArrayItemIndex("cards", values[value] + "-" + suits[suit]);
+}
+
+void Game::Clear() {
+	selectedCard = nullptr;
+	cards.clear();
+	cardCount = 0;
+	suitCount = 0;
 }

@@ -7,31 +7,25 @@ StateManager::StateManager(unsigned int gameWidth, unsigned int gameHeight)
 	  spriteRenderer{SpriteRenderer(gameWidth, gameHeight)},
 	  textRenderer{TextRenderer(gameWidth, gameHeight)} {}
 
-StateManager::~StateManager() {
-	for (auto state : states) {
-		delete (state.second);
-	}
-}
-
-void StateManager::Add(States name, StateInterface* state) {
-	states.emplace(name, state);
+void StateManager::Add(States name, std::unique_ptr<StateInterface> state) {
+	states.emplace(name, std::move(state));
 }
 
 void StateManager::PushState(States stateName) {
-	StateInterface* state = states.at(stateName);
+	StateInterface* state = &*states.at(stateName);
 	stack.push_back(state);
 	currentState = state;
+	state->OnEnter();
 }
 
-StateInterface* StateManager::PopState() {
+void StateManager::PopState() {
 	if (stack.size() <= 1) {
 		std::cerr << "ERROR::STATE_MANAGER: Can't pop from a stack of size " << stack.size() << "\n";
 		throw;
 	}
-	StateInterface* state = stack.back();
+	stack.back()->OnExit();
 	stack.pop_back();
 	currentState = stack.back();
-	return state;
 }
 
 void StateManager::ProcessInput(float dt) {
