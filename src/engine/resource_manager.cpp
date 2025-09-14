@@ -83,7 +83,7 @@ Shader &ResourceManager::LoadShader(std::string name, std::string vShaderFile, s
 	// 2. now create shader object from source code
 	Shader shader;
 	shader.Compile(vShaderCode, fShaderCode, gShaderFile != "" ? gShaderCode : nullptr);
-	Shaders[name] = shader;
+	Shaders.insert(std::make_pair(name, shader));
 	return Shaders.at(name);
 }
 
@@ -173,7 +173,7 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, std::string ddsFile
 		// now generate texture
 		Texture2D texture;
 		texture.Generate(width, height, format, mipMapCount, blockSize, buffer);
-		Textures[name] = texture;
+		Textures.insert(std::make_pair(name, texture));
 
 		delete[] (buffer);
 		delete[] (header);
@@ -328,8 +328,8 @@ Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string arrayName, std:
 		// now generate texture array
 		Texture2DArray textureArray;
 		textureArray.Generate(width, height, format, mipMapCount, blockSize, data);
-		TextureArrays[arrayName] = textureArray;
-		ArrayItemNames[arrayName] = std::move(indexMap);
+		TextureArrays.insert(std::make_pair(arrayName, textureArray));
+		ArrayItemNames.insert(std::make_pair(arrayName, std::move(indexMap)));
 
 		for (unsigned char *buffer : data)
 			delete[] (buffer);
@@ -413,7 +413,7 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 			glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
 			glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
 			(unsigned int)face->glyph->advance.x};
-		font.Characters[c] = characterData;
+		font.Characters.insert(std::make_pair(c, characterData));
 
 		glTexSubImage2D(GL_TEXTURE_2D, 0, pos, 0, characterData.Size.x,
 						characterData.Size.y, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
@@ -421,7 +421,7 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 		// prevent issues with linear filtering pulling from next character's texture
 		pos += (characterData.Size.x + 1);
 	}
-	Fonts[name] = font;
+	Fonts.insert(std::make_pair(name, font));
 	glBindTexture(GL_TEXTURE_2D, 0);
 	// destroy FreeType once we're finished
 	FT_Done_Face(face);

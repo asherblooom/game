@@ -40,10 +40,10 @@ void TextRenderer::RenderText(std::string text, float x, float y, float scale, F
 	// iterate through all characters
 	std::string::const_iterator c;
 	for (c = text.begin(); c != text.end(); c++) {
-		CharacterData ch = font.Characters[*c];
+		CharacterData ch{font.Characters.at(*c)};
 
 		float xpos = x + ch.Bearing.x * scale;
-		float ypos = y + (font.Characters['H'].Bearing.y - ch.Bearing.y) * scale;
+		float ypos = y + (font.Characters.at('H').Bearing.y - ch.Bearing.y) * scale;
 
 		float w = ch.Size.x * scale;
 		float h = ch.Size.y * scale;
