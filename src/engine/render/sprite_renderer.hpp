@@ -16,7 +16,7 @@ public:
 	void Draw(GameObject* object);
 
 private:
-	Shader shader;
+	Shader& shader;
 	unsigned int VAO;
 };
 

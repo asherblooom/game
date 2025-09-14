@@ -8,9 +8,9 @@
 #include "text_renderer.hpp"
 #include "vertex.hpp"
 
-TextRenderer::TextRenderer(unsigned int gameWidth, unsigned int gameHeight) {
-	// load and configure shader
-	textShader = ResourceManager::LoadShader("text", "text.vert", "text.frag");
+TextRenderer::TextRenderer(unsigned int gameWidth, unsigned int gameHeight)
+	: textShader{ResourceManager::LoadShader("text", "text.vert", "text.frag")} {
+	// configure shader
 	textShader.SetMatrix4("projection", glm::ortho(0.0f, (float)(gameWidth), (float)(gameHeight), 0.0f, -1.0f, 1.0f), true);
 	textShader.SetInteger("text", 0);
 	// configure VAO/VBO for texture quads

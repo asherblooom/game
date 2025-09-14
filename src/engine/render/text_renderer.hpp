@@ -19,7 +19,7 @@ public:
 
 private:
 	unsigned int VAO, VBO;
-	Shader textShader;
+	Shader& textShader;
 };
 
 #endif
