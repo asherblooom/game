@@ -7,7 +7,6 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include "render/texture.hpp"
 #include FT_FREETYPE_H
 
 // Instantiate (global) static variables
