@@ -15,6 +15,7 @@ std::map<std::string, Texture2D> ResourceManager::Textures;
 std::map<std::string, Texture2DArray> ResourceManager::TextureArrays;
 std::map<std::string, std::map<std::string, int>> ResourceManager::ArrayItemNames;
 std::map<std::string, Font> ResourceManager::Fonts;
+std::map<std::string, Sound> ResourceManager::Sounds;
 
 Shader &ResourceManager::GetShader(std::string name) {
 	if (!Shaders.contains(name))
@@ -99,14 +100,20 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, std::string ddsFile
 
 	unsigned char *buffer = 0;
 
+	std::FILE *f;
+
 	// open the DDS file for binary reading and get file size
 	// first try to open with default path
-	std::string defaultPath = "media/textures/";
-	std::FILE *f = std::fopen((defaultPath + ddsFile).c_str(), "rb");
 	try {
 		if (Textures.contains(name))
 			throw("ERROR::TEXTURE: There already exists a texture with name '" + name + "'\n");
 
+		std::string extension = ddsFile.substr(ddsFile.length() - 3, 3);
+		if (extension != "dds")
+			throw("ERROR::TEXTURE: Invalid file extension: " + extension + "\n");
+
+		std::string defaultPath = "media/textures/";
+		f = std::fopen((defaultPath + ddsFile).c_str(), "rb");
 		if (f == nullptr) {
 			// otherwise assume input is a full path itself and try to open
 			f = std::fopen(ddsFile.c_str(), "rb");
@@ -213,6 +220,10 @@ Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string arrayName, std:
 			throw "ERROR::TEXTURE: itemNames must be same size as ddsFiles for texture arrays";
 
 		for (std::size_t i = 0; i < ddsFiles.size(); i++) {
+			std::string extension = ddsFiles.at(i).substr(ddsFiles.at(i).length() - 3, 3);
+			if (extension != "dds")
+				throw("ERROR::TEXTURE: Invalid file extension: " + extension + "\n");
+
 			std::string file = ddsFiles.at(i);
 			// allocate new unsigned char space with 4 (file code) + 124 (header size) bytes
 			header = new unsigned char[128];
@@ -350,7 +361,7 @@ Texture2DArray &ResourceManager::GetTextureArray(std::string name) {
 	return TextureArrays.at(name);
 }
 
-int ResourceManager::GetArrayItemIndex(std::string arrayName, std::string itemName) {
+int &ResourceManager::GetArrayItemIndex(std::string arrayName, std::string itemName) {
 	if (!TextureArrays.contains(arrayName))
 		std::cerr << "ERROR::TEXTURE: Can't find texture array: " << arrayName << "\n";
 	if (!ArrayItemNames.at(arrayName).contains(itemName))
@@ -363,11 +374,17 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 		std::cerr << "ERROR::FONT: There already exists a font with name '" << name << "'\n";
 		throw;
 	}
+	std::string extension = fontFile.substr(fontFile.length() - 3, 3);
+	if (extension != "ttf") {
+		std::cerr << "ERROR::FONT: Invalid file extension: " << extension << "\n";
+		throw;
+	}
 
 	// initialize and load the FreeType library
 	FT_Library ft;
 	if (FT_Init_FreeType(&ft)) {  // all functions return a value different than 0 whenever an error occurred
 		std::cerr << "ERROR::FREETYPE: Could not init FreeType Library \n";
+		throw;
 	}
 	// load font as face
 	FT_Face face;
@@ -377,6 +394,7 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 		// otherwise assume input is a full path itself and try to open
 		if (FT_New_Face(ft, fontFile.c_str(), 0, &face)) {
 			std::cerr << "ERROR::FREETYPE: Failed to load font \n";
+			throw;
 		}
 	}
 	FT_Set_Pixel_Sizes(face, 0, defaultFontSize);
@@ -434,21 +452,46 @@ Font &ResourceManager::GetFont(std::string name) {
 	return Fonts.at(name);
 }
 
+Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
+	if (Sounds.contains(name)) {
+		std::cerr << "ERROR::SOUND: There already exists a sound with name '" << name << "'\n";
+		throw;
+	}
+	std::string extension = wavFile.substr(wavFile.length() - 3, 3);
+	if (extension != "wav") {
+		std::cerr << "ERROR::SOUND: Invalid file extension: " << extension << "\n";
+		throw;
+	}
+	Sound sound;
+	sound.LoadFromWAV(name);
+	alGenBuffers(1, &sound.buffer);
+	alBufferData(sound.buffer, sound.OALFormat(), sound.data, sound.size, (ALsizei)sound.freqRate);
+
+	Sounds.insert(std::make_pair(name, sound));
+	return Sounds.at(name);
+}
+
+Sound &ResourceManager::GetSound(std::string name) {
+	if (!Sounds.contains(name))
+		std::cerr << "ERROR::SOUND: Can't find sound: " << name << "\n";
+	return Sounds.at(name);
+}
+
 void ResourceManager::Clear() {
-	// (properly) delete all shaders
+	// (properly) delete all resources
 	for (auto &shader : Shaders) {
 		glDeleteProgram(shader.second.ID());
 	}
-	// (properly) delete all textures
 	for (auto &texture : Textures) {
 		glDeleteTextures(1, &texture.second.ID());
 	}
-	// (properly) delete all texture arrays
 	for (auto &textureArr : TextureArrays) {
 		glDeleteTextures(1, &textureArr.second.ID());
 	}
-	// (properly) delete all font textures
 	for (auto &font : Fonts) {
 		glDeleteTextures(1, &font.second.TextureAtlas);
+	}
+	for (auto &sound : Sounds) {
+		// delete sound??
 	}
 }
