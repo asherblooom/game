@@ -24,12 +24,15 @@ void GameObject::MoveTo(glm::vec2 location, float speed) {
 	animations[MOVETO] = std::make_unique<MoveToAnimation>(Position, Size, location, speed);
 }
 
-void GameObject::RotateTo(float newRotation, float speed) {
-	animations[ROTATE] = std::make_unique<RotateAnimation>(Rotation, newRotation, speed);
+void GameObject::RotateTo(int newRotation, float speed, Direction direction) {
+	animations[ROTATE] = std::make_unique<RotateAnimation>(Rotation, newRotation, speed, direction);
 }
 
-void GameObject::Rotate(int degrees, float speed) {
-	animations[ROTATE] = std::make_unique<RotateAnimation>(Rotation, Rotation + degrees, speed);
+void GameObject::Rotate(int degrees, float speed, Direction direction) {
+	if (direction == CLOCKWISE)
+		animations[ROTATE] = std::make_unique<RotateAnimation>(Rotation, Rotation + degrees, speed, direction);
+	else if (direction == ANTICLOCKWISE)
+		animations[ROTATE] = std::make_unique<RotateAnimation>(Rotation, Rotation - degrees, speed, direction);
 }
 
 void GameObject::Animate() {

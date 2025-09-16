@@ -87,9 +87,16 @@ void Game::ProcessInput(float dt) {
 		InputManager::Keys[GLFW_KEY_C] = false;
 	}
 	// move and flip card
-	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT]) {
+	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] && !(InputManager::Keys[GLFW_KEY_LEFT_SHIFT] || InputManager::Keys[GLFW_KEY_RIGHT_SHIFT])) {
 		selectedCard->Flip(20);
 		selectedCard->MoveTo(glm::vec2(100), 10);
+		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
+	}
+	// move flip and rotate card
+	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] && (InputManager::Keys[GLFW_KEY_LEFT_SHIFT] || InputManager::Keys[GLFW_KEY_RIGHT_SHIFT])) {
+		selectedCard->Flip(20);
+		selectedCard->MoveTo(glm::vec2(100), 10);
+		selectedCard->Rotate(360, 10, CLOCKWISE);
 		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
 	}
 	// just flip
@@ -102,9 +109,14 @@ void Game::ProcessInput(float dt) {
 		selectedCard->MoveTo(glm::vec2(100), 10);
 		InputManager::Keys[GLFW_KEY_M] = false;
 	}
-	// rotate card 360 degrees
-	if (selectedCard && InputManager::Keys[GLFW_KEY_R]) {
-		selectedCard->Rotate(360, 10);
+	// rotate card 360 degrees clockwise
+	if (selectedCard && InputManager::Keys[GLFW_KEY_R] && !(InputManager::Keys[GLFW_KEY_LEFT_SHIFT] || InputManager::Keys[GLFW_KEY_RIGHT_SHIFT])) {
+		selectedCard->Rotate(360, 10, CLOCKWISE);
+		InputManager::Keys[GLFW_KEY_R] = false;
+	}
+	// rotate card 360 degrees anticlockwise
+	if (selectedCard && InputManager::Keys[GLFW_KEY_R] && (InputManager::Keys[GLFW_KEY_LEFT_SHIFT] || InputManager::Keys[GLFW_KEY_RIGHT_SHIFT])) {
+		selectedCard->Rotate(360, 10, ANTICLOCKWISE);
 		InputManager::Keys[GLFW_KEY_R] = false;
 	}
 

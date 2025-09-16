@@ -47,15 +47,21 @@ private:
 	int sign = -1;
 };
 
+enum Direction {
+	CLOCKWISE,
+	ANTICLOCKWISE
+};
+
 class RotateAnimation : public Animation {
 public:
-	RotateAnimation(float& rotation, float targetRotation, float speed);
+	RotateAnimation(float& rotation, int targetRotation, float speed, Direction direction);
 	void Run() override;
 
 private:
 	float& rotation;
-	float targetRotation;
+	int targetRotation;
 	float speed;
+	Direction direction;
 };
 
 #endif

@@ -59,7 +59,10 @@ Press:
 - while cursor is over a card:
   - 'f' to flip it
   - 'm' to make it move to the top left of the screen
+  - 'r' to make it rotate 360 degrees clockwise
+  - 'R' (shift-r) to make it rotate 360 degrees anticlockwise
   - 'Right mouse button' to move and flip it at the same time
+  - 'shift' and 'right mouse button' to move, flip and rotate it at the same time
   - '+' to make it bigger
   - '-' to make it smaller
   - 'd' to delete it

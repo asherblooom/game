@@ -1,4 +1,5 @@
 #include "animation.hpp"
+#include <iostream>
 #include "glm/detail/func_geometric.hpp"
 
 MoveToAnimation::MoveToAnimation(glm::vec2& position, glm::vec2& size, glm::vec2 targetLocation, float speed)
@@ -71,23 +72,36 @@ void FlipAnimation::Run() {
 	}
 }
 
-RotateAnimation::RotateAnimation(float& rotation, float targetRotation, float speed)
-	: rotation{rotation}, targetRotation{targetRotation}, speed{speed} {
-	// make sure targetRotation is always greater than rotation
-	if (this->targetRotation < rotation) this->targetRotation += 360;
-}
-
-void RotateAnimation::Run() {
-	float newRotation = rotation + speed;
-	if (newRotation >= targetRotation) {
-		// we use modulo 360 as targetRotation might be greater than 360 (due to line in constructor)
-		rotation = (int)targetRotation % 360;
-		Finished = true;
-	} else {
-		rotation = newRotation;
+RotateAnimation::RotateAnimation(float& rotation, int targetRotation, float speed, Direction direction)
+	: rotation{rotation}, targetRotation{targetRotation}, speed{speed}, direction{direction} {
+	// make sure targetRotation is always greater than rotation for clockwise
+	if (targetRotation < rotation && direction == CLOCKWISE) this->targetRotation += 360;
+	// make sure targetRotation is always less than rotation for anticlockwise
+	if (targetRotation > rotation && direction == ANTICLOCKWISE) this->targetRotation -= 360;
+	// ensure that targetRotation and rotation are not below 0, as this complicates anticlockwise calculations
+	if (direction == ANTICLOCKWISE) {
+		this->targetRotation += 360;
+		this->rotation += 360;
 	}
 }
 
-// TODO:
-// counter-clockwise rotation
-// add instructions in readme
+void RotateAnimation::Run() {
+	float newRotation = 0;
+	if (direction == CLOCKWISE) {
+		newRotation = rotation + speed;
+		if (newRotation >= targetRotation) {
+			// we use modulo 360 as targetRotation might be greater than 360
+			rotation = (int)targetRotation % 360;
+			Finished = true;
+			return;
+		}
+	} else if (direction == ANTICLOCKWISE) {
+		newRotation = rotation - speed;
+		if (newRotation <= targetRotation) {
+			rotation = (int)targetRotation % 360;
+			Finished = true;
+			return;
+		}
+	}
+	rotation = newRotation;
+}
