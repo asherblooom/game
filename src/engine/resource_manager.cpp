@@ -462,11 +462,47 @@ Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 		std::cerr << "ERROR::SOUND: Invalid file extension: " << extension << "\n";
 		throw;
 	}
-	Sound sound;
-	sound.LoadFromWAV(name);
-	alGenBuffers(1, &sound.buffer);
-	alBufferData(sound.buffer, sound.OALFormat(), sound.data, sound.size, (ALsizei)sound.freqRate);
 
+	// first try to open with default path
+	std::ifstream f;
+	std::string defaultPath = "media/sound/";
+	f.open((defaultPath + wavFile).c_str(), std::ios::in | std::ios::binary);
+	if (!f) {
+		// otherwise assume input is a full path itself and try to open
+		f.open(wavFile.c_str(), std::ios::in | std::ios::binary);
+		if (!f) {
+			std::cerr << wavFile << " ";
+			throw "ERROR::SOUND: incorrect file name";
+		}
+	}
+	std::string chunkName;
+	unsigned int chunkSize;
+
+	char *data;
+	int size;
+	WAVEFormat fmt;
+
+	while (!f.eof()) {
+		// load wave chunk info
+		char chunk[4];
+		f.read((char *)&chunk, 4);
+		f.read((char *)&chunkSize, 4);
+		chunkName = std::string(chunk, 4);
+
+		if (chunkName == "RIFF") {
+			f.seekg(4, std::ios_base::cur);
+		} else if (chunkName == "fmt ") {
+			f.read((char *)&fmt, sizeof(WAVEFormat));
+		} else if (chunkName == "data") {
+			size = chunkSize;
+			data = new char[size];
+			f.read((char *)data, chunkSize);
+		} else {
+			f.seekg(chunkSize, std::ios_base::cur);
+		}
+	}
+	f.close();
+	Sound sound{fmt, size, data};
 	Sounds.insert(std::make_pair(name, sound));
 	return Sounds.at(name);
 }

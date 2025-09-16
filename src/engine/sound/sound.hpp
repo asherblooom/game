@@ -17,14 +17,6 @@ struct WAVEFormat {
 	short bitsPerSample;
 };
 
-/*
- * Struct to hold the data chunk of the wave file
- */
-struct WAVEData {
-	char subChunkID[4];			  // should contain the word data
-	unsigned long subChunk2Size;  // Stores the size of the data block
-};
-
 class Sound {
 	friend class ResourceManager;
 
@@ -42,18 +34,13 @@ public:
 	// const float& Length() const;
 
 protected:
-	Sound() : data{nullptr}, length{0}, bitRate{0}, freqRate{0}, size{0}, channels{0}, buffer{0} {}
-	// ~Sound() { delete data; }
-	void LoadFromWAV(std::string filename);
-	void LoadWAVChunkInfo(std::ifstream& file, std::string& name, unsigned int& size);
+	Sound(WAVEFormat fmt, int size, char* data);
 
-	char* data;
-
+private:
+	WAVEFormat fmt;
 	float length;
-	int bitRate;
-	float freqRate;
 	int size;
-	int channels;
+	char* data;
 
 	ALuint buffer;
 };
