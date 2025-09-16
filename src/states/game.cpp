@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <stdexcept>
 
 #include "../engine/input_manager.hpp"
 #include "../engine/resource_manager.hpp"
@@ -141,10 +142,9 @@ void Game::Render() {
 }
 
 CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
-	if (cards.size() == MAX_CARDS) {
-		std::cerr << "Card limit reached, cannot create more cards\n";
-		throw;
-	}
+	if (cards.size() == MAX_CARDS)
+		throw std::out_of_range("Card limit reached, cannot create more cards");
+
 	Texture2DArray cardTexArray = ResourceManager::GetTextureArray("cards");
 	int cardIndex = GetCardTextureIndex(value, suit);
 	cards.emplace_back(value, suit, cardTexArray, cardIndex, pos, FACEUP);

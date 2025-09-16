@@ -1,6 +1,7 @@
 #include "window.hpp"
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <stdexcept>
 #include "input_manager.hpp"
 #include "resource_manager.hpp"
 
@@ -21,17 +22,15 @@ Window::Window(std::string name, unsigned int width, unsigned int height) {
 	// create window
 	window = glfwCreateWindow(width, height, name.c_str(), NULL, NULL);
 	if (window == NULL) {
-		std::cout << "Failed to create GLFW window\n";
 		glfwTerminate();
-		throw;
+		throw std::runtime_error("Failed to create GLFW window");
 	}
 	glfwMakeContextCurrent(window);
 
 	// initialise GLAD - manages function pointers for OpenGL
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		std::cout << "Failed to initialize GLAD\n";
 		glfwTerminate();
-		throw;
+		throw std::runtime_error("Failed to initialize GLAD");
 	}
 
 	glEnable(GL_BLEND);

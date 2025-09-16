@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include FT_FREETYPE_H
 
 // Instantiate (global) static variables
@@ -24,15 +25,13 @@ Shader &ResourceManager::GetShader(std::string name) {
 }
 
 Shader &ResourceManager::LoadShader(std::string name, std::string vShaderFile, std::string fShaderFile, std::string gShaderFile) {
-	// 1. retrieve the vertex/fragment source code from files
+	// retrieve the vertex/fragment source code from files
 	std::string vertexCode;
 	std::string fragmentCode;
 	std::string geometryCode;
 	try {
-		if (Shaders.contains(name)) {
-			std::cerr << "ERROR::SHADER: There already exists a shader with name '" << name << "'\n";
-			throw;
-		}
+		if (Shaders.contains(name))
+			throw std::invalid_argument("ERROR::SHADER: There already exists a shader with name '" + name + "'");
 
 		// open files
 		// first try to open with default path
@@ -80,7 +79,7 @@ Shader &ResourceManager::LoadShader(std::string name, std::string vShaderFile, s
 	const char *vShaderCode = vertexCode.c_str();
 	const char *fShaderCode = fragmentCode.c_str();
 	const char *gShaderCode = geometryCode.c_str();
-	// 2. now create shader object from source code
+	// now create shader object from source code
 	Shader shader;
 	shader.Compile(vShaderCode, fShaderCode, gShaderFile != "" ? gShaderCode : nullptr);
 	Shaders.insert(std::make_pair(name, shader));
@@ -191,7 +190,7 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, std::string ddsFile
 		delete[] (header);
 		if (f) fclose(f);
 		std::cerr << e << "\n";
-		throw(e);
+		throw;
 	}
 }
 
@@ -351,7 +350,7 @@ Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string arrayName, std:
 		if (header) delete[] (header);
 		if (f) fclose(f);
 		std::cerr << e << "\n";
-		throw(e);
+		throw;
 	}
 }
 
@@ -370,32 +369,24 @@ int &ResourceManager::GetArrayItemIndex(std::string arrayName, std::string itemN
 }
 
 Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned int defaultFontSize) {
-	if (Fonts.contains(name)) {
-		std::cerr << "ERROR::FONT: There already exists a font with name '" << name << "'\n";
-		throw;
-	}
+	if (Fonts.contains(name))
+		throw std::invalid_argument("ERROR::FONT: There already exists a font with name '" + name + "'");
 	std::string extension = fontFile.substr(fontFile.length() - 3, 3);
-	if (extension != "ttf") {
-		std::cerr << "ERROR::FONT: Invalid file extension: " << extension << "\n";
-		throw;
-	}
+	if (extension != "ttf")
+		throw std::invalid_argument("ERROR::FONT: Invalid file extension: " + extension);
 
 	// initialize and load the FreeType library
 	FT_Library ft;
-	if (FT_Init_FreeType(&ft)) {  // all functions return a value different than 0 whenever an error occurred
-		std::cerr << "ERROR::FREETYPE: Could not init FreeType Library \n";
-		throw;
-	}
+	if (FT_Init_FreeType(&ft))	// all functions return a value different than 0 whenever an error occurred
+		throw std::runtime_error("ERROR::FREETYPE: Could not init FreeType Library");
 	// load font as face
 	FT_Face face;
 	// first try to open with default path
 	std::string defaultPath = "media/fonts/";
 	if (FT_New_Face(ft, (defaultPath + fontFile).c_str(), 0, &face)) {
 		// otherwise assume input is a full path itself and try to open
-		if (FT_New_Face(ft, fontFile.c_str(), 0, &face)) {
-			std::cerr << "ERROR::FREETYPE: Failed to load font \n";
-			throw;
-		}
+		if (FT_New_Face(ft, fontFile.c_str(), 0, &face))
+			throw std::runtime_error("ERROR::FREETYPE: Failed to load font");
 	}
 	FT_Set_Pixel_Sizes(face, 0, defaultFontSize);
 
@@ -453,15 +444,11 @@ Font &ResourceManager::GetFont(std::string name) {
 }
 
 Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
-	if (Sounds.contains(name)) {
-		std::cerr << "ERROR::SOUND: There already exists a sound with name '" << name << "'\n";
-		throw;
-	}
+	if (Sounds.contains(name))
+		throw std::invalid_argument("ERROR::SOUND: There already exists a sound with name '" + name + "'");
 	std::string extension = wavFile.substr(wavFile.length() - 3, 3);
-	if (extension != "wav") {
-		std::cerr << "ERROR::SOUND: Invalid file extension: " << extension << "\n";
-		throw;
-	}
+	if (extension != "wav")
+		throw std::invalid_argument("ERROR::SOUND: Invalid file extension: " + extension);
 
 	// first try to open with default path
 	std::ifstream f;
@@ -470,10 +457,8 @@ Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 	if (!f) {
 		// otherwise assume input is a full path itself and try to open
 		f.open(wavFile.c_str(), std::ios::in | std::ios::binary);
-		if (!f) {
-			std::cerr << wavFile << " ";
-			throw "ERROR::SOUND: incorrect file name";
-		}
+		if (!f)
+			throw std::invalid_argument("ERROR::SOUND: incorrect file name: " + wavFile);
 	}
 	std::string chunkName;
 	unsigned int chunkSize;

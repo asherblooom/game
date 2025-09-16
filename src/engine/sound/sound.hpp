@@ -21,15 +21,6 @@ class Sound {
 	friend class ResourceManager;
 
 public:
-	// TODO: do we need these??
-	//
-	// const char* Data() const { return data; }
-	// const int& BitRate() const { return bitRate; }
-	// const float& Frequency() const { return freqRate; }
-	// const int& Channels() const { return channels; }
-	// const int& Size() const { return size; }
-	// const ALuint& Buffer() const { return buffer; }
-
 	ALenum OALFormat();
 	// const float& Length() const;
 

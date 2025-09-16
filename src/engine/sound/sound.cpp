@@ -1,8 +1,7 @@
 #include "sound.hpp"
 
 Sound::Sound(WAVEFormat fmt, int size, char* data)
-	: fmt{fmt}, size{size}, data{data} {
-	length = (float)size / (fmt.numChannels * fmt.sampleRate * (fmt.bitsPerSample / 8.0f)) * 1000.0f;
+	: fmt{fmt}, length{(float)size / (fmt.numChannels * fmt.sampleRate * (fmt.bitsPerSample / 8.0f)) * 1000.0f}, size{size}, data{data} {
 	alGenBuffers(1, &buffer);
 	alBufferData(buffer, OALFormat(), data, size, (ALsizei)fmt.sampleRate);
 }

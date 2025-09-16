@@ -21,7 +21,7 @@ void StateManager::PushState(States stateName) {
 void StateManager::PopState() {
 	if (stack.size() <= 1) {
 		std::cerr << "ERROR::STATE_MANAGER: Can't pop from a stack of size " << stack.size() << "\n";
-		throw;
+		return;
 	}
 	stack.back()->OnExit();
 	stack.pop_back();
