@@ -102,6 +102,11 @@ void Game::ProcessInput(float dt) {
 		selectedCard->MoveTo(glm::vec2(100), 10);
 		InputManager::Keys[GLFW_KEY_M] = false;
 	}
+	// rotate card 360 degrees
+	if (selectedCard && InputManager::Keys[GLFW_KEY_R]) {
+		selectedCard->Rotate(360, 10);
+		InputManager::Keys[GLFW_KEY_R] = false;
+	}
 
 	// if there is a selected card and the mouse button is released, deselect it
 	if (selectedCard && !InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {

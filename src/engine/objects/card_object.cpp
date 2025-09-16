@@ -20,7 +20,7 @@ CardObject::CardObject(CardValue value,
 }
 
 void CardObject::Flip(float speed) {
-	animations[FLIP] = std::make_unique<FlipAnimation>(Position, Size, TextureIndex, cardIndex, backIndex, speed);
+	animations.insert(std::make_pair(FLIP, std::make_unique<FlipAnimation>(Position, Size, TextureIndex, cardIndex, backIndex, speed)));
 	if (Side == FACEUP) {
 		Side = FACEDOWN;
 	} else if (Side == FACEDOWN) {

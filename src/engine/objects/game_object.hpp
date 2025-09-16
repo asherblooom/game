@@ -29,6 +29,8 @@ public:
 
 	bool DetectMouseOver();
 	void MoveTo(glm::vec2 location, float speed = 10);
+	void RotateTo(float newRotation, float speed = 10);
+	void Rotate(int degrees, float speed = 10);
 	void Animate();
 	bool HasAnimations();
 

@@ -24,6 +24,14 @@ void GameObject::MoveTo(glm::vec2 location, float speed) {
 	animations[MOVETO] = std::make_unique<MoveToAnimation>(Position, Size, location, speed);
 }
 
+void GameObject::RotateTo(float newRotation, float speed) {
+	animations[ROTATE] = std::make_unique<RotateAnimation>(Rotation, newRotation, speed);
+}
+
+void GameObject::Rotate(int degrees, float speed) {
+	animations[ROTATE] = std::make_unique<RotateAnimation>(Rotation, Rotation + degrees, speed);
+}
+
 void GameObject::Animate() {
 	for (auto iter = animations.begin(), nextIter = iter; iter != animations.end(); iter = nextIter) {
 		++nextIter;

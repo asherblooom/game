@@ -70,3 +70,24 @@ void FlipAnimation::Run() {
 		Finished = true;
 	}
 }
+
+RotateAnimation::RotateAnimation(float& rotation, float targetRotation, float speed)
+	: rotation{rotation}, targetRotation{targetRotation}, speed{speed} {
+	// make sure targetRotation is always greater than rotation
+	if (this->targetRotation < rotation) this->targetRotation += 360;
+}
+
+void RotateAnimation::Run() {
+	float newRotation = rotation + speed;
+	if (newRotation >= targetRotation) {
+		// we use modulo 360 as targetRotation might be greater than 360 (due to line in constructor)
+		rotation = (int)targetRotation % 360;
+		Finished = true;
+	} else {
+		rotation = newRotation;
+	}
+}
+
+// TODO:
+// counter-clockwise rotation
+// add instructions in readme

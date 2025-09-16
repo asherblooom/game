@@ -5,7 +5,8 @@
 
 enum AnimationType {
 	MOVETO,
-	FLIP
+	FLIP,
+	ROTATE
 };
 
 class Animation {
@@ -13,7 +14,7 @@ public:
 	bool Finished = false;
 
 	virtual void Run() = 0;
-	virtual ~Animation() {}
+	// virtual ~Animation() {}
 };
 
 class MoveToAnimation : public Animation {
@@ -44,6 +45,17 @@ private:
 	int backTexIndex;
 	float speed;
 	int sign = -1;
+};
+
+class RotateAnimation : public Animation {
+public:
+	RotateAnimation(float& rotation, float targetRotation, float speed);
+	void Run() override;
+
+private:
+	float& rotation;
+	float targetRotation;
+	float speed;
 };
 
 #endif
