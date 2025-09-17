@@ -33,7 +33,7 @@ INC_DIRS := -Ilib/include -Ilib/include/freetype2
 # Libraries
 LIBS := -L$(GLFW_DIR)/lib -Llib/freetype
 ifeq ($(OS),Windows_NT)
-    LIBS += -lglfw3 -lopengl32 -lgdi32
+    LIBS += -lglfw3 -lfreetype -lopengl32 -lgdi32
 else
     LIBS += -lglfw -lGL -lX11 -lpthread -ldl -lXrandr -lXi $(shell pkg-config --cflags --libs freetype2)
 endif
