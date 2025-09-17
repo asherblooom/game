@@ -1,4 +1,13 @@
 # Cross-platform Makefile for OpenGL + GLFW + GLAD
+# =======
+# TARGET_EXEC := game
+# CXX:=g++
+# CC:=gcc
+# INC_DIR:=lib
+# CXXFLAGS:=-I$(INC_DIR) -march=native -Wall -Wextra -Wno-unused-parameter -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl $(shell pkg-config --cflags --libs freetype2) -std=c++20
+# OBJ_DIR:=./obj
+# SRC_DIR:=./src
+# >>>>>>> dev
 
 # Target executable
 TARGET := game
@@ -19,14 +28,14 @@ ifeq ($(OS),Windows_NT)
 endif
 
 # Include directories
-INC_DIRS := -Ilib/include
+INC_DIRS := -Ilib/include -Ilib/include/freetype2
 
 # Libraries
 LIBS := -L$(GLFW_DIR)/lib
 ifeq ($(OS),Windows_NT)
     LIBS += -lglfw3 -lopengl32 -lgdi32
 else
-    LIBS += -lglfw -lGL -lX11 -lpthread -ldl -lXrandr -lXi
+    LIBS += -lglfw -lGL -lX11 -lpthread -ldl -lXrandr -lXi $(shell pkg-config --cflags --libs freetype2)
 endif
 
 # Compiler flags

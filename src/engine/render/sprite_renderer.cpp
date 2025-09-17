@@ -1,8 +1,38 @@
 #include "sprite_renderer.hpp"
 #include <vector>
+#include "../resource_manager.hpp"
+#include "vertex.hpp"
 
-SpriteRenderer::SpriteRenderer(Shader shader) : shader{shader} {
-	initRenderData();
+SpriteRenderer::SpriteRenderer(unsigned int width, unsigned int height) {
+	shader = ResourceManager::LoadShader("sprite", "sprite.vert", "sprite.frag");
+	shader.SetMatrix4("projection", glm::ortho(0.0f, (float)(width), (float)(height), 0.0f, -1.0f, 1.0f), true);
+	// configure VAO/VBO
+	unsigned int VBO;
+	std::vector<Vertex> vertices = {
+		{0.0f, 1.0f, 0.0f, 1.0f},
+		{1.0f, 0.0f, 1.0f, 0.0f},
+		{0.0f, 0.0f, 0.0f, 0.0f},
+
+		{0.0f, 1.0f, 0.0f, 1.0f},
+		{1.0f, 1.0f, 1.0f, 1.0f},
+		{1.0f, 0.0f, 1.0f, 0.0f}};
+
+	// initialise VBO buffer and fill it with data from vertices
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+
+	// transfer data from VBO buffer to VAO indices 0 and 1
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, s));
+	glEnableVertexAttribArray(1);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glDeleteBuffers(1, &VBO);
 }
 
 SpriteRenderer::~SpriteRenderer() {
@@ -31,34 +61,4 @@ void SpriteRenderer::Draw(GameObject* object) {
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glBindVertexArray(0);
-}
-
-void SpriteRenderer::initRenderData() {
-	// configure VAO/VBO
-	unsigned int VBO;
-	std::vector<Vertex> vertices = {
-		{0.0f, 1.0f, 0.0f, 1.0f},
-		{1.0f, 0.0f, 1.0f, 0.0f},
-		{0.0f, 0.0f, 0.0f, 0.0f},
-
-		{0.0f, 1.0f, 0.0f, 1.0f},
-		{1.0f, 1.0f, 1.0f, 1.0f},
-		{1.0f, 0.0f, 1.0f, 0.0f}};
-
-	// initialise VBO buffer and fill it with data from vertices
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-
-	// transfer data from VBO buffer to VAO indices 0 and 1
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, x));
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, s));
-	glEnableVertexAttribArray(1);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	glDeleteBuffers(1, &VBO);
 }
