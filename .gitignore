@@ -4,3 +4,4 @@ compile_commands.json
 .clang-format
 obj/
 game
+game.exe

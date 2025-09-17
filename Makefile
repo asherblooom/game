@@ -15,11 +15,8 @@ GLFW_DIR := lib/glfw
 
 # OS-specific setup for executable extension
 ifeq ($(OS),Windows_NT)
-    TARGET_EXT := .exe
-else
-    TARGET_EXT :=
+    TARGET := $(TARGET).exe
 endif
-TARGET := $(TARGET)$(TARGET_EXT)
 
 # Include directories
 INC_DIRS := -I$(GLAD_DIR)/include -I$(GLFW_DIR)/include -I$(SRC_DIR) -Ilib
@@ -29,20 +26,21 @@ LIBS := -L$(GLFW_DIR)/lib
 ifeq ($(OS),Windows_NT)
     LIBS += -lglfw3 -lopengl32 -lgdi32
 else
-    LIBS += -lglfw -lGL -lX11 -lpthread -ldl -lXrandr -lXcursor -lXinerama -lXxf86vm
+    LIBS += -lglfw -lGL -lX11 -lpthread -ldl -lXrandr -lXi
 endif
 
 # Compiler flags
-# CXXFLAGS for C++ files, CFLAGS for C files
-CXXFLAGS := -Wall -Wextra -std=c++20 $(INC_DIRS)
-CFLAGS   := -Wall -Wextra $(INC_DIRS)
+# CXXFLAGS for C++ files, CFLAGS for C files, JOINTFLAGS for both
+JOINTFLAGS := -Wall -Wextra -Wno-unused-parameter $(INC_DIRS)
+CXXFLAGS := $(JOINTFLAGS) -std=c++20
+CFLAGS := $(JOINTFLAGS)
 
-# --- Robust File Finding ---
+# Find all C++ files we want to compile (and all GLAD c files)
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2)) $(wildcard $1$2)
 CPP_SRCS := $(call rwildcard,$(SRC_DIR)/,*.cpp)
 C_SRCS := $(call rwildcard,$(GLAD_DIR)/src/,*.c)
 
-# --- Object File Generation ---
+# Substitue .cpp for .o to generate object file names
 OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(CPP_SRCS))
 OBJS += $(patsubst $(GLAD_DIR)/src/%.c,$(OBJ_DIR)/%.o,$(C_SRCS))
 
