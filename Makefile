@@ -19,7 +19,7 @@ ifeq ($(OS),Windows_NT)
 endif
 
 # Include directories
-INC_DIRS := -I$(GLAD_DIR)/include -I$(GLFW_DIR)/include -I$(SRC_DIR) -Ilib
+INC_DIRS := -Ilib/include
 
 # Libraries
 LIBS := -L$(GLFW_DIR)/lib
