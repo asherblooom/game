@@ -21,6 +21,7 @@ SRC_DIR := src
 OBJ_DIR := obj
 GLAD_DIR := lib/glad
 GLFW_DIR := lib/glfw
+FREETYPE_DIR := lib/freetype
 
 # OS-specific setup for executable extension
 ifeq ($(OS),Windows_NT)
@@ -33,7 +34,7 @@ INC_DIRS := -Ilib/include -Ilib/include/freetype2
 # Libraries
 LIBS :=
 ifeq ($(OS),Windows_NT)
-    LIBS += -L$(GLFW_DIR)/lib -Llib/freetype -lglfw3 -lfreetype -lopengl32 -lgdi32
+    LIBS += -L$(GLFW_DIR)/lib -L$(FREETYPE_DIR)/lib -lglfw3 -lfreetype -lopengl32 -lgdi32
 else
     LIBS += -lglfw -lGL -lX11 -lpthread -ldl -lXrandr -lXi $(shell pkg-config --cflags --libs freetype2)
 endif
