@@ -3,7 +3,6 @@
 
 #include <AL/al.h>
 #include <AL/alc.h>
-#include <string>
 
 /*
  * Struct to hold fmt chunk data for WAVE files.
@@ -19,9 +18,12 @@ struct WAVEFormat {
 
 class Sound {
 	friend class ResourceManager;
+	friend class SoundSystem;
 
 public:
 	ALenum OALFormat();
+
+	ALint State;
 	// const float& Length() const;
 
 protected:
@@ -34,6 +36,7 @@ private:
 	char* data;
 
 	ALuint buffer;
+	ALuint source;
 };
 
 #endif

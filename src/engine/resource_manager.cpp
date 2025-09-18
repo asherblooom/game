@@ -513,6 +513,7 @@ void ResourceManager::Clear() {
 		glDeleteTextures(1, &font.second.TextureAtlas);
 	}
 	for (auto &sound : Sounds) {
-		// delete sound??
+		alDeleteSources(1, &sound.second.source);
+		alDeleteBuffers(1, &sound.second.buffer);
 	}
 }

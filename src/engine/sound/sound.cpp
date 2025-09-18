@@ -1,9 +1,17 @@
 #include "sound.hpp"
 
 Sound::Sound(WAVEFormat fmt, int size, char* data)
-	: fmt{fmt}, length{size / (fmt.numChannels * fmt.sampleRate * (fmt.bitsPerSample / 8.0f)) * 1000.0f}, size{size}, data{data} {
+	: State{AL_INITIAL}, fmt{fmt}, length{size / (fmt.numChannels * fmt.sampleRate * (fmt.bitsPerSample / 8.0f)) * 1000.0f}, size{size}, data{data} {
 	alGenBuffers(1, &buffer);
 	alBufferData(buffer, OALFormat(), data, size, (ALsizei)fmt.sampleRate);
+
+	alGenSources(1, &source);
+	alSourcef(source, AL_PITCH, 1);
+	alSourcef(source, AL_GAIN, 1.0f);
+	alSource3f(source, AL_POSITION, 0, 0, 0);
+	alSource3f(source, AL_VELOCITY, 0, 0, 0);
+	alSourcei(source, AL_LOOPING, AL_FALSE);
+	alSourcei(source, AL_BUFFER, buffer);
 }
 
 ALenum Sound::OALFormat() {

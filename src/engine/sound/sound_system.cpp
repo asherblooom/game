@@ -19,3 +19,13 @@ SoundSystem::~SoundSystem() {
 	alcDestroyContext(context);
 	alcCloseDevice(device);
 }
+
+void SoundSystem::Play(Sound sound) {
+	alSourcePlay(sound.source);
+
+	sound.State = AL_PLAYING;
+
+	while (sound.State == AL_PLAYING) {
+		alGetSourcei(sound.source, AL_SOURCE_STATE, &sound.State);
+	}
+}
