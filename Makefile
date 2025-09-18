@@ -1,46 +1,86 @@
-TARGET_EXEC := game
-CXX:=g++
-CC:=gcc
-INC_DIR:=lib
-CXXFLAGS:=-I$(INC_DIR) -march=native -Wall -Wextra -Wno-unused-parameter -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl $(shell pkg-config --cflags --libs freetype2) -std=c++20
-OBJ_DIR:=./obj
-SRC_DIR:=./src
+# Cross-platform Makefile for OpenGL + GLFW + GLAD
+# =======
+# TARGET_EXEC := game
+# CXX:=g++
+# CC:=gcc
+# INC_DIR:=lib
+# CXXFLAGS:=-I$(INC_DIR) -march=native -Wall -Wextra -Wno-unused-parameter -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl $(shell pkg-config --cflags --libs freetype2) -std=c++20
+# OBJ_DIR:=./obj
+# SRC_DIR:=./src
+# >>>>>>> dev
 
-# Find all the C++ files we want to compile
-SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
-# get a list of object files we want to compile by removing the 
-# paths from the source files and then substituing .cpp for .o
-_OBJS := $(patsubst %.cpp,%.o,$(notdir $(SRCS)))
-# add the object directory to the front of the object files
-OBJS := $(_OBJS:%=$(OBJ_DIR)/%)
+# Target executable
+TARGET := game
 
+# Compiler
+CXX := g++
+CC := gcc
 
-.PHONY: main
+# Directories
+SRC_DIR := src
+OBJ_DIR := obj
+GLAD_DIR := lib/glad
+GLFW_DIR := lib/glfw
+FREETYPE_DIR := lib/freetype
 
-main: obj $(TARGET_EXEC)
+# OS-specific setup for executable extension
+ifeq ($(OS),Windows_NT)
+    TARGET := $(TARGET).exe
+endif
 
-$(TARGET_EXEC): $(OBJS)
-	$(CXX) -o $@ $^ $(CXXFLAGS)
+# Include directories
+INC_DIRS := -Ilib/include -Ilib/include/freetype2
 
-# find sources not in base directory
-$(OBJ_DIR)/%.o: $(SRC_DIR)/*/%.cpp
-	$(CXX) -o $@ $< $(CXXFLAGS) -c
-$(OBJ_DIR)/%.o: $(SRC_DIR)/*/*/%.cpp
-	$(CXX) -o $@ $< $(CXXFLAGS) -c
+# Libraries
+LIBS :=
+ifeq ($(OS),Windows_NT)
+    LIBS += -L$(GLFW_DIR)/lib -L$(FREETYPE_DIR)/lib -lglfw3 -lfreetype -lopengl32 -lgdi32
+else
+    LIBS += -lglfw -lGL -lX11 -lpthread -ldl -lXrandr -lXi $(shell pkg-config --cflags --libs freetype2)
+endif
 
-# find sources in base directory
+# Compiler flags
+# CXXFLAGS for C++ files, CFLAGS for C files, JOINTFLAGS for both
+JOINTFLAGS := -Wall -Wextra -Wno-unused-parameter $(INC_DIRS)
+CXXFLAGS := $(JOINTFLAGS) -std=c++20
+CFLAGS := $(JOINTFLAGS)
+
+# Find all C++ files we want to compile (and all GLAD c files)
+rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2)) $(wildcard $1$2)
+CPP_SRCS := $(call rwildcard,$(SRC_DIR)/,*.cpp)
+C_SRCS := $(call rwildcard,$(GLAD_DIR)/src/,*.c)
+
+# Substitue .cpp for .o to generate object file names
+OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(CPP_SRCS))
+OBJS += $(patsubst $(GLAD_DIR)/src/%.c,$(OBJ_DIR)/%.o,$(C_SRCS))
+
+# Default target
+all: $(TARGET)
+
+# Linking
+$(TARGET): $(OBJS)
+	@echo Linking $@...
+	$(CXX) -o $@ $^ $(LIBS)
+
+# --- Compilation Rules ---
+
+# Rule for C++ files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	$(CXX) -o $@ $< $(CXXFLAGS) -c
+	@mkdir -p "$(dir $@)"
+	@echo Compiling $<...
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-obj: 
-	mkdir -p obj
+# Rule for C files (glad)
+$(OBJ_DIR)/%.o: $(GLAD_DIR)/src/%.c
+	@mkdir -p "$(dir $@)"
+	@echo Compiling $<...
+	$(CC) $(CFLAGS) -c $< -o $@
 
-
-.PHONY: clean
-
-# remove object dir and target exec
+# Clean target
 clean:
-	rm -rf $(OBJ_DIR) $(TARGET_EXEC)
+	@echo Cleaning project...
+	-rm -f $(TARGET)
+	-rm -rf $(OBJ_DIR)
 
-
-
+# Phony targets
+.PHONY: all clean
