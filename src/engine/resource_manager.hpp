@@ -19,20 +19,33 @@ public:
 	// resource storage
 	static std::map<std::string, Shader> Shaders;
 	static std::map<std::string, Texture2D> Textures;
+	static std::map<std::string, Texture2DArray> TextureArrays;
+	static std::map<std::string, std::map<std::string, int>> ArrayItemNames;
 	static std::map<std::string, Font> Fonts;
+
 	// loads (and generates) a shader program from file loading vertex, fragment (and geometry) shader's source code.
 	// If gShaderFile is not nullptr, it also loads a geometry shader
 	static Shader &LoadShader(std::string name, std::string vShaderFile, std::string fShaderFile, std::string gShaderFile = "");
 	// retrieves a stored shader
 	static Shader &GetShader(std::string name);
+
 	// loads (and generates) a texture from file
 	static Texture2D &LoadDDSTexture(std::string name, std::string ddsFile, bool mipmaps = true);
 	// retrieves a stored texture
 	static Texture2D &GetTexture(std::string name);
+
+	// loads (and generates) an array texture from file
+	static Texture2DArray &LoadDDSTextureArray(std::string arrayName, std::vector<std::string> itemNames, std::vector<std::string> ddsFiles, bool mipmaps);
+	// retrieves a stored array texture
+	static Texture2DArray &GetTextureArray(std::string name);
+	// retrives the index of a texture in the given texture array
+	static int GetArrayItemIndex(std::string arrayName, std::string itemName);
+
 	// loads (and generates) a font from file
 	static Font &LoadFont(std::string name, std::string fontFile, unsigned int defaultFontSize);
 	// retrieves a stored font
 	static Font &GetFont(std::string name);
+
 	// properly de-allocates all loaded resources
 	static void Clear();
 

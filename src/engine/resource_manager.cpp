@@ -7,11 +7,14 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "render/texture.hpp"
 #include FT_FREETYPE_H
 
 // Instantiate (global) static variables
 std::map<std::string, Shader> ResourceManager::Shaders;
 std::map<std::string, Texture2D> ResourceManager::Textures;
+std::map<std::string, Texture2DArray> ResourceManager::TextureArrays;
+std::map<std::string, std::map<std::string, int>> ResourceManager::ArrayItemNames;
 std::map<std::string, Font> ResourceManager::Fonts;
 
 Shader &ResourceManager::GetShader(std::string name) {
@@ -184,6 +187,163 @@ Texture2D &ResourceManager::GetTexture(std::string name) {
 	return Textures.at(name);
 }
 
+Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string arrayName, std::vector<std::string> itemNames, std::vector<std::string> ddsFiles, bool mipmaps) {
+	unsigned int width;
+	unsigned int height;
+	unsigned int mipMapCount;
+	unsigned int blockSize;
+	unsigned int format;
+	std::FILE *f;
+	std::vector<unsigned char *> data;
+	unsigned char *header;
+	unsigned char *buffer;
+	std::map<std::string, int> indexMap{};
+
+	try {
+		if (itemNames.size() != ddsFiles.size()) {
+			throw "ERROR::TEXTURE: itemNames must be same size as ddsFiles for texture arrays";
+		}
+
+		for (std::size_t i = 0; i < ddsFiles.size(); i++) {
+			std::string file = ddsFiles.at(i);
+			// allocate new unsigned char space with 4 (file code) + 124 (header size) bytes
+			header = new unsigned char[128];
+			buffer = 0;
+
+			// open the DDS file for binary reading and get file size
+			// first try to open with default path
+			std::string defaultPath = "media/textures/";
+			f = std::fopen((defaultPath + file).c_str(), "rb");
+			if (f == nullptr) {
+				// otherwise assume input is a full path itself and try to open
+				f = std::fopen(file.c_str(), "rb");
+				if (f == nullptr) {
+					std::cerr << file << " ";
+					throw "ERROR::TEXTURE: incorrect file name";
+				}
+			}
+			std::fseek(f, 0, SEEK_END);
+			long file_size = ftell(f);
+			std::fseek(f, 0, SEEK_SET);
+
+			// read in 128 bytes from the file
+			std::fread(header, 1, 128, f);
+
+			// compare the `DDS ` signature
+			if (std::memcmp(header, "DDS ", 4) != 0) {
+				throw "ERROR::TEXTURE: incorrect DDS signature";
+			}
+
+			// for first texture,
+			// extract height, width, and amount of mipmaps - yes it is stored height then width
+			if (i == 0) {
+				height = (header[12]) | (header[13] << 8) | (header[14] << 16) | (header[15] << 24);
+				width = (header[16]) | (header[17] << 8) | (header[18] << 16) | (header[19] << 24);
+				if (mipmaps)
+					mipMapCount = (header[28]) | (header[29] << 8) | (header[30] << 16) | (header[31] << 24);
+				else
+					mipMapCount = 1;
+
+				// figure out what format to use for what fourCC file type it is
+				// block size is about physical chunk storage of compressed data in file (important)
+				if (header[84] == 'D') {
+					switch (header[87]) {
+						case '1':  // DXT1
+							format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+							blockSize = 8;
+							break;
+						case '3':  // DXT3
+							format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+							blockSize = 16;
+							break;
+						case '5':  // DXT5
+							format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+							blockSize = 16;
+							break;
+						case '0':  // DX10
+								   // unsupported, else will error
+								   // as it adds sizeof(struct DDS_HEADER_DXT10) between pixels
+								   // so, buffer = malloc((file_size - 128) - sizeof(struct DDS_HEADER_DXT10));
+						default:
+							throw "ERROR::TEXTURE: unsupported compression";
+					}
+				} else {  // BC4U/BC4S/ATI2/BC55/R8G8_B8G8/G8R8_G8B8/UYVY-packed/YUY2-packed unsupported
+					throw "ERROR::TEXTURE: unsupported compression";
+				}
+			}
+			// check if all other textures match size/mip map count/format
+			else {
+				if (height != (unsigned int)((header[12]) | (header[13] << 8) | (header[14] << 16) | (header[15] << 24)) ||
+					width != (unsigned int)((header[16]) | (header[17] << 8) | (header[18] << 16) | (header[19] << 24)))
+					throw "ERROR::TEXTURE: all textures in an array must have same size";
+				if (mipmaps && mipMapCount != (unsigned int)((header[28]) | (header[29] << 8) | (header[30] << 16) | (header[31] << 24)))
+					throw "ERROR::TEXTURE: all textures in an array must have same mip map count";
+				if (header[84] == 'D') {
+					switch (header[87]) {
+						case '1':  // DXT1
+							if (format != GL_COMPRESSED_RGBA_S3TC_DXT1_EXT)
+								throw "ERROR::TEXTURE: all textures in an array must use same compression format";
+							break;
+						case '3':  // DXT3
+							if (format != GL_COMPRESSED_RGBA_S3TC_DXT3_EXT)
+								throw "ERROR::TEXTURE: all textures in an array must use same compression format";
+							break;
+						case '5':  // DXT5
+							if (format != GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)
+								throw "ERROR::TEXTURE: all textures in an array must use same compression format";
+							break;
+						default:
+							throw "ERROR::TEXTURE: unsupported compression";
+					}
+				} else {  // BC4U/BC4S/ATI2/BC55/R8G8_B8G8/G8R8_G8B8/UYVY-packed/YUY2-packed unsupported
+					throw "ERROR::TEXTURE: unsupported compression";
+				}
+			}
+
+			// read rest of file
+			buffer = new unsigned char[file_size - 128];
+			if (buffer == 0) {
+				throw "ERROR::TEXTURE: memory allocation failed";
+			}
+			fread(buffer, 1, file_size, f);
+			data.emplace_back(buffer);
+			indexMap.emplace(itemNames.at(i), i);
+
+			delete[] (header);
+			fclose(f);
+		}
+		// now generate texture array
+		Texture2DArray textureArray;
+		textureArray.Generate(width, height, format, mipMapCount, blockSize, data);
+		TextureArrays[arrayName] = textureArray;
+		ArrayItemNames[arrayName] = std::move(indexMap);
+
+		for (unsigned char *buffer : data)
+			delete[] (buffer);
+		return TextureArrays.at(arrayName);
+
+	} catch (const char *e) {
+		for (unsigned char *buff : data)
+			delete[] (buff);
+		if (header) delete[] (header);
+		if (f) fclose(f);
+		std::cerr << e << "\n";
+		throw(e);
+	}
+}
+
+Texture2DArray &ResourceManager::GetTextureArray(std::string name) {
+	if (!TextureArrays.contains(name))
+		std::cerr << "ERROR: Can't find texture array: " << name << "\n";
+	return TextureArrays.at(name);
+}
+
+int ResourceManager::GetArrayItemIndex(std::string arrayName, std::string itemName) {
+	if (!TextureArrays.contains(arrayName))
+		std::cerr << "ERROR: Can't find texture array: " << arrayName << "\n";
+	return ArrayItemNames.at(arrayName).at(itemName);
+}
+
 Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned int defaultFontSize) {
 	// initialize and load the FreeType library
 	FT_Library ft;
@@ -200,45 +360,46 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 			std::cerr << "ERROR::FREETYPE: Failed to load font" << std::endl;
 		}
 	}
-	// set size to load glyphs as
 	FT_Set_Pixel_Sizes(face, 0, defaultFontSize);
-	// disable byte-alignment restriction
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	// then for the first 128 ASCII characters, pre-load/compile their characters and store them
+
+	// initialise texture atlas
 	Font font;
-	for (GLubyte c = 0; c < 128; c++) {
-		// load character glyph
+	unsigned int width = 0;
+	unsigned int height = 0;
+	for (GLubyte c = 32; c < 128; c++) {
 		if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
 			std::cerr << "ERROR::FREETYPE: Failed to load Glyph" << std::endl;
 			continue;
 		}
-		// generate texture
-		unsigned int texture;
-		glGenTextures(1, &texture);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glTexImage2D(
-			GL_TEXTURE_2D,
-			0,
-			GL_RED,
-			face->glyph->bitmap.width,
-			face->glyph->bitmap.rows,
-			0,
-			GL_RED,
-			GL_UNSIGNED_BYTE,
-			face->glyph->bitmap.buffer);
-		// set texture options
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		if (face->glyph->bitmap.rows > height) height = face->glyph->bitmap.rows;
+		width += (face->glyph->bitmap.width + 1);
+	}
+	font.AtlasSize = {width, height};
+	glGenTextures(1, &font.TextureAtlas);
+	glBindTexture(GL_TEXTURE_2D, font.TextureAtlas);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);	// disable byte-alignment restriction
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height,
+				 0, GL_RED, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		// now store character for later use
+	// for the first 128 ASCII characters, pre-load/compile their characters and store them
+	int pos = 0;
+	for (GLubyte c = 32; c < 128; c++) {
+		if (FT_Load_Char(face, c, FT_LOAD_RENDER)) continue;
+
 		CharacterData characterData = {
-			texture,
+			{pos, 0},
 			glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
 			glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
 			(unsigned int)face->glyph->advance.x};
-		font[c] = characterData;
+		font.Characters[c] = characterData;
+
+		glTexSubImage2D(GL_TEXTURE_2D, 0, pos, 0, characterData.Size.x,
+						characterData.Size.y, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+
+		// prevent issues with linear filtering pulling from next character's texture
+		pos += (characterData.Size.x + 1);
 	}
 	Fonts[name] = font;
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -263,9 +424,12 @@ void ResourceManager::Clear() {
 	for (auto &texture : Textures) {
 		glDeleteTextures(1, &texture.second.ID());
 	}
+	// (properly) delete all texture arrays
+	for (auto &textureArr : TextureArrays) {
+		glDeleteTextures(1, &textureArr.second.ID());
+	}
 	// (properly) delete all font textures
 	for (auto &font : Fonts) {
-		for (auto &c : font.second)
-			glDeleteTextures(1, &c.second.TextureID);
+		glDeleteTextures(1, &font.second.TextureAtlas);
 	}
 }

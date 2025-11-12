@@ -1,4 +1,5 @@
 #include "sprite_renderer.hpp"
+#include <iostream>
 #include <vector>
 #include "../resource_manager.hpp"
 #include "vertex.hpp"
@@ -55,8 +56,21 @@ void SpriteRenderer::Draw(GameObject* object) {
 
 	shader.SetVector3f("spriteColor", object->Color);
 
-	glActiveTexture(GL_TEXTURE0);
-	object->Texture.Bind();
+	// set uniform variables to the correct texture locations
+	shader.SetInteger("image", 0);
+	shader.SetInteger("textureArray", 1);
+	if (object->Texture) {
+		glActiveTexture(GL_TEXTURE0);
+		object->Texture->Bind();
+		shader.SetInteger("textureIndex", -1);	//-1 means shader will know to use "image" sampler instead of "textureArray"
+	} else if (object->TextureArray) {
+		glActiveTexture(GL_TEXTURE1);
+		object->TextureArray->Bind();
+		shader.SetInteger("textureIndex", object->TextureIndex);
+	} else {
+		std::cerr << "ERROR::RENDERER: cannot render object that has no texture";
+		return;
+	}
 
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);

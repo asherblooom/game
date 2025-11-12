@@ -66,6 +66,9 @@ Click and drag to move cards around
 
 _Note: the cards are currently rendered without mipmaps, as the mipmaps need some touching up before they will look good_
 
+## Debugging
+The [RenderDoc](https://renderdoc.org/) program can be _very_ helpful in debugging issues with shaders, opengl api calls, etc.
+
 ## Learning OpenGL and C++
 
 ### OpenGL

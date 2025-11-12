@@ -35,29 +35,34 @@ void TextRenderer::RenderText(std::string text, float x, float y, float scale, F
 	textShader.Use();
 	textShader.SetVector3f("textColor", color);
 	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, font.TextureAtlas);
 	glBindVertexArray(VAO);
 
 	// iterate through all characters
 	std::string::const_iterator c;
 	for (c = text.begin(); c != text.end(); c++) {
-		CharacterData ch = font[*c];
+		CharacterData ch = font.Characters[*c];
 
 		float xpos = x + ch.Bearing.x * scale;
-		float ypos = y + (font['H'].Bearing.y - ch.Bearing.y) * scale;
+		float ypos = y + (font.Characters['H'].Bearing.y - ch.Bearing.y) * scale;
 
 		float w = ch.Size.x * scale;
 		float h = ch.Size.y * scale;
-		// update VBO for each character
-		std::vector<Vertex> vertices = {
-			{xpos, ypos + h, 0.0f, 1.0f},
-			{xpos + w, ypos, 1.0f, 0.0f},
-			{xpos, ypos, 0.0f, 0.0f},
 
-			{xpos, ypos + h, 0.0f, 1.0f},
-			{xpos + w, ypos + h, 1.0f, 1.0f},
-			{xpos + w, ypos, 1.0f, 0.0f}};
-		// render glyph texture over quad
-		glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+		// update VBO for each character
+		float minTexX = ch.TexPos.x / font.AtlasSize.x;
+		float minTexY = ch.TexPos.y / font.AtlasSize.y;
+		float maxTexX = (ch.TexPos.x + ch.Size.x) / font.AtlasSize.x;
+		float maxTexY = (ch.TexPos.y + ch.Size.y) / font.AtlasSize.y;
+		std::vector<Vertex> vertices = {
+			{xpos, ypos + h, minTexX, maxTexY},
+			{xpos + w, ypos, maxTexX, minTexY},
+			{xpos, ypos, minTexX, minTexY},
+
+			{xpos, ypos + h, minTexX, maxTexY},
+			{xpos + w, ypos + h, maxTexX, maxTexY},
+			{xpos + w, ypos, maxTexX, minTexY}};
+
 		// update content of VBO memory
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		// be sure to use glBufferSubData and not glBufferData

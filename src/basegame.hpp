@@ -45,29 +45,34 @@ protected:
 
 	// basic utility functions for loading and getting card textures
 	void LoadCardTextures() {
-		ResourceManager::LoadDDSTexture("JOKER-BLACKJOKER", "JOKER-BLACKJOKER.dds");
-		ResourceManager::LoadDDSTexture("JOKER-REDJOKER", "JOKER-REDJOKER.dds");
+		// ResourceManager::LoadDDSTexture("JOKER-BLACKJOKER", "JOKER-BLACKJOKER.dds");
+		// ResourceManager::LoadDDSTexture("JOKER-REDJOKER", "JOKER-REDJOKER.dds");
+		std::vector<std::string> names{"JOKER-BLACKJOKER", "JOKER-REDJOKER"};
+		std::vector<std::string> fileNames{"JOKER-BLACKJOKER.dds", "JOKER-REDJOKER.dds"};
 		std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
 		std::string values[] = {"ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
 								"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
 		for (std::string suit : suits) {
 			for (std::string value : values) {
 				std::string name = value + "-" + suit;
-				ResourceManager::LoadDDSTexture(name, (name + ".dds"), false);
+				names.emplace_back(name);
+				fileNames.emplace_back(name + ".dds");
+				// ResourceManager::LoadDDSTexture(name, (name + ".dds"), false);
 			}
 		}
+		ResourceManager::LoadDDSTextureArray("cards", names, fileNames, false);
 	}
-	Texture2D& GetCardTexture(CardValue value, CardSuit suit) {
+	int GetCardTextureIndex(CardValue value, CardSuit suit) {
 		if (value == JOKER) {
 			if (suit == BLACKJOKER)
-				return ResourceManager::GetTexture("JOKER-BLACKJOKER");
+				return ResourceManager::GetArrayItemIndex("cards", "JOKER-BLACKJOKER");
 			else if (suit == REDJOKER)
-				return ResourceManager::GetTexture("JOKER-REDJOKER");
+				return ResourceManager::GetArrayItemIndex("cards", "JOKER-REDJOKER");
 		}
 		std::string suits[] = {"SPADES", "HEARTS", "DIAMONDS", "CLUBS"};
 		std::string values[] = {"JOKER", "ACE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN",
 								"EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING"};
-		return ResourceManager::GetTexture(values[value] + "-" + suits[suit]);
+		return ResourceManager::GetArrayItemIndex("cards", values[value] + "-" + suits[suit]);
 	}
 };
 #endif
