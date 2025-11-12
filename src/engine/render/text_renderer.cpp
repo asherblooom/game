@@ -1,6 +1,5 @@
 #include <ft2build.h>
 #include <glm/gtc/matrix_transform.hpp>
-#include <iostream>
 #include <vector>
 #include FT_FREETYPE_H
 
@@ -9,10 +8,10 @@
 #include "text_renderer.hpp"
 #include "vertex.hpp"
 
-TextRenderer::TextRenderer(unsigned int width, unsigned int height) {
+TextRenderer::TextRenderer(unsigned int gameWidth, unsigned int gameHeight) {
 	// load and configure shader
 	textShader = ResourceManager::LoadShader("text", "text.vert", "text.frag");
-	textShader.SetMatrix4("projection", glm::ortho(0.0f, (float)(width), (float)(height), 0.0f, -1.0f, 1.0f), true);
+	textShader.SetMatrix4("projection", glm::ortho(0.0f, (float)(gameWidth), (float)(gameHeight), 0.0f, -1.0f, 1.0f), true);
 	textShader.SetInteger("text", 0);
 	// configure VAO/VBO for texture quads
 	glGenVertexArrays(1, &VAO);

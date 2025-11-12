@@ -20,10 +20,11 @@ public:
 	std::optional<Texture2DArray> TextureArray;
 	int TextureIndex;
 
+	GameObject();
 	GameObject(glm::vec2 pos, glm::vec2 size, Texture2D texture, glm::vec3 color = glm::vec3(1.0f));
 	GameObject(glm::vec2 pos, glm::vec2 size, Texture2DArray textureArray, int textureIndex, glm::vec3 color = glm::vec3(1.0f));
 
-	bool DetectMouseOver(glm::vec2 mousePos);
+	bool DetectMouseOver();
 };
 
 #endif

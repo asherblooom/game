@@ -13,7 +13,7 @@
 // items for later rendering.
 class TextRenderer {
 public:
-	TextRenderer(unsigned int width, unsigned int height);
+	TextRenderer(unsigned int gameWidth, unsigned int gameHeight);
 	// renders a string of text using the precompiled list of characters
 	void RenderText(std::string text, float x, float y, float scale, Font font, glm::vec3 color = glm::vec3(1.0f));
 
