@@ -1,5 +1,5 @@
-#ifndef PAUSE_HPP
-#define PAUSE_HPP
+#ifndef PAUSE_MENU_HPP
+#define PAUSE_MENU_HPP
 
 #include "../engine/objects/ui_object.hpp"
 #include "../state_manager.hpp"
@@ -14,14 +14,14 @@ public:
 	void ProcessInput(float dt) override;
 	void Update(float dt) override;
 	void Render() override;
-
-	void OnEnter() override {}
+  
+  void OnEnter() override {}
 	void OnExit() override {}
 
 private:
 	StateManager& manager;
 
-	std::map<std::string, Button> buttons;
+	std::map<std::string, std::unique_ptr<Button>> buttons;
 	GameObject background;
 };
 

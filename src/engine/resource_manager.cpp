@@ -282,9 +282,13 @@ Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string arrayName, std:
 			}
 			// check if all other textures match size/mip map count/format
 			else {
-				if (height != (unsigned int)((header[12]) | (header[13] << 8) | (header[14] << 16) | (header[15] << 24)) ||
-					width != (unsigned int)((header[16]) | (header[17] << 8) | (header[18] << 16) | (header[19] << 24)))
-					throw "ERROR::TEXTURE: all textures in an array must have same size";
+				unsigned int newHeight = (unsigned int)((header[12]) | (header[13] << 8) | (header[14] << 16) | (header[15] << 24));
+				unsigned int newWidth = (unsigned int)((header[16]) | (header[17] << 8) | (header[18] << 16) | (header[19] << 24));
+				if (height != newHeight || width != newWidth) {
+					std::cerr << "ERROR::TEXTURE: all textures in an array must have size " << width << "x" << height
+							  << ", but " << itemNames[i] << " has size " << newWidth << "x" << newHeight;
+					throw "";
+				}
 				if (mipmaps && mipMapCount != (unsigned int)((header[28]) | (header[29] << 8) | (header[30] << 16) | (header[31] << 24)))
 					throw "ERROR::TEXTURE: all textures in an array must have same mip map count";
 				if (header[84] == 'D') {

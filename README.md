@@ -56,17 +56,23 @@
 Press:
 
 - 'Left mouse button' while cursor is not over a card to create a new card at cursor position
-- 'Right mouse button' while cursor is over a card to delete it
-- '+' while cursor is over a card to make it bigger
-- '-' while cursor is over a card to make it smaller
+- while cursor is over a card:
+  - 'f' to flip it
+  - 'm' to make it move to the top left of the screen
+  - 'r' to make it rotate 360 degrees clockwise
+  - 'R' (shift-r) to make it rotate 360 degrees anticlockwise
+  - 'Right mouse button' to move and flip it at the same time
+  - 'shift' and 'right mouse button' to move, flip and rotate it at the same time
+  - '+' to make it bigger
+  - '-' to make it smaller
+  - 'd' to delete it
 - 'c' to clear all cards
 - 'q' or 'esc' to exit the game
 
-Click and drag to move cards around
-
-_Note: the cards are currently rendered without mipmaps, as the mipmaps need some touching up before they will look good_
+Click and drag cards to move them around
 
 ## Debugging
+
 The [RenderDoc](https://renderdoc.org/) program can be _very_ helpful in debugging issues with shaders, opengl api calls, etc.
 
 ## Learning OpenGL and C++

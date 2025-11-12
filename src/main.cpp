@@ -16,6 +16,7 @@ int main() {
 	ResourceLoader::LoadAll();
 
 	StateManager manager{GAME_WIDTH, GAME_HEIGHT};
+
 	manager.Add(MAIN_MENU, std::make_unique<MainMenu>(manager));
 	manager.Add(GAME, std::make_unique<Game>(manager));
 	manager.Add(PAUSE_MENU, std::make_unique<PauseMenu>(manager));

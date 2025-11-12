@@ -1,7 +1,6 @@
 #ifndef CARDOBJECT_HPP
 #define CARDOBJECT_HPP
 
-#include "../render/shader.hpp"
 #include "../render/texture.hpp"
 #include "game_object.hpp"
 
@@ -31,18 +30,32 @@ enum CardSuit {
 	REDJOKER
 };
 
+enum CardSide {
+	FACEUP,
+	FACEDOWN
+};
+
 class CardObject : public GameObject {
 public:
 	CardValue Value;
 	CardSuit Suit;
+	CardSide Side;
 
 	CardObject(CardValue value,
 			   CardSuit suit,
 			   Texture2DArray textureArray,
 			   int textureIndex,
 			   glm::vec2 pos,
-			   glm::vec2 size = {216, 313.6},
-			   glm::vec3 color = glm::vec3(1.0f));
+			   CardSide side = FACEDOWN,
+			   glm::vec3 color = glm::vec3(1.0f),
+			   glm::vec2 size = {200, 280});
+
+	void Flip(float speed = 20);
+	void FlipTo(CardSide side, float speed = 20);
+
+private:
+	int cardIndex;
+	int backIndex;
 };
 
 #endif

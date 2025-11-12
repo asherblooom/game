@@ -2,7 +2,10 @@
 #define GAMEOBJECT_HPP
 
 #include <glm/glm.hpp>
+#include <map>
+#include <memory>
 #include <optional>
+#include "../animation.hpp"
 
 #include "../render/texture.hpp"
 
@@ -25,6 +28,14 @@ public:
 	GameObject(glm::vec2 pos, glm::vec2 size, Texture2DArray textureArray, int textureIndex, glm::vec3 color = glm::vec3(1.0f));
 
 	bool DetectMouseOver();
+	void MoveTo(glm::vec2 location, float speed = 10);
+	void RotateTo(int newRotation, float speed = 10, Direction direction = CLOCKWISE);
+	void Rotate(int degrees, float speed = 10, Direction direction = CLOCKWISE);
+	void Animate();
+	bool HasAnimations();
+
+protected:
+	std::map<AnimationType, std::unique_ptr<Animation>> animations;
 };
 
 #endif

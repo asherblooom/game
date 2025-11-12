@@ -41,6 +41,8 @@ SpriteRenderer::~SpriteRenderer() {
 }
 
 void SpriteRenderer::Draw(GameObject* object) {
+	// move object based on current animations
+	object->Animate();
 	// prepare transformations
 	shader.Use();
 	glm::mat4 model = glm::mat4(1.0f);

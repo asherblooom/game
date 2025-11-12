@@ -1,16 +1,20 @@
 #include "game.hpp"
 
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 #include "../engine/input_manager.hpp"
 #include "../engine/resource_manager.hpp"
 
 Game::Game(StateManager& manager)
 	: manager{manager},
-	  pauseButton{glm::vec2{manager.Width - 65, 20},
-				  glm::vec2{40, 57},
+	  background{{0, 0},
+				 {manager.Width, manager.Width * (9.0 / 16.0)},
+				 ResourceManager::GetTexture("background0")},
+	  pauseButton{{manager.Width - 65, 20},
+				  {40, 57},
 				  ResourceManager::GetTexture("pause-button")} {
-	background = GameObject({0, 0}, {manager.Width, manager.Width * (9.0 / 16.0)}, ResourceManager::GetTexture("background0"));
+	cards.reserve(MAX_CARDS);
 }
 
 void Game::ProcessInput(float dt) {
@@ -21,6 +25,9 @@ void Game::ProcessInput(float dt) {
 	}
 	// add new card
 	if (InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT] && !selectedCard) {
+		if (cards.size() == MAX_CARDS)
+			// don't make a card
+			return;
 		cardCount += 1;
 		// draw jokers once end of normal cards is reached
 		if (cardCount == 14 && suitCount == 3) {
@@ -60,7 +67,7 @@ void Game::ProcessInput(float dt) {
 		InputManager::Keys[GLFW_KEY_MINUS] = false;
 	}
 	// delete selected card
-	if (InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT]) {
+	if (InputManager::Keys[GLFW_KEY_D]) {
 		if (selectedCard) {
 			for (size_t i = 0; i < cards.size(); i++) {
 				if (&cards.at(i) == selectedCard) {
@@ -69,8 +76,9 @@ void Game::ProcessInput(float dt) {
 				}
 			}
 		}
-		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
+		InputManager::Keys[GLFW_KEY_D] = false;
 	}
+	// clear all cards
 	if (InputManager::Keys[GLFW_KEY_C]) {
 		selectedCard = nullptr;
 		cards.clear();
@@ -78,17 +86,56 @@ void Game::ProcessInput(float dt) {
 		suitCount = 0;
 		InputManager::Keys[GLFW_KEY_C] = false;
 	}
+	// move and flip card
+	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] && !(InputManager::Keys[GLFW_KEY_LEFT_SHIFT] || InputManager::Keys[GLFW_KEY_RIGHT_SHIFT])) {
+		selectedCard->Flip(20);
+		selectedCard->MoveTo(glm::vec2(100), 10);
+		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
+	}
+	// move flip and rotate card
+	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] && (InputManager::Keys[GLFW_KEY_LEFT_SHIFT] || InputManager::Keys[GLFW_KEY_RIGHT_SHIFT])) {
+		selectedCard->Flip(20);
+		selectedCard->MoveTo(glm::vec2(100), 10);
+		selectedCard->Rotate(360, 10, CLOCKWISE);
+		InputManager::MouseButtons[GLFW_MOUSE_BUTTON_RIGHT] = false;
+	}
+	// just flip
+	if (selectedCard && InputManager::Keys[GLFW_KEY_F]) {
+		selectedCard->Flip(20);
+		InputManager::Keys[GLFW_KEY_F] = false;
+	}
+	// just move
+	if (selectedCard && InputManager::Keys[GLFW_KEY_M]) {
+		selectedCard->MoveTo(glm::vec2(100), 10);
+		InputManager::Keys[GLFW_KEY_M] = false;
+	}
+	// rotate card 360 degrees clockwise
+	if (selectedCard && InputManager::Keys[GLFW_KEY_R] && !(InputManager::Keys[GLFW_KEY_LEFT_SHIFT] || InputManager::Keys[GLFW_KEY_RIGHT_SHIFT])) {
+		selectedCard->Rotate(360, 10, CLOCKWISE);
+		InputManager::Keys[GLFW_KEY_R] = false;
+	}
+	// rotate card 360 degrees anticlockwise
+	if (selectedCard && InputManager::Keys[GLFW_KEY_R] && (InputManager::Keys[GLFW_KEY_LEFT_SHIFT] || InputManager::Keys[GLFW_KEY_RIGHT_SHIFT])) {
+		selectedCard->Rotate(360, 10, ANTICLOCKWISE);
+		InputManager::Keys[GLFW_KEY_R] = false;
+	}
+
 	// if there is a selected card and the mouse button is released, deselect it
 	if (selectedCard && !InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
 		selectedCard->Color += glm::vec3(0.2);
 		selectedCard = nullptr;
 	}
+	// if there is a selected card and the mouse is down, make it follow the mouse pointer
+	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
+		selectedCard->Position += InputManager::ChangeInMousePos;
+	}
 	// if no card currently selected, select a card which is over the mouse pointer
 	// loop through cards in reverse order, so as to pick the one on top (drawn last) if any overlap
+	// do not select the card if it is in the middle of an animation
 	if (!selectedCard) {
 		for (int i = cards.size() - 1; i >= 0; i--) {
 			CardObject& card = cards[i];
-			if (card.DetectMouseOver()) {
+			if (card.DetectMouseOver() && !card.HasAnimations()) {
 				selectedCard = &card;
 				// make selected card darker
 				card.Color -= glm::vec3(0.2);
@@ -100,10 +147,6 @@ void Game::ProcessInput(float dt) {
 }
 
 void Game::Update(float dt) {
-	// if there is a selected card and the mouse is down, make it follow the mouse pointer
-	if (selectedCard && InputManager::MouseButtons[GLFW_MOUSE_BUTTON_LEFT]) {
-		selectedCard->Position += InputManager::ChangeInMousePos;
-	}
 }
 
 void Game::Render() {
@@ -115,20 +158,13 @@ void Game::Render() {
 }
 
 CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
+	if (cards.size() == MAX_CARDS) {
+		std::cerr << "Card limit reached, cannot create more cards\n";
+		throw;
+	}
 	Texture2DArray cardTexArray = ResourceManager::GetTextureArray("cards");
 	int cardIndex = GetCardTextureIndex(value, suit);
-	if (selectedCard) {
-		int selectedLoc = 0;
-		for (size_t i = 0; i < cards.size(); i++) {
-			if (&cards.at(i) == selectedCard) {
-				selectedLoc = i;
-				selectedCard = nullptr;
-			}
-		}
-		cards.emplace_back(value, suit, cardTexArray, cardIndex, pos);
-		selectedCard = &cards.at(selectedLoc);
-	} else
-		cards.emplace_back(value, suit, cardTexArray, cardIndex, pos);
+	cards.emplace_back(value, suit, cardTexArray, cardIndex, pos, FACEUP);
 	return cards.back();
 }
 

@@ -8,6 +8,10 @@
 
 #include <vector>
 
+// done to preserve pointers to CardObjects in the cards vector
+// (MAX_CARDS space is reserved on construction of GameState so no reallocation will occur)
+const unsigned int MAX_CARDS = 54;
+
 class Game : public StateInterface {
 public:
 	Game(StateManager& manager);
