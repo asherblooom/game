@@ -139,7 +139,7 @@ void Game::Render() {
 		manager.spriteRenderer.Draw(&card);
 	}
 	manager.spriteRenderer.Draw(&pauseButton);
-	manager.soundSystem.Play(ResourceManager::GetSound("shout"));
+	// manager.soundSystem.Play(ResourceManager::GetSound("shout"));
 }
 
 CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {

@@ -4,9 +4,7 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 
-/*
- * Struct to hold fmt chunk data for WAVE files.
- */
+// Struct to hold fmt chunk data for WAVE files.
 struct WAVEFormat {
 	short audioFormat;
 	short numChannels;

@@ -443,6 +443,7 @@ Font &ResourceManager::GetFont(std::string name) {
 	return Fonts.at(name);
 }
 
+// FIXME: problems here!!
 Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 	if (Sounds.contains(name))
 		throw std::invalid_argument("ERROR::SOUND: There already exists a sound with name '" + name + "'");
@@ -467,6 +468,8 @@ Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 	int size;
 	WAVEFormat fmt;
 
+	int fin = 0;
+
 	while (!f.eof()) {
 		// load wave chunk info
 		char chunk[4];
@@ -474,9 +477,15 @@ Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 		f.read((char *)&chunkSize, 4);
 		chunkName = std::string(chunk, 4);
 
+		if (fin < 1000) {
+			std::cout << fin;
+			std::cout << chunkName << "? ";
+			fin++;
+		}
 		if (chunkName == "RIFF") {
 			f.seekg(4, std::ios_base::cur);
 		} else if (chunkName == "fmt ") {
+			// TODO: problem with fmt
 			f.read((char *)&fmt, sizeof(WAVEFormat));
 		} else if (chunkName == "data") {
 			size = chunkSize;
@@ -486,6 +495,7 @@ Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 			f.seekg(chunkSize, std::ios_base::cur);
 		}
 	}
+	std::cout << "\n\nDONE!!";
 	f.close();
 	Sound sound{fmt, size, data};
 	Sounds.insert(std::make_pair(name, sound));
