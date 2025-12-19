@@ -14,6 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: install dependencies
-      run: sudo apt install -y libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev libfreetype6-dev
+      run: sudo apt install -y libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev libfreetype6-dev libopenal-dev
     - name: make
       run: make
