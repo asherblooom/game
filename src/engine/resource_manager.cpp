@@ -443,6 +443,15 @@ Font &ResourceManager::GetFont(std::string name) {
 	return Fonts.at(name);
 }
 
+struct WAVEy {
+	// short audioFormat;
+	// short numChannels;
+	// unsigned long sampleRate;
+	// unsigned long byteRate;
+	// short blockAlign;
+	// short bitsPerSample;
+};
+
 // FIXME: problems here!!
 Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 	if (Sounds.contains(name))
@@ -469,28 +478,40 @@ Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 	WAVEFormat fmt;
 
 	int fin = 0;
+	bool riffRead, fmtRead, dataRead;
 
 	while (!f.eof()) {
 		// load wave chunk info
 		char chunk[4];
 		f.read((char *)&chunk, 4);
 		f.read((char *)&chunkSize, 4);
+		std::cout << "\n"
+				  << f.tellg() << "current loc after chunk meta read ";
 		chunkName = std::string(chunk, 4);
 
 		if (fin < 1000) {
 			std::cout << fin;
 			std::cout << chunkName << "? ";
+			std::cout << chunkSize << "size ";
 			fin++;
 		}
 		if (chunkName == "RIFF") {
 			f.seekg(4, std::ios_base::cur);
+			riffRead = true;
 		} else if (chunkName == "fmt ") {
-			// TODO: problem with fmt
-			f.read((char *)&fmt, sizeof(WAVEFormat));
+			f.read((char *)&fmt, chunkSize);
+			fmtRead = true;
+			// TODO: check fmt is being properly read??
 		} else if (chunkName == "data") {
 			size = chunkSize;
 			data = new char[size];
 			f.read((char *)data, chunkSize);
+			// FIXME: THE 1 READ HERE FIXES IT !
+			f.read(nullptr, 1);
+			dataRead = true;
+			std::cout << f.tellg() << "current loc ";
+		} else if (riffRead && fmtRead && dataRead) {
+			break;
 		} else {
 			f.seekg(chunkSize, std::ios_base::cur);
 		}
