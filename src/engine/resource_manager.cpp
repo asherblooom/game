@@ -491,7 +491,6 @@ Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 			// skip over any extra bytes
 			if (chunkSize > 16) f.seekg(chunkSize - 16, std::ios_base::cur);
 			fmtRead = true;
-			// TODO: check fmt is being properly read??
 		} else if (chunkName == "data") {
 			size = chunkSize;
 			data = new char[size];
