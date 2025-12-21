@@ -1,4 +1,7 @@
 #include "sound.hpp"
+#include <AL/al.h>
+#include <iostream>
+#include <stdexcept>
 
 Sound::Sound(WAVEFormat fmt, int size, char* data)
 	: State{AL_INITIAL}, fmt{fmt}, length{size / (fmt.numChannels * fmt.sampleRate * (fmt.bitsPerSample / 8.0f)) * 1000.0f}, size{size}, data{data} {
@@ -20,5 +23,5 @@ ALenum Sound::OALFormat() {
 	} else if (fmt.bitsPerSample == 8) {
 		return fmt.numChannels == 2 ? AL_FORMAT_STEREO8 : AL_FORMAT_MONO8;
 	}
-	return AL_FORMAT_MONO8;
+	throw std::runtime_error("ERROR::SOUND: Unrecognised wave format");
 }

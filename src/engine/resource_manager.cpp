@@ -443,16 +443,6 @@ Font &ResourceManager::GetFont(std::string name) {
 	return Fonts.at(name);
 }
 
-struct WAVEy {
-	// short audioFormat;
-	// short numChannels;
-	// unsigned long sampleRate;
-	// unsigned long byteRate;
-	// short blockAlign;
-	// short bitsPerSample;
-};
-
-// FIXME: problems here!!
 Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 	if (Sounds.contains(name))
 		throw std::invalid_argument("ERROR::SOUND: There already exists a sound with name '" + name + "'");
@@ -477,46 +467,42 @@ Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 	int size;
 	WAVEFormat fmt;
 
-	int fin = 0;
 	bool riffRead, fmtRead, dataRead;
 
-	while (!f.eof()) {
+	while (true) {
 		// load wave chunk info
 		char chunk[4];
 		f.read((char *)&chunk, 4);
 		f.read((char *)&chunkSize, 4);
-		std::cout << "\n"
-				  << f.tellg() << "current loc after chunk meta read ";
 		chunkName = std::string(chunk, 4);
 
-		if (fin < 1000) {
-			std::cout << fin;
-			std::cout << chunkName << "? ";
-			std::cout << chunkSize << "size ";
-			fin++;
-		}
+		if (f.eof()) break;
+
 		if (chunkName == "RIFF") {
 			f.seekg(4, std::ios_base::cur);
 			riffRead = true;
 		} else if (chunkName == "fmt ") {
-			f.read((char *)&fmt, chunkSize);
+			f.read((char *)&fmt.audioFormat, 2);
+			f.read((char *)&fmt.numChannels, 2);
+			f.read((char *)&fmt.sampleRate, 4);
+			f.read((char *)&fmt.byteRate, 4);
+			f.read((char *)&fmt.blockAlign, 2);
+			f.read((char *)&fmt.bitsPerSample, 2);
+			// skip over any extra bytes
+			if (chunkSize > 16) f.seekg(chunkSize - 16, std::ios_base::cur);
 			fmtRead = true;
 			// TODO: check fmt is being properly read??
 		} else if (chunkName == "data") {
 			size = chunkSize;
 			data = new char[size];
 			f.read((char *)data, chunkSize);
-			// FIXME: THE 1 READ HERE FIXES IT !
-			f.read(nullptr, 1);
 			dataRead = true;
-			std::cout << f.tellg() << "current loc ";
 		} else if (riffRead && fmtRead && dataRead) {
 			break;
 		} else {
 			f.seekg(chunkSize, std::ios_base::cur);
 		}
 	}
-	std::cout << "\n\nDONE!!";
 	f.close();
 	Sound sound{fmt, size, data};
 	Sounds.insert(std::make_pair(name, sound));

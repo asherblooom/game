@@ -8,8 +8,8 @@
 struct WAVEFormat {
 	short audioFormat;
 	short numChannels;
-	unsigned long sampleRate;
-	unsigned long byteRate;
+	unsigned int sampleRate;
+	unsigned int byteRate;
 	short blockAlign;
 	short bitsPerSample;
 };

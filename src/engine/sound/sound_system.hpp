@@ -7,14 +7,8 @@
 // TODO: make singleton??
 class SoundSystem {
 public:
-	SoundSystem();
-	~SoundSystem();
-
-	void Play(Sound sound);
-
-private:
-	ALCdevice* device;
-	ALCcontext* context;
+	// set blocking to true if you want game to pause until sound has finished
+	void Play(Sound sound, bool blocking = false);
 };
 
 #endif

@@ -14,6 +14,7 @@ int main() {
 		// size for game world; also initial size of window
 		const unsigned int GAME_WIDTH = 1920;
 		const unsigned int GAME_HEIGHT = 1080;
+		// must create window before resources are loaded as we need opengl and openal contexts to be active
 		Window window{"Card Game", GAME_WIDTH, GAME_HEIGHT};
 		ResourceLoader::LoadAll();
 

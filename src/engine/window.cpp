@@ -19,6 +19,18 @@ Window::Window(std::string name, unsigned int width, unsigned int height) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+	// Initialise OpenAL
+	device = alcOpenDevice(nullptr);
+	if (!device)
+		throw std::runtime_error("ERROR::SOUNDSYSTEM: Could not find an audio device");
+
+	context = alcCreateContext(device, nullptr);
+	if (!context)
+		throw std::runtime_error("ERROR::SOUNDSYSTEM: Could not create audio context");
+
+	if (!alcMakeContextCurrent(context))
+		throw std::runtime_error("ERROR::SOUNDSYSTEM: Could not make audio context current");
+
 	// create window
 	window = glfwCreateWindow(width, height, name.c_str(), NULL, NULL);
 	if (window == NULL) {
@@ -50,6 +62,10 @@ Window::Window(std::string name, unsigned int width, unsigned int height) {
 Window::~Window() {
 	ResourceManager::Clear();
 	glfwTerminate();
+
+	alcMakeContextCurrent(nullptr);
+	alcDestroyContext(context);
+	alcCloseDevice(device);
 }
 
 bool Window::ShouldClose() {

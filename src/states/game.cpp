@@ -18,6 +18,10 @@ Game::Game(StateManager& manager)
 	cards.reserve(MAX_CARDS);
 }
 
+void Game::OnEnter() {
+	manager.soundSystem.Play(ResourceManager::GetSound("meow"));
+}
+
 void Game::ProcessInput(float dt) {
 	pauseButton.Update();
 	if (pauseButton.State == ACTIVE) {
@@ -139,7 +143,6 @@ void Game::Render() {
 		manager.spriteRenderer.Draw(&card);
 	}
 	manager.spriteRenderer.Draw(&pauseButton);
-	// manager.soundSystem.Play(ResourceManager::GetSound("shout"));
 }
 
 CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
