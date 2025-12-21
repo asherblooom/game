@@ -19,10 +19,9 @@ class Sound {
 	friend class SoundSystem;
 
 public:
-	ALenum OALFormat();
-
+	// set blocking to true if you want game to pause until sound has finished
+	void Play(bool blocking = false);
 	ALint State;
-	// const float& Length() const;
 
 protected:
 	Sound(WAVEFormat fmt, int size, char* data);
@@ -35,6 +34,8 @@ private:
 
 	ALuint buffer;
 	ALuint source;
+
+	ALenum OALFormat();
 };
 
 #endif

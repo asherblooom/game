@@ -25,3 +25,13 @@ ALenum Sound::OALFormat() {
 	}
 	throw std::runtime_error("ERROR::SOUND: Unrecognised wave format");
 }
+
+void Sound::Play(bool blocking) {
+	alSourcePlay(source);
+	if (blocking) {
+		State = AL_PLAYING;
+		while (State == AL_PLAYING) {
+			alGetSourcei(source, AL_SOURCE_STATE, &State);
+		}
+	}
+}
