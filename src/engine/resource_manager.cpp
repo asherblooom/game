@@ -559,8 +559,6 @@ Sound &ResourceManager::LoadOggFile(std::string name, std::string oggFile) {
 	short bitsPerSample = 16;
 	short numChannels = vorbisInfo->channels;
 	unsigned int sampleRate = vorbisInfo->rate;
-	// float length = ov_time_total(&vorbisFile, -1) * 1000.0f;
-	// float length total_samples * vi->channels * bytes_per_sample;
 
 	std::vector<char> data;
 	const int bufferSize = 4096;  // Read 4KB at a time
@@ -569,14 +567,6 @@ Sound &ResourceManager::LoadOggFile(std::string name, std::string oggFile) {
 	long bytesRead = 0;
 
 	do {
-		// ov_read args:
-		// 1. OggVorbis_File structure
-		// 2. buffer to store decoded PCM data
-		// 3. length of buffer
-		// 4. endianness (0 for little endian, 1 for big endian)
-		// 5. data type size (2 for 16-bit samples)
-		// 6. signedness (1 for signed, 0 for unsigned)
-		// 7. current bitstream section (tracker)
 		bytesRead = ov_read(&vorbisFile, buffer, bufferSize, 0, 2, 1, &currentSection);
 
 		if (bytesRead < 0) {
@@ -584,12 +574,6 @@ Sound &ResourceManager::LoadOggFile(std::string name, std::string oggFile) {
 			ov_clear(&vorbisFile);
 			throw std::runtime_error("ERROR::SOUND: could not decode OGG bitstream");
 		} else if (bytesRead > 0) {
-			// bytes_read contains the number of bytes successfully decoded.
-			// We cast the char buffer to short (16-bit) integers for storage.
-			// Note: This assumes the system is Little Endian (standard for x86/x64).
-			// short *sampleBuffer = reinterpret_cast<short *>(buffer);
-			// int sampleCount = bytes_read / 2;  // 2 bytes per sample (16-bit)
-			// pcmData.insert(pcmData.end(), sampleBuffer, sampleBuffer + sampleCount);
 			data.insert(data.end(), buffer, buffer + bytesRead);
 		}
 	} while (bytesRead > 0);
