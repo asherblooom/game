@@ -14,7 +14,7 @@ public:
 		ResourceManager::LoadFont("default-50", "OpenSans-Regular.ttf", 50);
 		ResourceManager::LoadFont("default-25", "OpenSans-Regular.ttf", 25);
 		ResourceManager::LoadSound("meow", "meow.wav");
-		ResourceManager::LoadSound("countdown", "countdown.wav");
+		ResourceManager::LoadSound("countdown", "countdown.ogg");
 		LoadCardTextures();
 	}
 

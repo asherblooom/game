@@ -45,8 +45,9 @@ protected:
 	static Texture2DArray &LoadDDSTextureArray(std::string arrayName, std::vector<std::string> itemNames, std::vector<std::string> ddsFiles, bool mipmaps = true);
 	// loads (and generates) a font from file
 	static Font &LoadFont(std::string name, std::string fontFile, unsigned int defaultFontSize);
-	// loads (and generates) a sound from a .wav file
-	static Sound &LoadSound(std::string name, std::string wavFile);
+	// loads (and generates) a sound from a .wav or .ogg file
+	// option to stream the sound data into memory (should be used for long audio tracks such as music)
+	static Sound &LoadSound(std::string name, std::string soundFile, bool useStreaming = false);
 
 private:
 	// private constructor, that is we do not want any actual resource manager objects.
@@ -60,6 +61,12 @@ private:
 	static std::map<std::string, std::map<std::string, int>> ArrayItemNames;
 	static std::map<std::string, Font> Fonts;
 	static std::map<std::string, Sound> Sounds;
+
+	// helper functions for loading each type of sound file
+	static Sound &LoadWaveFile(std::string name, std::string wavFile);
+	static Sound &LoadOggFile(std::string name, std::string oggFile);
+	static Sound &LoadWaveFileStream(std::string name, std::string wavFile);
+	static Sound &LoadOggFileStream(std::string name, std::string oggFile);
 };
 
 #endif

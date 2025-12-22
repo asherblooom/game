@@ -3,10 +3,16 @@
 #include <iostream>
 #include <stdexcept>
 
-Sound::Sound(WAVEFormat fmt, int size, char* data)
-	: State{AL_INITIAL}, fmt{fmt}, length{size / (fmt.numChannels * fmt.sampleRate * (fmt.bitsPerSample / 8.0f)) * 1000.0f}, size{size}, data{data} {
+Sound::Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data)
+	: State{AL_INITIAL},
+	  numChannels{numChannels},
+	  sampleRate{sampleRate},
+	  bitsPerSample{bitsPerSample},
+	  length{size / (numChannels * sampleRate * (bitsPerSample / 8.0f)) * 1000.0f},
+	  size{size},
+	  data{data} {
 	alGenBuffers(1, &buffer);
-	alBufferData(buffer, OALFormat(), data, size, (ALsizei)fmt.sampleRate);
+	alBufferData(buffer, OALFormat(), data, size, (ALsizei)sampleRate);
 
 	alGenSources(1, &source);
 	alSourcef(source, AL_PITCH, 1);
@@ -18,10 +24,10 @@ Sound::Sound(WAVEFormat fmt, int size, char* data)
 }
 
 ALenum Sound::OALFormat() {
-	if (fmt.bitsPerSample == 16) {
-		return fmt.numChannels == 2 ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16;
-	} else if (fmt.bitsPerSample == 8) {
-		return fmt.numChannels == 2 ? AL_FORMAT_STEREO8 : AL_FORMAT_MONO8;
+	if (bitsPerSample == 16) {
+		return numChannels == 2 ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16;
+	} else if (bitsPerSample == 8) {
+		return numChannels == 2 ? AL_FORMAT_STEREO8 : AL_FORMAT_MONO8;
 	}
 	throw std::runtime_error("ERROR::SOUND: Unrecognised wave format");
 }
