@@ -7,18 +7,18 @@
 <details>
 <summary>Prerequisites</summary>
   
-- Ensure the glfw, freetype, openGL, openAL soft, x11, xInput and xrandr development libraries are installed
+- Ensure the glfw, freetype, openGL, openAL soft, ogg, vorbis, x11, xInput and xrandr development libraries are installed
   
   - _on ubuntu you can run_
 
     ```
-    sudo apt install libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev libfreetype6-dev libopenal-dev
+    sudo apt install libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev libfreetype6-dev libopenal-dev libvorbis-dev libogg-dev
     ```
 
   - _on fedora you can run_
 
     ```
-    sudo dnf install libglvnd-devel mesa-libGL-devel libXi-devel libX11-devel libXrandr-devel glfw-devel freetype-devel openal-soft-devel
+    sudo dnf install libglvnd-devel mesa-libGL-devel libXi-devel libX11-devel libXrandr-devel glfw-devel freetype-devel openal-soft-devel libvorbis-devel libogg-devel
     ```
 
 </details>

@@ -19,7 +19,8 @@ Game::Game(StateManager& manager)
 }
 
 void Game::OnEnter() {
-	ResourceManager::GetSound("meow").Play();
+	ResourceManager::GetSound("meow").Play(true);
+	ResourceManager::GetSound("countdown").Play();
 }
 
 void Game::ProcessInput(float dt) {

@@ -467,7 +467,9 @@ Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 	int size;
 	WAVEFormat fmt;
 
-	bool riffRead, fmtRead, dataRead;
+	bool riffRead = false;
+	bool fmtRead = false;
+	bool dataRead = false;
 
 	while (true) {
 		// load wave chunk info
@@ -501,6 +503,9 @@ Sound &ResourceManager::LoadSound(std::string name, std::string wavFile) {
 		} else {
 			f.seekg(chunkSize, std::ios_base::cur);
 		}
+	}
+	if (!riffRead || !fmtRead || !dataRead) {
+		throw std::runtime_error("ERROR::SOUND: Failed to load sound: cannot find correct chunks in WAVE file");
 	}
 	f.close();
 	Sound sound{fmt, size, data};
