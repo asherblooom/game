@@ -12,6 +12,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include "sound/sound.hpp"
 #include FT_FREETYPE_H
 
 // Instantiate (global) static variables
@@ -21,6 +22,7 @@ std::map<std::string, Texture2DArray> ResourceManager::TextureArrays;
 std::map<std::string, std::map<std::string, int>> ResourceManager::ArrayItemNames;
 std::map<std::string, Font> ResourceManager::Fonts;
 std::map<std::string, Sound> ResourceManager::Sounds;
+std::map<std::string, SoundStream> ResourceManager::SoundStreams;
 
 Shader &ResourceManager::GetShader(std::string name) {
 	if (!Shaders.contains(name))
@@ -447,8 +449,8 @@ Font &ResourceManager::GetFont(std::string name) {
 	return Fonts.at(name);
 }
 
-Sound &ResourceManager::LoadSound(std::string name, std::string soundFile, bool useStreaming) {
-	if (Sounds.contains(name))
+BaseSound *ResourceManager::LoadSound(std::string name, std::string soundFile, bool useStreaming) {
+	if (Sounds.contains(name) || SoundStreams.contains(name))
 		throw std::invalid_argument("ERROR::SOUND: There already exists a sound with name '" + name + "'");
 
 	std::string extension = soundFile.substr(soundFile.length() - 3, 3);
@@ -466,7 +468,7 @@ Sound &ResourceManager::LoadSound(std::string name, std::string soundFile, bool 
 		throw std::invalid_argument("ERROR::SOUND: Invalid file extension: " + extension);
 }
 
-Sound &ResourceManager::LoadWaveFile(std::string name, std::string wavFile) {
+BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile) {
 	// first try to open with default path
 	std::ifstream f;
 	std::string defaultPath = "media/sound/";
@@ -533,12 +535,81 @@ Sound &ResourceManager::LoadWaveFile(std::string name, std::string wavFile) {
 	f.close();
 	Sound sound{numChannels, sampleRate, bitsPerSample, size, data};
 	Sounds.insert(std::make_pair(name, sound));
-	return Sounds.at(name);
+	return &Sounds.at(name);
 }
 
-Sound &ResourceManager::LoadWaveFileStream(std::string name, std::string wavFile) {}
+BaseSound *ResourceManager::LoadWaveFileStream(std::string name, std::string wavFile) {
+	// first try to open with default path
+	std::ifstream f;
+	std::string defaultPath = "media/sound/";
+	f.open((defaultPath + wavFile).c_str(), std::ios::in | std::ios::binary);
+	if (!f) {
+		// otherwise assume input is a full path itself and try to open
+		f.open(wavFile.c_str(), std::ios::in | std::ios::binary);
+		if (!f)
+			throw std::invalid_argument("ERROR::SOUND: incorrect file name: " + wavFile);
+	}
+	std::string chunkName;
+	unsigned int chunkSize;
 
-Sound &ResourceManager::LoadOggFile(std::string name, std::string oggFile) {
+	char *data;
+	int size;
+	short audioFormat;
+	short numChannels;
+	unsigned int sampleRate;
+	unsigned int byteRate;
+	short blockAlign;
+	short bitsPerSample;
+
+	bool riffRead = false;
+	bool fmtRead = false;
+	bool dataRead = false;
+
+	while (true) {
+		// load wave chunk info
+		char chunk[4];
+		f.read((char *)&chunk, 4);
+		f.read((char *)&chunkSize, 4);
+		chunkName = std::string(chunk, 4);
+
+		if (f.eof()) break;
+
+		if (chunkName == "RIFF") {
+			f.seekg(4, std::ios_base::cur);
+			riffRead = true;
+		} else if (chunkName == "fmt ") {
+			f.read((char *)&audioFormat, 2);
+			f.read((char *)&numChannels, 2);
+			f.read((char *)&sampleRate, 4);
+			f.read((char *)&byteRate, 4);
+			f.read((char *)&blockAlign, 2);
+			f.read((char *)&bitsPerSample, 2);
+			// skip over any extra bytes
+			if (chunkSize > 16) f.seekg(chunkSize - 16, std::ios_base::cur);
+			fmtRead = true;
+		} else if (chunkName == "data") {
+			size = chunkSize;
+			data = new char[size];
+			f.read((char *)data, chunkSize);
+			dataRead = true;
+		} else if (riffRead && fmtRead && dataRead) {
+			break;
+		} else {
+			f.seekg(chunkSize, std::ios_base::cur);
+		}
+	}
+	if (!riffRead || !fmtRead || !dataRead) {
+		f.close();
+		throw std::runtime_error("ERROR::SOUND: Failed to load sound: cannot find correct chunks in WAVE file");
+	}
+	f.close();
+
+	SoundStream sound{numChannels, sampleRate, bitsPerSample, size, data};
+	SoundStreams.insert(std::make_pair(name, sound));
+	return &SoundStreams.at(name);
+}
+
+BaseSound *ResourceManager::LoadOggFile(std::string name, std::string oggFile) {
 	// first try to open with default path
 	FILE *f;
 	std::string defaultPath = "media/sound/";
@@ -568,7 +639,6 @@ Sound &ResourceManager::LoadOggFile(std::string name, std::string oggFile) {
 
 	do {
 		bytesRead = ov_read(&vorbisFile, buffer, bufferSize, 0, 2, 1, &currentSection);
-
 		if (bytesRead < 0) {
 			// Error in the stream
 			ov_clear(&vorbisFile);
@@ -582,10 +652,10 @@ Sound &ResourceManager::LoadOggFile(std::string name, std::string oggFile) {
 	ov_clear(&vorbisFile);
 	Sound sound{numChannels, sampleRate, bitsPerSample, (int)data.size(), data.data()};
 	Sounds.insert(std::make_pair(name, sound));
-	return Sounds.at(name);
+	return &Sounds.at(name);
 }
 
-Sound &ResourceManager::LoadOggFileStream(std::string name, std::string oggFile) {}
+BaseSound *ResourceManager::LoadOggFileStream(std::string name, std::string oggFile) {}
 // 	// first try to open with default path
 // 	FILE *f;
 // 	std::string defaultPath = "media/sound/";
@@ -609,10 +679,14 @@ Sound &ResourceManager::LoadOggFileStream(std::string name, std::string oggFile)
 // 	ov_time_seek(&streamHandle, 0);
 // }
 
-Sound &ResourceManager::GetSound(std::string name) {
-	if (!Sounds.contains(name))
-		std::cerr << "ERROR::SOUND: Can't find sound: " << name << "\n";
-	return Sounds.at(name);
+BaseSound *ResourceManager::GetSound(std::string name) {
+	if (!Sounds.contains(name)) {
+		if (!SoundStreams.contains(name)) {
+			std::cerr << "ERROR::SOUND: Can't find sound: " << name << "\n";
+		}
+		return &SoundStreams.at(name);
+	}
+	return &Sounds.at(name);
 }
 
 void ResourceManager::Clear() {
@@ -632,5 +706,9 @@ void ResourceManager::Clear() {
 	for (auto &sound : Sounds) {
 		alDeleteSources(1, &sound.second.source);
 		alDeleteBuffers(1, &sound.second.buffer);
+	}
+	for (auto &sound : SoundStreams) {
+		alDeleteSources(1, &sound.second.source);
+		alDeleteBuffers(NUM_BUFFERS, &sound.second.buffers[0]);
 	}
 }

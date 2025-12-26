@@ -30,7 +30,7 @@ public:
 	// retrieves a stored font
 	static Font &GetFont(std::string name);
 	// retrieves a stored sound
-	static Sound &GetSound(std::string name);
+	static BaseSound *GetSound(std::string name);
 
 	// properly de-allocates all loaded resources
 	static void Clear();
@@ -47,7 +47,7 @@ protected:
 	static Font &LoadFont(std::string name, std::string fontFile, unsigned int defaultFontSize);
 	// loads (and generates) a sound from a .wav or .ogg file
 	// option to stream the sound data into memory (should be used for long audio tracks such as music)
-	static Sound &LoadSound(std::string name, std::string soundFile, bool useStreaming = false);
+	static BaseSound *LoadSound(std::string name, std::string soundFile, bool useStreaming = false);
 
 private:
 	// private constructor, that is we do not want any actual resource manager objects.
@@ -61,12 +61,13 @@ private:
 	static std::map<std::string, std::map<std::string, int>> ArrayItemNames;
 	static std::map<std::string, Font> Fonts;
 	static std::map<std::string, Sound> Sounds;
+	static std::map<std::string, SoundStream> SoundStreams;
 
 	// helper functions for loading each type of sound file
-	static Sound &LoadWaveFile(std::string name, std::string wavFile);
-	static Sound &LoadOggFile(std::string name, std::string oggFile);
-	static Sound &LoadWaveFileStream(std::string name, std::string wavFile);
-	static Sound &LoadOggFileStream(std::string name, std::string oggFile);
+	static BaseSound *LoadWaveFile(std::string name, std::string wavFile);
+	static BaseSound *LoadWaveFileStream(std::string name, std::string wavFile);
+	static BaseSound *LoadOggFile(std::string name, std::string oggFile);
+	static BaseSound *LoadOggFileStream(std::string name, std::string oggFile);
 };
 
 #endif

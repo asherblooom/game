@@ -3,69 +3,65 @@
 
 #include <AL/al.h>
 #include <AL/alc.h>
+#include <vector>
 
-// Struct to hold fmt chunk data for WAVE files.
-// struct WAVEFormat {
-// 	short audioFormat;
-// 	short numChannels;
-// 	unsigned int sampleRate;
-// 	unsigned int byteRate;
-// 	short blockAlign;
-// 	short bitsPerSample;
-// };
+// constants for streaming sounds
+const int NUM_BUFFERS = 4;
+const int BUFFER_SIZE = 65536;	// 32kb of data in each buffer
 
-class Sound {
-	friend class ResourceManager;
-	friend class SoundSystem;
-
+class BaseSound {
 public:
 	// set blocking to true if you want game to pause until sound has finished
-	void Play(bool blocking = false);
+	virtual void Play(bool blocking = false) = 0;
 	ALint State;
 
 protected:
-	Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
+	BaseSound(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
 
-private:
 	short numChannels;
 	unsigned int sampleRate;
 	short bitsPerSample;
 	float length;
 
 	int size;
-	char* data;
+	std::vector<char> data;
 
-	ALuint buffer;
 	ALuint source;
 
 	ALenum OALFormat();
 };
 
-class StreamSound {
+class Sound : public BaseSound {
 	friend class ResourceManager;
 	friend class SoundSystem;
 
 public:
 	// set blocking to true if you want game to pause until sound has finished
-	void Play(bool blocking = false);
-	ALint State;
+	void Play(bool blocking = false) override;
 
 protected:
-	StreamSound(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
+	Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
 
 private:
-	short numChannels;
-	unsigned int sampleRate;
-	short bitsPerSample;
-	float length;
-
-	int size;
-	char* data;
-
 	ALuint buffer;
-	ALuint source;
+};
 
-	ALenum OALFormat();
+class SoundStream : public BaseSound {
+	friend class ResourceManager;
+	friend class SoundSystem;
+
+public:
+	// set blocking to true if you want game to pause until sound has finished
+	void Play(bool blocking = false) override;
+
+protected:
+	SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
+
+private:
+	ALuint buffers[NUM_BUFFERS];
+	int cursor;
+
+	void updateStream();
 };
 
 #endif
