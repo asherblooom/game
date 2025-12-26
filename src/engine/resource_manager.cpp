@@ -456,9 +456,9 @@ BaseSound *ResourceManager::LoadSound(std::string name, std::string soundFile, b
 	std::string extension = soundFile.substr(soundFile.length() - 3, 3);
 	if (extension == "wav") {
 		if (useStreaming)
-			return LoadWaveFileStream(name, soundFile);
+			return LoadWaveFile(name, soundFile, true);
 		else
-			return LoadWaveFile(name, soundFile);
+			return LoadWaveFile(name, soundFile, false);
 	} else if (extension == "ogg")
 		if (useStreaming)
 			return LoadOggFileStream(name, soundFile);
@@ -468,7 +468,7 @@ BaseSound *ResourceManager::LoadSound(std::string name, std::string soundFile, b
 		throw std::invalid_argument("ERROR::SOUND: Invalid file extension: " + extension);
 }
 
-BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile) {
+BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, bool useStreaming) {
 	// first try to open with default path
 	std::ifstream f;
 	std::string defaultPath = "media/sound/";
@@ -533,80 +533,15 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile) 
 		throw std::runtime_error("ERROR::SOUND: Failed to load sound: cannot find correct chunks in WAVE file");
 	}
 	f.close();
-	Sound sound{numChannels, sampleRate, bitsPerSample, size, data};
-	Sounds.insert(std::make_pair(name, sound));
-	return &Sounds.at(name);
-}
-
-BaseSound *ResourceManager::LoadWaveFileStream(std::string name, std::string wavFile) {
-	// first try to open with default path
-	std::ifstream f;
-	std::string defaultPath = "media/sound/";
-	f.open((defaultPath + wavFile).c_str(), std::ios::in | std::ios::binary);
-	if (!f) {
-		// otherwise assume input is a full path itself and try to open
-		f.open(wavFile.c_str(), std::ios::in | std::ios::binary);
-		if (!f)
-			throw std::invalid_argument("ERROR::SOUND: incorrect file name: " + wavFile);
+	if (useStreaming) {
+		SoundStream sound{numChannels, sampleRate, bitsPerSample, size, data};
+		SoundStreams.insert(std::make_pair(name, sound));
+		return &SoundStreams.at(name);
+	} else {
+		Sound sound{numChannels, sampleRate, bitsPerSample, size, data};
+		Sounds.insert(std::make_pair(name, sound));
+		return &Sounds.at(name);
 	}
-	std::string chunkName;
-	unsigned int chunkSize;
-
-	char *data;
-	int size;
-	short audioFormat;
-	short numChannels;
-	unsigned int sampleRate;
-	unsigned int byteRate;
-	short blockAlign;
-	short bitsPerSample;
-
-	bool riffRead = false;
-	bool fmtRead = false;
-	bool dataRead = false;
-
-	while (true) {
-		// load wave chunk info
-		char chunk[4];
-		f.read((char *)&chunk, 4);
-		f.read((char *)&chunkSize, 4);
-		chunkName = std::string(chunk, 4);
-
-		if (f.eof()) break;
-
-		if (chunkName == "RIFF") {
-			f.seekg(4, std::ios_base::cur);
-			riffRead = true;
-		} else if (chunkName == "fmt ") {
-			f.read((char *)&audioFormat, 2);
-			f.read((char *)&numChannels, 2);
-			f.read((char *)&sampleRate, 4);
-			f.read((char *)&byteRate, 4);
-			f.read((char *)&blockAlign, 2);
-			f.read((char *)&bitsPerSample, 2);
-			// skip over any extra bytes
-			if (chunkSize > 16) f.seekg(chunkSize - 16, std::ios_base::cur);
-			fmtRead = true;
-		} else if (chunkName == "data") {
-			size = chunkSize;
-			data = new char[size];
-			f.read((char *)data, chunkSize);
-			dataRead = true;
-		} else if (riffRead && fmtRead && dataRead) {
-			break;
-		} else {
-			f.seekg(chunkSize, std::ios_base::cur);
-		}
-	}
-	if (!riffRead || !fmtRead || !dataRead) {
-		f.close();
-		throw std::runtime_error("ERROR::SOUND: Failed to load sound: cannot find correct chunks in WAVE file");
-	}
-	f.close();
-
-	SoundStream sound{numChannels, sampleRate, bitsPerSample, size, data};
-	SoundStreams.insert(std::make_pair(name, sound));
-	return &SoundStreams.at(name);
 }
 
 BaseSound *ResourceManager::LoadOggFile(std::string name, std::string oggFile) {

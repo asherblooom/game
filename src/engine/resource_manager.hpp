@@ -64,8 +64,7 @@ private:
 	static std::map<std::string, SoundStream> SoundStreams;
 
 	// helper functions for loading each type of sound file
-	static BaseSound *LoadWaveFile(std::string name, std::string wavFile);
-	static BaseSound *LoadWaveFileStream(std::string name, std::string wavFile);
+	static BaseSound *LoadWaveFile(std::string name, std::string wavFile, bool useStreaming);
 	static BaseSound *LoadOggFile(std::string name, std::string oggFile);
 	static BaseSound *LoadOggFileStream(std::string name, std::string oggFile);
 };

@@ -47,7 +47,7 @@ void Sound::Play(bool blocking) {
 }
 
 SoundStream::SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data)
-	: BaseSound{numChannels, sampleRate, bitsPerSample, size, data} {
+	: BaseSound{numChannels, sampleRate, bitsPerSample, size, data}, cursor{BUFFER_SIZE * NUM_BUFFERS} {
 	alGenBuffers(NUM_BUFFERS, &buffers[0]);
 	// alBufferData(buffer, OALFormat(), data, size, (ALsizei)sampleRate);
 	for (int i = 0; i < NUM_BUFFERS; i++) {
@@ -69,7 +69,6 @@ void SoundStream::Play(bool blocking) {
 	alSourceQueueBuffers(source, NUM_BUFFERS, &buffers[0]);
 	alSourcePlay(source);
 	ALint state = AL_PLAYING;
-	cursor = BUFFER_SIZE * NUM_BUFFERS;
 
 	while (state == AL_PLAYING) {
 		updateStream();
