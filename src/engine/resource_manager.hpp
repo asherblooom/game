@@ -31,6 +31,9 @@ public:
 	static Font &GetFont(std::string name);
 	// retrieves a stored sound
 	static BaseSound *GetSound(std::string name);
+	// updates the cursor of all the SoundStreams currently loaded
+	// should only be called in main.cpp inside the game loop (i.e. every frame)
+	static void updateAllSoundStreams();
 
 	// properly de-allocates all loaded resources
 	static void Clear();

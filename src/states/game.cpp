@@ -19,7 +19,9 @@ Game::Game(StateManager& manager)
 }
 
 void Game::OnEnter() {
-	ResourceManager::GetSound("meow")->Play(true);
+	// ResourceManager::GetSound("meow")->Blocking = true;
+	// ResourceManager::GetSound("meow")->Play();
+	// ResourceManager::GetSound("countdown")->Blocking = true;
 	ResourceManager::GetSound("countdown")->Play();
 }
 

@@ -36,9 +36,10 @@ Sound::Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, in
 	alSourcei(source, AL_BUFFER, buffer);
 }
 
-void Sound::Play(bool blocking) {
+void Sound::Play() {
+	Looping ? alSourcei(source, AL_LOOPING, AL_TRUE) : alSourcei(source, AL_LOOPING, AL_FALSE);
 	alSourcePlay(source);
-	if (blocking) {
+	if (Blocking) {
 		State = AL_PLAYING;
 		while (State == AL_PLAYING) {
 			alGetSourcei(source, AL_SOURCE_STATE, &State);
@@ -47,32 +48,36 @@ void Sound::Play(bool blocking) {
 }
 
 SoundStream::SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data)
-	: BaseSound{numChannels, sampleRate, bitsPerSample, size, data}, cursor{BUFFER_SIZE * NUM_BUFFERS} {
+	: BaseSound{numChannels, sampleRate, bitsPerSample, size, data}, cursor{0} {
 	alGenBuffers(NUM_BUFFERS, &buffers[0]);
-	// alBufferData(buffer, OALFormat(), data, size, (ALsizei)sampleRate);
-	for (int i = 0; i < NUM_BUFFERS; i++) {
-		alBufferData(buffers[i], OALFormat(), &data[i * BUFFER_SIZE], BUFFER_SIZE, sampleRate);
-	}
 
 	alGenSources(1, &source);
 	alSourcef(source, AL_PITCH, 1);
 	alSourcef(source, AL_GAIN, 1.0f);
 	alSource3f(source, AL_POSITION, 0, 0, 0);
 	alSource3f(source, AL_VELOCITY, 0, 0, 0);
+	// this is always false, we deal with looping in updateStream() to avoid silence at end of audio track
+	// when we haven't got enough data to completely fill last buffer
 	alSourcei(source, AL_LOOPING, AL_FALSE);
-
-	alSourceQueueBuffers(source, NUM_BUFFERS, &buffers[0]);
 }
 
-// FIXME: what about blocking/non-blocking with this?????????
-void SoundStream::Play(bool blocking) {
+void SoundStream::Play() {
+	// clear and reset queue
+	alSourceStop(source);
+	alSourcei(source, AL_BUFFER, 0);  // Removing the buffers from the source clears the queue
+	// (re)fill buffers and initialise queue
+	for (int i = 0; i < NUM_BUFFERS; i++)
+		alBufferData(buffers[i], OALFormat(), &data[i * BUFFER_SIZE], BUFFER_SIZE, sampleRate);
 	alSourceQueueBuffers(source, NUM_BUFFERS, &buffers[0]);
-	alSourcePlay(source);
-	ALint state = AL_PLAYING;
+	cursor = BUFFER_SIZE * NUM_BUFFERS;
 
-	while (state == AL_PLAYING) {
-		updateStream();
-		alGetSourcei(source, AL_SOURCE_STATE, &state);
+	alSourcePlay(source);
+	if (Blocking) {
+		State = AL_PLAYING;
+		while (State == AL_PLAYING) {
+			updateStream();
+			alGetSourcei(source, AL_SOURCE_STATE, &State);
+		}
 	}
 }
 
@@ -84,6 +89,12 @@ void SoundStream::updateStream() {
 		return;
 
 	while (buffersProcessed--) {
+		if (!Looping && cursor >= size) {
+			// We have no more data to push, stop adding buffers and let the queue drain out
+			// When the queue is empty, state will become AL_STOPPED
+			return;
+		}
+
 		ALuint buffer;
 		alSourceUnqueueBuffers(source, 1, &buffer);
 
@@ -96,10 +107,10 @@ void SoundStream::updateStream() {
 		if (cursor + BUFFER_SIZE > (int)data.size())
 			dataSizeToCopy = data.size() - cursor;
 
-		memcpy(&data[0], &data[cursor], dataSizeToCopy);
+		memcpy(tempData, &data[cursor], dataSizeToCopy);
 		cursor += dataSizeToCopy;
 
-		if (dataSizeToCopy < BUFFER_SIZE) {
+		if (Looping && dataSizeToCopy < BUFFER_SIZE) {
 			cursor = 0;
 			memcpy(&tempData[dataSizeToCopy], &data[cursor], BUFFER_SIZE - dataSizeToCopy);
 			cursor = BUFFER_SIZE - dataSizeToCopy;

@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "engine/input_manager.hpp"
+#include "engine/resource_manager.hpp"
 #include "engine/window.hpp"
 #include "resource_loader.hpp"
 #include "state_manager.hpp"
@@ -40,6 +41,7 @@ int main() {
 			window.SetBackground(0, 0, 0);
 			manager.Render();
 
+			ResourceManager::updateAllSoundStreams();
 			window.SwapBuffers();
 		}
 	} catch (std::exception& e) {

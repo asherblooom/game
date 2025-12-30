@@ -11,9 +11,13 @@ const int BUFFER_SIZE = 65536;	// 32kb of data in each buffer
 
 class BaseSound {
 public:
-	// set blocking to true if you want game to pause until sound has finished
-	virtual void Play(bool blocking = false) = 0;
+	virtual void Play() = 0;
 	ALint State;
+
+	// set looping to true if you want sound to loop
+	bool Looping = false;
+	// set blocking to true if you want game to pause until sound has finished
+	bool Blocking = false;
 
 protected:
 	BaseSound(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
@@ -36,13 +40,10 @@ class Sound : public BaseSound {
 	friend class SoundSystem;
 
 public:
-	// set blocking to true if you want game to pause until sound has finished
-	void Play(bool blocking = false) override;
-
-protected:
-	Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
+	void Play() override;
 
 private:
+	Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
 	ALuint buffer;
 };
 
@@ -51,13 +52,10 @@ class SoundStream : public BaseSound {
 	friend class SoundSystem;
 
 public:
-	// set blocking to true if you want game to pause until sound has finished
-	void Play(bool blocking = false) override;
-
-protected:
-	SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
+	void Play() override;
 
 private:
+	SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
 	ALuint buffers[NUM_BUFFERS];
 	int cursor;
 

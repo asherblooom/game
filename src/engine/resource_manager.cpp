@@ -533,7 +533,9 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 		throw std::runtime_error("ERROR::SOUND: Failed to load sound: cannot find correct chunks in WAVE file");
 	}
 	f.close();
-	if (useStreaming) {
+	// FIXME: size cant be smaller than numbuffers * buffersize - check this is correct for ogg too!!
+	// SWITCH TO STREAMING ON AUTO IF SIZE IS TOO BIG INSTEAD OF MAKING USER CHOOSE!?!?!?!?!?!??!
+	if (useStreaming && size > NUM_BUFFERS * BUFFER_SIZE) {
 		SoundStream sound{numChannels, sampleRate, bitsPerSample, size, data};
 		SoundStreams.insert(std::make_pair(name, sound));
 		return &SoundStreams.at(name);
@@ -622,6 +624,12 @@ BaseSound *ResourceManager::GetSound(std::string name) {
 		return &SoundStreams.at(name);
 	}
 	return &Sounds.at(name);
+}
+
+void ResourceManager::updateAllSoundStreams() {
+	for (auto &sound : SoundStreams) {
+		sound.second.updateStream();
+	}
 }
 
 void ResourceManager::Clear() {
