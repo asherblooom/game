@@ -48,7 +48,7 @@ void Sound::Play() {
 }
 
 SoundStream::SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data)
-	: BaseSound{numChannels, sampleRate, bitsPerSample, size, data}, cursor{0} {
+	: BaseSound{numChannels, sampleRate, bitsPerSample, size, data}, cursor{0}, transferBuffer(BUFFER_SIZE) {
 	alGenBuffers(NUM_BUFFERS, &buffers[0]);
 
 	alGenSources(1, &source);
@@ -89,36 +89,38 @@ void SoundStream::updateStream() {
 		return;
 
 	while (buffersProcessed--) {
-		if (!Looping && cursor >= size) {
-			// We have no more data to push, stop adding buffers and let the queue drain out
-			// When the queue is empty, state will become AL_STOPPED
-			return;
-		}
-
 		ALuint buffer;
 		alSourceUnqueueBuffers(source, 1, &buffer);
 
-		ALsizei dataSize = BUFFER_SIZE;
+		if (!Looping && cursor >= size)
+			continue;
 
-		char* tempData = new char[dataSize];
-		memset(tempData, 0, dataSize);
+		int bytesWritten = 0;
+		while (bytesWritten < BUFFER_SIZE) {
+			// How much data is available to read from the current cursor?
+			int bytesRemaningInSource = size - cursor;
+			// How much space is left in our OpenAL buffer?
+			int bytesSpaceInBuffer = BUFFER_SIZE - bytesWritten;
+			// Copy whichever is smaller
+			int bytesToCopy = std::min(bytesRemaningInSource, bytesSpaceInBuffer);
 
-		std::size_t dataSizeToCopy = BUFFER_SIZE;
-		if (cursor + BUFFER_SIZE > (int)data.size())
-			dataSizeToCopy = data.size() - cursor;
+			memcpy(&transferBuffer[bytesWritten], &data[cursor], bytesToCopy);
+			cursor += bytesToCopy;
+			bytesWritten += bytesToCopy;
 
-		memcpy(tempData, &data[cursor], dataSizeToCopy);
-		cursor += dataSizeToCopy;
-
-		if (Looping && dataSizeToCopy < BUFFER_SIZE) {
-			cursor = 0;
-			memcpy(&tempData[dataSizeToCopy], &data[cursor], BUFFER_SIZE - dataSizeToCopy);
-			cursor = BUFFER_SIZE - dataSizeToCopy;
+			// If we hit the end of the source data...
+			if (cursor >= size) {
+				if (Looping) {
+					// Loop: Reset cursor and continue filling the same buffer (avoid extra unneeded silence!)
+					cursor = 0;
+				} else {
+					// No Loop: Fill the rest with silence and stop
+					memset(&transferBuffer[bytesWritten], 0, BUFFER_SIZE - bytesWritten);
+					break;
+				}
+			}
 		}
-
-		alBufferData(buffer, OALFormat(), tempData, BUFFER_SIZE, sampleRate);
+		alBufferData(buffer, OALFormat(), transferBuffer.data(), BUFFER_SIZE, sampleRate);
 		alSourceQueueBuffers(source, 1, &buffer);
-
-		delete[] tempData;
 	}
 }

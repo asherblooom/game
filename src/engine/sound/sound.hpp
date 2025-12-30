@@ -58,6 +58,7 @@ private:
 	SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
 	ALuint buffers[NUM_BUFFERS];
 	int cursor;
+	std::vector<char> transferBuffer;
 
 	void updateStream();
 };
