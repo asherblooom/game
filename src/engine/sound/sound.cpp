@@ -48,7 +48,10 @@ void Sound::Play() {
 }
 
 SoundStream::SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data)
-	: BaseSound{numChannels, sampleRate, bitsPerSample, size, data}, cursor{0}, transferBuffer(BUFFER_SIZE) {
+	: BaseSound{numChannels, sampleRate, bitsPerSample, size, data} {}
+
+WaveSoundStream::WaveSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data)
+	: SoundStream{numChannels, sampleRate, bitsPerSample, size, data}, cursor{0}, transferBuffer(BUFFER_SIZE) {
 	alGenBuffers(NUM_BUFFERS, &buffers[0]);
 
 	alGenSources(1, &source);
@@ -61,7 +64,7 @@ SoundStream::SoundStream(short numChannels, unsigned int sampleRate, short bitsP
 	alSourcei(source, AL_LOOPING, AL_FALSE);
 }
 
-void SoundStream::Play() {
+void WaveSoundStream::Play() {
 	// clear and reset queue
 	alSourceStop(source);
 	alSourcei(source, AL_BUFFER, 0);  // Removing the buffers from the source clears the queue
@@ -81,7 +84,7 @@ void SoundStream::Play() {
 	}
 }
 
-void SoundStream::updateStream() {
+void WaveSoundStream::updateStream() {
 	ALint buffersProcessed = 0;
 	alGetSourcei(source, AL_BUFFERS_PROCESSED, &buffersProcessed);
 
@@ -99,7 +102,7 @@ void SoundStream::updateStream() {
 		while (bytesWritten < BUFFER_SIZE) {
 			// How much data is available to read from the current cursor?
 			int bytesRemaningInSource = size - cursor;
-			// How much space is left in our OpenAL buffer?
+			// How much space is left in the buffer?
 			int bytesSpaceInBuffer = BUFFER_SIZE - bytesWritten;
 			// Copy whichever is smaller
 			int bytesToCopy = std::min(bytesRemaningInSource, bytesSpaceInBuffer);
@@ -123,4 +126,36 @@ void SoundStream::updateStream() {
 		alBufferData(buffer, OALFormat(), transferBuffer.data(), BUFFER_SIZE, sampleRate);
 		alSourceQueueBuffers(source, 1, &buffer);
 	}
+}
+
+OggSoundStream::OggSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, OggVorbis_File& streamHandle)
+	: SoundStream(numChannels, sampleRate, bitsPerSample, 0, 0), streamHandle{streamHandle} {}
+
+void OggSoundStream::Play() {
+}
+
+void OggSoundStream::updateStream() {
+	char data[BUFFER_SIZE];
+	int read = 0;
+	int readResult = 0;
+	int section;
+
+	int seek = ov_time_seek(&streamHandle, (length - timeLeft) / 1000.0);
+	if (seek != 0) {
+		// return StreamData(buffer, timeLeft + GetLength());
+		return;
+	}
+	while (read < BUFFER_SIZE) {
+		readResult = ov_read(&streamHandle, data + read, BUFFER_SIZE - read, 0, 2, 1, &section);
+
+		if (readResult > 0) {
+			read += readResult;
+		} else {
+			break;
+		}
+	}
+	if (read > 0) {
+		alBufferData(buffer, OALFormat(), data, read, sampleRate);
+	}
+	// return (float)read / (channels * freqRate * (bitRate / 8.0)) * 1000.0 f;
 }

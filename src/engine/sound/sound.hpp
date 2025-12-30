@@ -3,6 +3,7 @@
 
 #include <AL/al.h>
 #include <AL/alc.h>
+#include <vorbis/vorbisfile.h>
 #include <vector>
 
 // constants for streaming sounds
@@ -51,16 +52,43 @@ class SoundStream : public BaseSound {
 	friend class ResourceManager;
 	friend class SoundSystem;
 
+protected:
+	SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
+	virtual void updateStream() = 0;
+	virtual void deleteBuffers() = 0;
+};
+
+class WaveSoundStream : public SoundStream {
+	friend class ResourceManager;
+	friend class SoundSystem;
+
 public:
 	void Play() override;
 
 private:
-	SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
+	WaveSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
 	ALuint buffers[NUM_BUFFERS];
 	int cursor;
 	std::vector<char> transferBuffer;
 
-	void updateStream();
+	void updateStream() override;
+	void deleteBuffers() override { alDeleteBuffers(NUM_BUFFERS, &buffers[0]); }
+};
+
+class OggSoundStream : public SoundStream {
+	friend class ResourceManager;
+	friend class SoundSystem;
+
+public:
+	void Play() override;
+
+private:
+	OggSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, OggVorbis_File& streamHandle);
+	OggVorbis_File& streamHandle;
+	ALuint buffer;
+
+	void updateStream() override;
+	void deleteBuffers() override { alDeleteBuffers(1, &buffer); }
 };
 
 #endif

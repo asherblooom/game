@@ -9,6 +9,7 @@
 #include <cstring>
 #include <exception>
 #include <fstream>
+#include <ios>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -22,7 +23,7 @@ std::map<std::string, Texture2DArray> ResourceManager::TextureArrays;
 std::map<std::string, std::map<std::string, int>> ResourceManager::ArrayItemNames;
 std::map<std::string, Font> ResourceManager::Fonts;
 std::map<std::string, Sound> ResourceManager::Sounds;
-std::map<std::string, SoundStream> ResourceManager::SoundStreams;
+std::map<std::string, std::unique_ptr<SoundStream>> ResourceManager::SoundStreams;
 
 Shader &ResourceManager::GetShader(std::string name) {
 	if (!Shaders.contains(name))
@@ -533,12 +534,10 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 		throw std::runtime_error("ERROR::SOUND: Failed to load sound: cannot find correct chunks in WAVE file");
 	}
 	f.close();
-	// FIXME: size cant be smaller than numbuffers * buffersize - check this is correct for ogg too!!
-	// SWITCH TO STREAMING ON AUTO IF SIZE IS TOO BIG INSTEAD OF MAKING USER CHOOSE!?!?!?!?!?!??!
-	if (useStreaming && size > NUM_BUFFERS * BUFFER_SIZE) {
-		SoundStream sound{numChannels, sampleRate, bitsPerSample, size, data};
-		SoundStreams.insert(std::make_pair(name, sound));
-		return &SoundStreams.at(name);
+	if (useStreaming) {
+		WaveSoundStream sound{numChannels, sampleRate, bitsPerSample, size, data};
+		SoundStreams.insert(std::make_pair(name, std::make_unique<WaveSoundStream>(sound)));
+		return &*SoundStreams.at(name);
 	} else {
 		Sound sound{numChannels, sampleRate, bitsPerSample, size, data};
 		Sounds.insert(std::make_pair(name, sound));
@@ -592,43 +591,49 @@ BaseSound *ResourceManager::LoadOggFile(std::string name, std::string oggFile) {
 	return &Sounds.at(name);
 }
 
-BaseSound *ResourceManager::LoadOggFileStream(std::string name, std::string oggFile) {}
-// 	// first try to open with default path
-// 	FILE *f;
-// 	std::string defaultPath = "media/sound/";
-// 	f = fopen((defaultPath + oggFile).c_str(), "rb");
-// 	if (!f) {
-// 		// otherwise assume input is a full path itself and try to open
-// 		f = fopen(oggFile.c_str(), "rb");
-// 		if (!f)
-// 			throw std::invalid_argument("ERROR::SOUND: incorrect file name: " + oggFile);
-// 	}
-//
-// 	if (ov_open(f, &streamHandle, NULL, 0) < 0) {
-// 		throw std::runtime_error("ERROR::SOUND: failed to get OGG stream handle");
-// 	}
-// 	vorbis_info *vorbisInfo = ov_info(&streamHandle, -1);
-// 	bitsPerSample = 16;
-// 	numChannels = vorbisInfo->channels;
-// 	sampleRate = (float)vorbisInfo->rate;
-// 	length = (float)ov_time_total(&streamHandle, -1) * 1000.0f;
-//
-// 	ov_time_seek(&streamHandle, 0);
-// }
+BaseSound *ResourceManager::LoadOggFileStream(std::string name, std::string oggFile) {
+	// first try to open with default path
+	FILE *f;
+	std::string defaultPath = "media/sound/";
+	f = fopen((defaultPath + oggFile).c_str(), "rb");
+	if (!f) {
+		// otherwise assume input is a full path itself and try to open
+		f = fopen(oggFile.c_str(), "rb");
+		if (!f)
+			throw std::invalid_argument("ERROR::SOUND: incorrect file name: " + oggFile);
+	}
+
+	OggVorbis_File streamHandle;
+	if (ov_open(f, &streamHandle, NULL, 0) < 0) {
+		throw std::runtime_error("ERROR::SOUND: failed to get OGG stream handle");
+	}
+	vorbis_info *vorbisInfo = ov_info(&streamHandle, -1);
+	short bitsPerSample = 16;
+	short numChannels = vorbisInfo->channels;
+	unsigned int sampleRate = (float)vorbisInfo->rate;
+	// FIXME: unused
+	int length = (float)ov_time_total(&streamHandle, -1) * 1000.0f;
+
+	ov_time_seek(&streamHandle, 0);
+
+	OggSoundStream sound{numChannels, sampleRate, bitsPerSample, streamHandle};
+	SoundStreams.insert(std::make_pair(name, std::make_unique<OggSoundStream>(sound)));
+	return &*SoundStreams.at(name);
+}
 
 BaseSound *ResourceManager::GetSound(std::string name) {
 	if (!Sounds.contains(name)) {
 		if (!SoundStreams.contains(name)) {
 			std::cerr << "ERROR::SOUND: Can't find sound: " << name << "\n";
 		}
-		return &SoundStreams.at(name);
+		return &*SoundStreams.at(name);
 	}
 	return &Sounds.at(name);
 }
 
 void ResourceManager::updateAllSoundStreams() {
 	for (auto &sound : SoundStreams) {
-		sound.second.updateStream();
+		sound.second->updateStream();
 	}
 }
 
@@ -651,7 +656,7 @@ void ResourceManager::Clear() {
 		alDeleteBuffers(1, &sound.second.buffer);
 	}
 	for (auto &sound : SoundStreams) {
-		alDeleteSources(1, &sound.second.source);
-		alDeleteBuffers(NUM_BUFFERS, &sound.second.buffers[0]);
+		alDeleteSources(1, &sound.second->source);
+		sound.second->deleteBuffers();
 	}
 }

@@ -3,6 +3,7 @@
 
 #include <glad/glad.h>
 #include <map>
+#include <memory>
 #include <string>
 
 #include "render/font.hpp"
@@ -64,7 +65,7 @@ private:
 	static std::map<std::string, std::map<std::string, int>> ArrayItemNames;
 	static std::map<std::string, Font> Fonts;
 	static std::map<std::string, Sound> Sounds;
-	static std::map<std::string, SoundStream> SoundStreams;
+	static std::map<std::string, std::unique_ptr<SoundStream>> SoundStreams;
 
 	// helper functions for loading each type of sound file
 	static BaseSound *LoadWaveFile(std::string name, std::string wavFile, bool useStreaming);
