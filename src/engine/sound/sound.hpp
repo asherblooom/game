@@ -4,6 +4,7 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <vorbis/vorbisfile.h>
+#include <fstream>
 #include <vector>
 
 // constants for streaming sounds
@@ -13,6 +14,8 @@ const int BUFFER_SIZE = 65536;	// 32kb of data in each buffer
 class BaseSound {
 public:
 	virtual void Play() = 0;
+	void Stop();
+	void FadeOut();
 	ALint State;
 
 	// set looping to true if you want sound to loop
@@ -21,16 +24,12 @@ public:
 	bool Blocking = false;
 
 protected:
-	BaseSound(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
+	BaseSound(short numChannels, unsigned int sampleRate, short bitsPerSample, long size);
 
 	short numChannels;
 	unsigned int sampleRate;
 	short bitsPerSample;
-	float length;
-
-	int size;
-	std::vector<char> data;
-
+	long size;
 	ALuint source;
 
 	ALenum OALFormat();
@@ -44,8 +43,9 @@ public:
 	void Play() override;
 
 private:
-	Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
+	Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, char* data);
 	ALuint buffer;
+	std::vector<char> data;
 };
 
 class SoundStream : public BaseSound {
@@ -53,9 +53,12 @@ class SoundStream : public BaseSound {
 	friend class SoundSystem;
 
 protected:
-	SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
+	SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size);
+	ALuint buffers[NUM_BUFFERS];
+	std::vector<char> transferBuffer;
+
 	virtual void updateStream() = 0;
-	virtual void deleteBuffers() = 0;
+	virtual void closeFile() = 0;
 };
 
 class WaveSoundStream : public SoundStream {
@@ -66,13 +69,12 @@ public:
 	void Play() override;
 
 private:
-	WaveSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data);
-	ALuint buffers[NUM_BUFFERS];
+	WaveSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, std::ifstream& file);
+	std::ifstream& file;
 	int cursor;
-	std::vector<char> transferBuffer;
 
 	void updateStream() override;
-	void deleteBuffers() override { alDeleteBuffers(NUM_BUFFERS, &buffers[0]); }
+	void closeFile() override { file.close(); }
 };
 
 class OggSoundStream : public SoundStream {
@@ -83,12 +85,11 @@ public:
 	void Play() override;
 
 private:
-	OggSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, OggVorbis_File& streamHandle);
-	OggVorbis_File& streamHandle;
-	ALuint buffer;
+	OggSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, OggVorbis_File& streamHandle);
+	OggVorbis_File& vorbisFile;
 
 	void updateStream() override;
-	void deleteBuffers() override { alDeleteBuffers(1, &buffer); }
+	void closeFile() override { ov_clear(&vorbisFile); }
 };
 
 #endif

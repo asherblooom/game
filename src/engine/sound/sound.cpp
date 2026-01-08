@@ -1,8 +1,16 @@
 #include "sound.hpp"
 #include <AL/al.h>
-#include <string.h>
+#include <vorbis/vorbisfile.h>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
+
+BaseSound::BaseSound(short numChannels, unsigned int sampleRate, short bitsPerSample, long size)
+	: State{AL_INITIAL},
+	  numChannels{numChannels},
+	  sampleRate{sampleRate},
+	  bitsPerSample{bitsPerSample},
+	  size{size} {}
 
 ALenum BaseSound::OALFormat() {
 	if (bitsPerSample == 16) {
@@ -13,17 +21,23 @@ ALenum BaseSound::OALFormat() {
 	throw std::runtime_error("ERROR::SOUND: Unrecognised wave format");
 }
 
-BaseSound::BaseSound(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data)
-	: State{AL_INITIAL},
-	  numChannels{numChannels},
-	  sampleRate{sampleRate},
-	  bitsPerSample{bitsPerSample},
-	  length{size / (numChannels * sampleRate * (bitsPerSample / 8.0f)) * 1000.0f},
-	  size{size},
-	  data{data, data + size} {}
+void BaseSound::Stop() {
+	if (State == AL_PLAYING) alSourceStop(source);
+}
 
-Sound::Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data)
-	: BaseSound{numChannels, sampleRate, bitsPerSample, size, data} {
+void BaseSound::FadeOut() {
+	if (State != AL_PLAYING) return;
+
+	float currentGain;
+	alGetSourcef(source, AL_GAIN, &currentGain);
+	if (currentGain > 0.0)
+		alSourcef(source, AL_GAIN, currentGain - 0.01);	 // Fade out over roughly 1 second (assuming 60fps)
+	else
+		alSourceStop(source);
+}
+
+Sound::Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, char* data)
+	: BaseSound{numChannels, sampleRate, bitsPerSample, size}, data{data, data + size} {
 	alGenBuffers(1, &buffer);
 	alBufferData(buffer, OALFormat(), data, size, (ALsizei)sampleRate);
 
@@ -47,11 +61,16 @@ void Sound::Play() {
 	}
 }
 
-SoundStream::SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data)
-	: BaseSound{numChannels, sampleRate, bitsPerSample, size, data} {}
+SoundStream::SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size)
+	: BaseSound{numChannels, sampleRate, bitsPerSample, size}, transferBuffer(BUFFER_SIZE) {}
 
-WaveSoundStream::WaveSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, int size, char* data)
-	: SoundStream{numChannels, sampleRate, bitsPerSample, size, data}, cursor{0}, transferBuffer(BUFFER_SIZE) {
+WaveSoundStream::WaveSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, std::ifstream& file)
+	: SoundStream{numChannels, sampleRate, bitsPerSample, size}, file{file}, cursor{0} {
+	if (size < NUM_BUFFERS * BUFFER_SIZE) {
+		file.close();
+		throw std::invalid_argument("ERROR::SOUND: sound too small to use streaming");
+	}
+
 	alGenBuffers(NUM_BUFFERS, &buffers[0]);
 
 	alGenSources(1, &source);
@@ -69,9 +88,11 @@ void WaveSoundStream::Play() {
 	alSourceStop(source);
 	alSourcei(source, AL_BUFFER, 0);  // Removing the buffers from the source clears the queue
 	// (re)fill buffers and initialise queue
-	for (int i = 0; i < NUM_BUFFERS; i++)
-		alBufferData(buffers[i], OALFormat(), &data[i * BUFFER_SIZE], BUFFER_SIZE, sampleRate);
-	alSourceQueueBuffers(source, NUM_BUFFERS, &buffers[0]);
+	for (int i = 0; i < NUM_BUFFERS; i++) {
+		file.read(transferBuffer.data(), BUFFER_SIZE);
+		alBufferData(buffers[i], OALFormat(), transferBuffer.data(), BUFFER_SIZE, sampleRate);
+		alSourceQueueBuffers(source, 1, &buffers[i]);
+	}
 	cursor = BUFFER_SIZE * NUM_BUFFERS;
 
 	alSourcePlay(source);
@@ -88,74 +109,125 @@ void WaveSoundStream::updateStream() {
 	ALint buffersProcessed = 0;
 	alGetSourcei(source, AL_BUFFERS_PROCESSED, &buffersProcessed);
 
-	if (buffersProcessed <= 0)
-		return;
+	while (buffersProcessed--) {
+		ALuint buffer;
+		alSourceUnqueueBuffers(source, 1, &buffer);
+
+		// if we have reached end of file and we are not looping, but there are queued buffers
+		// waiting to be filled (buffersProcessed > 0), do nothing with the unqueued buffer
+		if (!Looping && cursor >= size)
+			continue;
+
+		int totalBytesRead = 0;
+		while (totalBytesRead < BUFFER_SIZE) {
+			// How much data is available to read from the current cursor?
+			int bytesRemaningInSource = size - cursor;
+			// How much space is left in the buffer?
+			int bytesSpaceInBuffer = BUFFER_SIZE - totalBytesRead;
+			// Read whichever is smaller
+			int bytesToRead = std::min(bytesRemaningInSource, bytesSpaceInBuffer);
+			file.read(transferBuffer.data() + totalBytesRead, bytesToRead);
+			cursor += bytesToRead;
+			totalBytesRead += bytesToRead;
+
+			// If we hit the end of the source data... (cannot use file.eof() since end of data section might not be end of file)
+			if (cursor >= size) {
+				if (Looping) {
+					// Loop: Reset cursor and continue filling the same buffer (avoid extra unneeded silence!)
+					if (file.eof()) file.clear();
+					// cursor should never be greater than size, only less than or equal,
+					// but we use -cursor here just in case it ever is????? (same with if statement above)
+					file.seekg(-cursor, std::ios::cur);
+					cursor = 0;
+				} else {
+					// No Loop: Fill the rest with silence and stop
+					// memset(&transferBuffer[bytesWritten], 0, BUFFER_SIZE - bytesWritten);
+					// FIXME: check removing added silence and changing alBufferData size works????
+					break;
+				}
+			}
+		}
+		alBufferData(buffer, OALFormat(), transferBuffer.data(), totalBytesRead, sampleRate);
+		alSourceQueueBuffers(source, 1, &buffer);
+	}
+}
+
+OggSoundStream::OggSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, OggVorbis_File& vorbisFile)
+	: SoundStream(numChannels, sampleRate, bitsPerSample, size), vorbisFile{vorbisFile} {
+	if (size < NUM_BUFFERS * BUFFER_SIZE) {
+		ov_clear(&vorbisFile);
+		throw std::invalid_argument("ERROR::SOUND: sound too small to use streaming");
+	}
+	alGenBuffers(NUM_BUFFERS, &buffers[0]);
+
+	alGenSources(1, &source);
+	alSourcef(source, AL_PITCH, 1);
+	alSourcef(source, AL_GAIN, 1.0f);
+	alSource3f(source, AL_POSITION, 0, 0, 0);
+	alSource3f(source, AL_VELOCITY, 0, 0, 0);
+	alSourcei(source, AL_LOOPING, AL_FALSE);
+}
+
+void OggSoundStream::Play() {
+	// clear and reset queue
+	alSourceStop(source);
+	alSourcei(source, AL_BUFFER, 0);  // Removing the buffers from the source clears the queue
+	// (re)fill buffers and initialise queue
+	int bytesRead = 0;
+	int currentSection;
+	for (int i = 0; i < NUM_BUFFERS; i++) {
+		int totalBytesRead = 0;
+		while (totalBytesRead < BUFFER_SIZE) {
+			bytesRead = ov_read(&vorbisFile, transferBuffer.data() + totalBytesRead, BUFFER_SIZE - totalBytesRead, 0, 2, 1, &currentSection);
+			if (bytesRead > 0)
+				totalBytesRead += bytesRead;
+			else if (bytesRead < 0) {
+				// Error in the stream
+				ov_clear(&vorbisFile);
+				throw std::runtime_error("ERROR::SOUND: could not decode OGG bitstream");
+			}
+			// FIXME: handle sound too small here instead of error????????
+		}
+		alBufferData(buffers[i], OALFormat(), transferBuffer.data(), BUFFER_SIZE, sampleRate);
+		alSourceQueueBuffers(source, 1, &buffers[i]);
+	}
+
+	alSourcePlay(source);
+	// FIXME: no blocking!
+}
+
+void OggSoundStream::updateStream() {
+	int bytesRead = 0;
+	int section;
+
+	ALint buffersProcessed = 0;
+	alGetSourcei(source, AL_BUFFERS_PROCESSED, &buffersProcessed);
 
 	while (buffersProcessed--) {
 		ALuint buffer;
 		alSourceUnqueueBuffers(source, 1, &buffer);
 
-		if (!Looping && cursor >= size)
-			continue;
-
-		int bytesWritten = 0;
-		while (bytesWritten < BUFFER_SIZE) {
-			// How much data is available to read from the current cursor?
-			int bytesRemaningInSource = size - cursor;
-			// How much space is left in the buffer?
-			int bytesSpaceInBuffer = BUFFER_SIZE - bytesWritten;
-			// Copy whichever is smaller
-			int bytesToCopy = std::min(bytesRemaningInSource, bytesSpaceInBuffer);
-
-			memcpy(&transferBuffer[bytesWritten], &data[cursor], bytesToCopy);
-			cursor += bytesToCopy;
-			bytesWritten += bytesToCopy;
-
-			// If we hit the end of the source data...
-			if (cursor >= size) {
-				if (Looping) {
-					// Loop: Reset cursor and continue filling the same buffer (avoid extra unneeded silence!)
-					cursor = 0;
-				} else {
-					// No Loop: Fill the rest with silence and stop
-					memset(&transferBuffer[bytesWritten], 0, BUFFER_SIZE - bytesWritten);
+		// refill the buffer with new ogg data
+		int totalBytesRead = 0;
+		while (totalBytesRead < BUFFER_SIZE) {
+			bytesRead = ov_read(&vorbisFile, transferBuffer.data() + totalBytesRead, BUFFER_SIZE - totalBytesRead, 0, 2, 1, &section);
+			if (bytesRead > 0)
+				totalBytesRead += bytesRead;
+			else if (bytesRead < 0) {
+				// Error in the stream
+				ov_clear(&vorbisFile);
+				throw std::runtime_error("ERROR::SOUND: could not decode OGG bitstream");
+			} else if (bytesRead == 0) {
+				// end of file reached
+				if (Looping)
+					ov_pcm_seek(&vorbisFile, 0);
+				else
 					break;
-				}
 			}
 		}
-		alBufferData(buffer, OALFormat(), transferBuffer.data(), BUFFER_SIZE, sampleRate);
-		alSourceQueueBuffers(source, 1, &buffer);
-	}
-}
-
-OggSoundStream::OggSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, OggVorbis_File& streamHandle)
-	: SoundStream(numChannels, sampleRate, bitsPerSample, 0, 0), streamHandle{streamHandle} {}
-
-void OggSoundStream::Play() {
-}
-
-void OggSoundStream::updateStream() {
-	char data[BUFFER_SIZE];
-	int read = 0;
-	int readResult = 0;
-	int section;
-
-	int seek = ov_time_seek(&streamHandle, (length - timeLeft) / 1000.0);
-	if (seek != 0) {
-		// return StreamData(buffer, timeLeft + GetLength());
-		return;
-	}
-	while (read < BUFFER_SIZE) {
-		readResult = ov_read(&streamHandle, data + read, BUFFER_SIZE - read, 0, 2, 1, &section);
-
-		if (readResult > 0) {
-			read += readResult;
-		} else {
-			break;
+		if (totalBytesRead > 0) {
+			alBufferData(buffer, OALFormat(), transferBuffer.data(), totalBytesRead, sampleRate);
+			alSourceQueueBuffers(source, 1, &buffer);
 		}
 	}
-	if (read > 0) {
-		alBufferData(buffer, OALFormat(), data, read, sampleRate);
-	}
-	// return (float)read / (channels * freqRate * (bitRate / 8.0)) * 1000.0 f;
 }

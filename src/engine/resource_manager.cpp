@@ -484,7 +484,7 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 	unsigned int chunkSize;
 
 	char *data;
-	int size;
+	long size;
 	short audioFormat;
 	short numChannels;
 	unsigned int sampleRate;
@@ -496,7 +496,7 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 	bool fmtRead = false;
 	bool dataRead = false;
 
-	while (true) {
+	while (riffRead && fmtRead && dataRead) {
 		// load wave chunk info
 		char chunk[4];
 		f.read((char *)&chunk, 4);
@@ -520,11 +520,11 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 			fmtRead = true;
 		} else if (chunkName == "data") {
 			size = chunkSize;
-			data = new char[size];
-			f.read((char *)data, chunkSize);
+			if (useStreaming) {
+				data = new char[size];
+				f.read((char *)data, chunkSize);
+			}
 			dataRead = true;
-		} else if (riffRead && fmtRead && dataRead) {
-			break;
 		} else {
 			f.seekg(chunkSize, std::ios_base::cur);
 		}
@@ -533,12 +533,12 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 		f.close();
 		throw std::runtime_error("ERROR::SOUND: Failed to load sound: cannot find correct chunks in WAVE file");
 	}
-	f.close();
 	if (useStreaming) {
-		WaveSoundStream sound{numChannels, sampleRate, bitsPerSample, size, data};
+		WaveSoundStream sound{numChannels, sampleRate, bitsPerSample, size, f};
 		SoundStreams.insert(std::make_pair(name, std::make_unique<WaveSoundStream>(sound)));
 		return &*SoundStreams.at(name);
 	} else {
+		f.close();
 		Sound sound{numChannels, sampleRate, bitsPerSample, size, data};
 		Sounds.insert(std::make_pair(name, sound));
 		return &Sounds.at(name);
@@ -603,20 +603,23 @@ BaseSound *ResourceManager::LoadOggFileStream(std::string name, std::string oggF
 			throw std::invalid_argument("ERROR::SOUND: incorrect file name: " + oggFile);
 	}
 
-	OggVorbis_File streamHandle;
-	if (ov_open(f, &streamHandle, NULL, 0) < 0) {
+	OggVorbis_File vorbisFile;
+	if (ov_open(f, &vorbisFile, NULL, 0) < 0) {
 		throw std::runtime_error("ERROR::SOUND: failed to get OGG stream handle");
 	}
-	vorbis_info *vorbisInfo = ov_info(&streamHandle, -1);
-	short bitsPerSample = 16;
+	vorbis_info *vorbisInfo = ov_info(&vorbisFile, -1);
+	short bitsPerSample = 16;  // Assuming 16-bit audio, standard for Ogg decoding
 	short numChannels = vorbisInfo->channels;
-	unsigned int sampleRate = (float)vorbisInfo->rate;
-	// FIXME: unused
-	int length = (float)ov_time_total(&streamHandle, -1) * 1000.0f;
+	unsigned int sampleRate = vorbisInfo->rate;
+	ov_pcm_seek(&vorbisFile, 0);
 
-	ov_time_seek(&streamHandle, 0);
+	int totalSamples = ov_pcm_total(&vorbisFile, -1);
+	long size = totalSamples * numChannels * bitsPerSample;
+	// FIXME: what are these for???
+	// std::cout << size << "  ";
+	// std::cerr << "ERROR::SOUND: Can't find sound: " << name << "\n";
 
-	OggSoundStream sound{numChannels, sampleRate, bitsPerSample, streamHandle};
+	OggSoundStream sound{numChannels, sampleRate, bitsPerSample, size, vorbisFile};
 	SoundStreams.insert(std::make_pair(name, std::make_unique<OggSoundStream>(sound)));
 	return &*SoundStreams.at(name);
 }
@@ -657,6 +660,7 @@ void ResourceManager::Clear() {
 	}
 	for (auto &sound : SoundStreams) {
 		alDeleteSources(1, &sound.second->source);
-		sound.second->deleteBuffers();
+		alDeleteBuffers(NUM_BUFFERS, &sound.second->buffers[0]);
+		sound.second->closeFile();
 	}
 }
