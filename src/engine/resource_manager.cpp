@@ -11,10 +11,8 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
-#include <memory>
 #include <sstream>
 #include <stdexcept>
-#include "sound/sound.hpp"
 #include FT_FREETYPE_H
 
 // Instantiate (global) static variables

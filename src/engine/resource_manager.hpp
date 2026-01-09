@@ -9,7 +9,7 @@
 #include "render/font.hpp"
 #include "render/shader.hpp"
 #include "render/texture.hpp"
-#include "sound/sound.hpp"
+#include "sound.hpp"
 
 // A static singleton ResourceManager class that hosts several functions to load Textures, Shaders, Fonts and Sounds.
 // Each loaded resource is also stored for future reference by string handles.
