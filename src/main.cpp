@@ -41,7 +41,7 @@ int main() {
 			window.SetBackground(0, 0, 0);
 			manager.Render();
 
-			ResourceManager::updateAllSoundStreams();
+			ResourceManager::updateAllSounds();
 			window.SwapBuffers();
 		}
 	} catch (std::exception& e) {

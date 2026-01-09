@@ -67,6 +67,8 @@ Press:
   - '-' to make it smaller
   - 'd' to delete it
 - 'c' to clear all cards
+- 'p' to pause or resume the countdown
+- 's' to stop the countdown
 - 'q' or 'esc' to exit the game
 
 Click and drag cards to move them around

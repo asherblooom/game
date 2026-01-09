@@ -24,7 +24,6 @@ public:
 	void Pause();
 	void Resume();
 	void Stop();
-	void FadeOut();
 
 	ALint State;
 	// set looping to true if you want sound to loop
@@ -41,6 +40,7 @@ protected:
 	ALuint source;
 
 	ALenum OALFormat();
+	void updateState();
 };
 
 class Sound : public BaseSound {

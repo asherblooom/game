@@ -1,5 +1,6 @@
 #include "game.hpp"
 
+#include <AL/al.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <stdexcept>
@@ -134,6 +135,18 @@ void Game::ProcessInput(float dt) {
 				break;
 			}
 		}
+	}
+	if (InputManager::Keys[GLFW_KEY_P]) {
+		auto countdown = ResourceManager::GetSound("countdown");
+		if (countdown->State == AL_PLAYING)
+			countdown->Pause();
+		else if (countdown->State == AL_PAUSED)
+			countdown->Resume();
+		InputManager::Keys[GLFW_KEY_P] = false;
+	}
+	if (InputManager::Keys[GLFW_KEY_S]) {
+		ResourceManager::GetSound("countdown")->Stop();
+		InputManager::Keys[GLFW_KEY_S] = false;
 	}
 }
 

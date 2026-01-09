@@ -32,9 +32,9 @@ public:
 	static Font &GetFont(std::string name);
 	// retrieves a stored sound
 	static BaseSound *GetSound(std::string name);
-	// Updates the buffers of all the SoundStreams currently loaded.
-	// Should only be called in main.cpp inside the game loop (i.e. every frame).
-	static void updateAllSoundStreams();
+	// Updates the buffers of all SoundStreams, and the State member variable of all BaseSounds.
+	// Must be called in main.cpp inside the game loop (i.e. every frame).
+	static void updateAllSounds();
 
 	// properly de-allocates all loaded resources
 	static void Clear();
@@ -50,7 +50,7 @@ protected:
 	// loads (and generates) a font from file
 	static Font &LoadFont(std::string name, std::string fontFile, unsigned int defaultFontSize);
 	// loads (and generates) a sound from a .wav or .ogg file
-	static BaseSound *LoadSound(std::string name, std::string soundFile, UseStreaming option = AUTOMATIC);
+	static BaseSound *LoadSound(std::string name, std::string soundFile, UseStreaming streaming = AUTOMATIC);
 
 private:
 	// private constructor, that is we do not want any actual resource manager objects.
@@ -67,8 +67,8 @@ private:
 	static std::map<std::string, std::unique_ptr<SoundStream>> SoundStreams;
 
 	// helper functions for loading each type of sound file
-	static BaseSound *LoadWaveFile(std::string name, std::string wavFile, UseStreaming option);
-	static BaseSound *LoadOggFile(std::string name, std::string oggFile, UseStreaming option);
+	static BaseSound *LoadWaveFile(std::string name, std::string wavFile, UseStreaming streaming);
+	static BaseSound *LoadOggFile(std::string name, std::string oggFile, UseStreaming streaming);
 };
 
 #endif

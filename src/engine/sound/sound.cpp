@@ -21,7 +21,10 @@ ALenum BaseSound::OALFormat() {
 	throw std::runtime_error("ERROR::SOUND: Unrecognised wave format");
 }
 
-// FIXME: add something in updateStream() functions for these
+void BaseSound::updateState() {
+	alGetSourcei(source, AL_SOURCE_STATE, &State);
+}
+
 void BaseSound::Pause() {
 	if (State == AL_PLAYING) alSourcePause(source);
 }
@@ -30,17 +33,6 @@ void BaseSound::Resume() {
 }
 void BaseSound::Stop() {
 	if (State == AL_PLAYING) alSourceStop(source);
-}
-
-void BaseSound::FadeOut() {
-	if (State != AL_PLAYING) return;
-
-	float currentGain;
-	alGetSourcef(source, AL_GAIN, &currentGain);
-	if (currentGain > 0.0)
-		alSourcef(source, AL_GAIN, currentGain - 0.01);	 // Fade out over roughly 1 second (assuming 60fps)
-	else
-		alSourceStop(source);
 }
 
 Sound::Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, char* data)
