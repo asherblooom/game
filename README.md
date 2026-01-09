@@ -69,6 +69,7 @@ Press:
 - 'c' to clear all cards
 - 'p' to pause or resume the countdown
 - 's' to stop the countdown
+- 'f' (while cursor is not over a card) to fade the countdown out
 - 'q' or 'esc' to exit the game
 
 Click and drag cards to move them around

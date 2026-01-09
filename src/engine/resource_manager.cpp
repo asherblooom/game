@@ -628,9 +628,11 @@ void ResourceManager::updateAllSounds() {
 	for (auto &sound : SoundStreams) {
 		sound.second->updateStream();
 		sound.second->updateState();
+		sound.second->updateVolume();
 	}
 	for (auto &sound : Sounds) {
 		sound.second.updateState();
+		sound.second.updateVolume();
 	}
 }
 

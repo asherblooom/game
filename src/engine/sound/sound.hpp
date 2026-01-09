@@ -24,6 +24,7 @@ public:
 	void Pause();
 	void Resume();
 	void Stop();
+	void FadeOut();
 
 	ALint State;
 	// set looping to true if you want sound to loop
@@ -38,9 +39,13 @@ protected:
 	short bitsPerSample;
 	long size;
 	ALuint source;
+	bool fadeOut = false;
 
 	ALenum OALFormat();
+	// updates State member variable with current OpenAL state of source; must be called every frame
 	void updateState();
+	// for volume changes that are meant to happen over time; must be called every frame
+	void updateVolume();
 };
 
 class Sound : public BaseSound {
@@ -66,6 +71,7 @@ protected:
 	ALuint buffers[NUM_BUFFERS];
 	std::vector<char> transferBuffer;
 
+	// updates any processed buffers with new data; must be called every frame
 	virtual void updateStream() = 0;
 	virtual void closeFile() = 0;
 };

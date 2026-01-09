@@ -34,6 +34,24 @@ void BaseSound::Resume() {
 void BaseSound::Stop() {
 	if (State == AL_PLAYING) alSourceStop(source);
 }
+void BaseSound::FadeOut() {
+	fadeOut = true;
+}
+
+void BaseSound::updateVolume() {
+	if (State != AL_PLAYING) return;
+
+	if (fadeOut) {
+		float currentGain;
+		alGetSourcef(source, AL_GAIN, &currentGain);
+		if (currentGain > 0.01)
+			alSourcef(source, AL_GAIN, currentGain - 0.01);	 // Fade out over roughly 1 second (assuming 60fps)
+		else {
+			alSourceStop(source);
+			fadeOut = false;
+		}
+	}
+}
 
 Sound::Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, char* data)
 	: BaseSound{numChannels, sampleRate, bitsPerSample, size}, data{data, data + size} {
@@ -51,6 +69,8 @@ Sound::Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, lo
 
 void Sound::Play() {
 	Looping ? alSourcei(source, AL_LOOPING, AL_TRUE) : alSourcei(source, AL_LOOPING, AL_FALSE);
+	fadeOut = false;
+	alSourcef(source, AL_GAIN, 1.0f);
 	alSourcePlay(source);
 }
 
@@ -90,6 +110,8 @@ void WaveSoundStream::Play() {
 	}
 	cursor = BUFFER_SIZE * NUM_BUFFERS;
 
+	fadeOut = false;
+	alSourcef(source, AL_GAIN, 1.0f);
 	alSourcePlay(source);
 }
 
@@ -174,6 +196,8 @@ void OggSoundStream::Play() {
 		alSourceQueueBuffers(source, 1, &buffers[i]);
 	}
 
+	fadeOut = false;
+	alSourcef(source, AL_GAIN, 1.0f);
 	alSourcePlay(source);
 }
 

@@ -148,6 +148,10 @@ void Game::ProcessInput(float dt) {
 		ResourceManager::GetSound("countdown")->Stop();
 		InputManager::Keys[GLFW_KEY_S] = false;
 	}
+	if (InputManager::Keys[GLFW_KEY_F]) {
+		ResourceManager::GetSound("countdown")->FadeOut();
+		InputManager::Keys[GLFW_KEY_F] = false;
+	}
 }
 
 void Game::Update(float dt) {
