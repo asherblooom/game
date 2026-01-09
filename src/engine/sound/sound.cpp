@@ -21,6 +21,13 @@ ALenum BaseSound::OALFormat() {
 	throw std::runtime_error("ERROR::SOUND: Unrecognised wave format");
 }
 
+// FIXME: add something in updateStream() functions for these
+void BaseSound::Pause() {
+	if (State == AL_PLAYING) alSourcePause(source);
+}
+void BaseSound::Resume() {
+	if (State == AL_PAUSED) alSourcePlay(source);
+}
 void BaseSound::Stop() {
 	if (State == AL_PLAYING) alSourceStop(source);
 }
@@ -53,21 +60,15 @@ Sound::Sound(short numChannels, unsigned int sampleRate, short bitsPerSample, lo
 void Sound::Play() {
 	Looping ? alSourcei(source, AL_LOOPING, AL_TRUE) : alSourcei(source, AL_LOOPING, AL_FALSE);
 	alSourcePlay(source);
-	if (Blocking) {
-		State = AL_PLAYING;
-		while (State == AL_PLAYING) {
-			alGetSourcei(source, AL_SOURCE_STATE, &State);
-		}
-	}
 }
 
 SoundStream::SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size)
 	: BaseSound{numChannels, sampleRate, bitsPerSample, size}, transferBuffer(BUFFER_SIZE) {}
 
-WaveSoundStream::WaveSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, std::ifstream& file)
-	: SoundStream{numChannels, sampleRate, bitsPerSample, size}, file{file}, cursor{0} {
+WaveSoundStream::WaveSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, std::unique_ptr<std::ifstream>& file, std::streampos soundDataStartPos)
+	: SoundStream{numChannels, sampleRate, bitsPerSample, size}, file{std::move(file)}, soundDataStartPos{soundDataStartPos}, cursor{0} {
 	if (size < NUM_BUFFERS * BUFFER_SIZE) {
-		file.close();
+		closeFile();
 		throw std::invalid_argument("ERROR::SOUND: sound too small to use streaming");
 	}
 
@@ -87,22 +88,17 @@ void WaveSoundStream::Play() {
 	// clear and reset queue
 	alSourceStop(source);
 	alSourcei(source, AL_BUFFER, 0);  // Removing the buffers from the source clears the queue
+	if (file->eof()) file->clear();
+	file->seekg(soundDataStartPos);
 	// (re)fill buffers and initialise queue
 	for (int i = 0; i < NUM_BUFFERS; i++) {
-		file.read(transferBuffer.data(), BUFFER_SIZE);
+		file->read(transferBuffer.data(), BUFFER_SIZE);
 		alBufferData(buffers[i], OALFormat(), transferBuffer.data(), BUFFER_SIZE, sampleRate);
 		alSourceQueueBuffers(source, 1, &buffers[i]);
 	}
 	cursor = BUFFER_SIZE * NUM_BUFFERS;
 
 	alSourcePlay(source);
-	if (Blocking) {
-		State = AL_PLAYING;
-		while (State == AL_PLAYING) {
-			updateStream();
-			alGetSourcei(source, AL_SOURCE_STATE, &State);
-		}
-	}
 }
 
 void WaveSoundStream::updateStream() {
@@ -126,7 +122,7 @@ void WaveSoundStream::updateStream() {
 			int bytesSpaceInBuffer = BUFFER_SIZE - totalBytesRead;
 			// Read whichever is smaller
 			int bytesToRead = std::min(bytesRemaningInSource, bytesSpaceInBuffer);
-			file.read(transferBuffer.data() + totalBytesRead, bytesToRead);
+			file->read(transferBuffer.data() + totalBytesRead, bytesToRead);
 			cursor += bytesToRead;
 			totalBytesRead += bytesToRead;
 
@@ -134,17 +130,11 @@ void WaveSoundStream::updateStream() {
 			if (cursor >= size) {
 				if (Looping) {
 					// Loop: Reset cursor and continue filling the same buffer (avoid extra unneeded silence!)
-					if (file.eof()) file.clear();
-					// cursor should never be greater than size, only less than or equal,
-					// but we use -cursor here just in case it ever is????? (same with if statement above)
-					file.seekg(-cursor, std::ios::cur);
+					if (file->eof()) file->clear();
+					file->seekg(soundDataStartPos);
 					cursor = 0;
-				} else {
-					// No Loop: Fill the rest with silence and stop
-					// memset(&transferBuffer[bytesWritten], 0, BUFFER_SIZE - bytesWritten);
-					// FIXME: check removing added silence and changing alBufferData size works????
+				} else
 					break;
-				}
 			}
 		}
 		alBufferData(buffer, OALFormat(), transferBuffer.data(), totalBytesRead, sampleRate);
@@ -152,10 +142,10 @@ void WaveSoundStream::updateStream() {
 	}
 }
 
-OggSoundStream::OggSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, OggVorbis_File& vorbisFile)
+OggSoundStream::OggSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, OggVorbis_File* vorbisFile)
 	: SoundStream(numChannels, sampleRate, bitsPerSample, size), vorbisFile{vorbisFile} {
 	if (size < NUM_BUFFERS * BUFFER_SIZE) {
-		ov_clear(&vorbisFile);
+		closeFile();
 		throw std::invalid_argument("ERROR::SOUND: sound too small to use streaming");
 	}
 	alGenBuffers(NUM_BUFFERS, &buffers[0]);
@@ -172,28 +162,27 @@ void OggSoundStream::Play() {
 	// clear and reset queue
 	alSourceStop(source);
 	alSourcei(source, AL_BUFFER, 0);  // Removing the buffers from the source clears the queue
+	ov_pcm_seek(vorbisFile, 0);
 	// (re)fill buffers and initialise queue
 	int bytesRead = 0;
 	int currentSection;
 	for (int i = 0; i < NUM_BUFFERS; i++) {
 		int totalBytesRead = 0;
 		while (totalBytesRead < BUFFER_SIZE) {
-			bytesRead = ov_read(&vorbisFile, transferBuffer.data() + totalBytesRead, BUFFER_SIZE - totalBytesRead, 0, 2, 1, &currentSection);
+			bytesRead = ov_read(vorbisFile, transferBuffer.data() + totalBytesRead, BUFFER_SIZE - totalBytesRead, 0, 2, 1, &currentSection);
 			if (bytesRead > 0)
 				totalBytesRead += bytesRead;
 			else if (bytesRead < 0) {
 				// Error in the stream
-				ov_clear(&vorbisFile);
+				closeFile();
 				throw std::runtime_error("ERROR::SOUND: could not decode OGG bitstream");
 			}
-			// FIXME: handle sound too small here instead of error????????
 		}
-		alBufferData(buffers[i], OALFormat(), transferBuffer.data(), BUFFER_SIZE, sampleRate);
+		alBufferData(buffers[i], OALFormat(), transferBuffer.data(), totalBytesRead, sampleRate);
 		alSourceQueueBuffers(source, 1, &buffers[i]);
 	}
 
 	alSourcePlay(source);
-	// FIXME: no blocking!
 }
 
 void OggSoundStream::updateStream() {
@@ -210,17 +199,17 @@ void OggSoundStream::updateStream() {
 		// refill the buffer with new ogg data
 		int totalBytesRead = 0;
 		while (totalBytesRead < BUFFER_SIZE) {
-			bytesRead = ov_read(&vorbisFile, transferBuffer.data() + totalBytesRead, BUFFER_SIZE - totalBytesRead, 0, 2, 1, &section);
+			bytesRead = ov_read(vorbisFile, transferBuffer.data() + totalBytesRead, BUFFER_SIZE - totalBytesRead, 0, 2, 1, &section);
 			if (bytesRead > 0)
 				totalBytesRead += bytesRead;
 			else if (bytesRead < 0) {
 				// Error in the stream
-				ov_clear(&vorbisFile);
+				closeFile();
 				throw std::runtime_error("ERROR::SOUND: could not decode OGG bitstream");
 			} else if (bytesRead == 0) {
 				// end of file reached
 				if (Looping)
-					ov_pcm_seek(&vorbisFile, 0);
+					ov_pcm_seek(vorbisFile, 0);
 				else
 					break;
 			}

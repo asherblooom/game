@@ -11,6 +11,7 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include "sound/sound.hpp"
@@ -450,26 +451,20 @@ Font &ResourceManager::GetFont(std::string name) {
 	return Fonts.at(name);
 }
 
-BaseSound *ResourceManager::LoadSound(std::string name, std::string soundFile, bool useStreaming) {
+BaseSound *ResourceManager::LoadSound(std::string name, std::string soundFile, UseStreaming option) {
 	if (Sounds.contains(name) || SoundStreams.contains(name))
 		throw std::invalid_argument("ERROR::SOUND: There already exists a sound with name '" + name + "'");
 
 	std::string extension = soundFile.substr(soundFile.length() - 3, 3);
-	if (extension == "wav") {
-		if (useStreaming)
-			return LoadWaveFile(name, soundFile, true);
-		else
-			return LoadWaveFile(name, soundFile, false);
-	} else if (extension == "ogg")
-		if (useStreaming)
-			return LoadOggFileStream(name, soundFile);
-		else
-			return LoadOggFile(name, soundFile);
+	if (extension == "wav")
+		return LoadWaveFile(name, soundFile, option);
+	else if (extension == "ogg")
+		return LoadOggFile(name, soundFile, option);
 	else
 		throw std::invalid_argument("ERROR::SOUND: Invalid file extension: " + extension);
 }
 
-BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, bool useStreaming) {
+BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, UseStreaming option) {
 	// first try to open with default path
 	std::ifstream f;
 	std::string defaultPath = "media/sound/";
@@ -483,7 +478,7 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 	std::string chunkName;
 	unsigned int chunkSize;
 
-	char *data;
+	std::vector<char> data;
 	long size;
 	short audioFormat;
 	short numChannels;
@@ -491,12 +486,15 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 	unsigned int byteRate;
 	short blockAlign;
 	short bitsPerSample;
+	std::streampos soundDataStartPos;
 
 	bool riffRead = false;
 	bool fmtRead = false;
 	bool dataRead = false;
+	bool useStreaming = false;
 
-	while (riffRead && fmtRead && dataRead) {
+	// keep reading chunks until we have read riff, fmt and data chunks
+	while (!(riffRead && fmtRead && dataRead)) {
 		// load wave chunk info
 		char chunk[4];
 		f.read((char *)&chunk, 4);
@@ -520,10 +518,22 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 			fmtRead = true;
 		} else if (chunkName == "data") {
 			size = chunkSize;
-			if (useStreaming) {
-				data = new char[size];
-				f.read((char *)data, chunkSize);
+
+			if (option == AUTOMATIC || option == STREAMING_ON) {
+				// don't use streaming if audio is too small (will produce error otherwise)
+				(size < NUM_BUFFERS * BUFFER_SIZE) ? useStreaming = false : useStreaming = true;
+			} else if (option == STREAMING_OFF) {
+				useStreaming = false;
 			}
+
+			if (!useStreaming) {
+				// don't need to read any data now if we are streaming as it is read only when needed
+				data.resize(size);
+				f.read(data.data(), chunkSize);
+			} else {
+				soundDataStartPos = f.tellg();
+			}
+
 			dataRead = true;
 		} else {
 			f.seekg(chunkSize, std::ios_base::cur);
@@ -534,18 +544,20 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 		throw std::runtime_error("ERROR::SOUND: Failed to load sound: cannot find correct chunks in WAVE file");
 	}
 	if (useStreaming) {
-		WaveSoundStream sound{numChannels, sampleRate, bitsPerSample, size, f};
-		SoundStreams.insert(std::make_pair(name, std::make_unique<WaveSoundStream>(sound)));
+		// move the stack allocated ifstream into a unique pointer to pass to WaveSoundStream constructor
+		std::unique_ptr<std::ifstream> filePtr = std::make_unique<std::ifstream>(std::move(f));
+		WaveSoundStream sound{numChannels, sampleRate, bitsPerSample, size, filePtr, soundDataStartPos};
+		SoundStreams.insert(std::make_pair(name, std::make_unique<WaveSoundStream>(std::move(sound))));
 		return &*SoundStreams.at(name);
 	} else {
 		f.close();
-		Sound sound{numChannels, sampleRate, bitsPerSample, size, data};
+		Sound sound{numChannels, sampleRate, bitsPerSample, size, data.data()};
 		Sounds.insert(std::make_pair(name, sound));
 		return &Sounds.at(name);
 	}
 }
 
-BaseSound *ResourceManager::LoadOggFile(std::string name, std::string oggFile) {
+BaseSound *ResourceManager::LoadOggFile(std::string name, std::string oggFile, UseStreaming option) {
 	// first try to open with default path
 	FILE *f;
 	std::string defaultPath = "media/sound/";
@@ -556,72 +568,57 @@ BaseSound *ResourceManager::LoadOggFile(std::string name, std::string oggFile) {
 		if (!f)
 			throw std::invalid_argument("ERROR::SOUND: incorrect file name: " + oggFile);
 	}
-	OggVorbis_File vorbisFile;
-	if (ov_open(f, &vorbisFile, NULL, 0) < 0) {
+	OggVorbis_File *vorbisFile = new OggVorbis_File();
+	if (ov_open(f, vorbisFile, NULL, 0) < 0) {
 		fclose(f);
+		delete vorbisFile;
 		throw std::runtime_error("ERROR::SOUND: failed to open OGG file");
 	}
 
-	vorbis_info *vorbisInfo = ov_info(&vorbisFile, -1);
+	vorbis_info *vorbisInfo = ov_info(vorbisFile, -1);
 	short bitsPerSample = 16;
 	short numChannels = vorbisInfo->channels;
 	unsigned int sampleRate = vorbisInfo->rate;
+	int totalSamples = ov_pcm_total(vorbisFile, -1);
+	long size = (totalSamples * numChannels * bitsPerSample) / 8;
 
-	std::vector<char> data;
-	const int bufferSize = 4096;  // Read 4KB at a time
-	char buffer[bufferSize];
-	int currentSection;
-	long bytesRead = 0;
-
-	do {
-		bytesRead = ov_read(&vorbisFile, buffer, bufferSize, 0, 2, 1, &currentSection);
-		if (bytesRead < 0) {
-			// Error in the stream
-			ov_clear(&vorbisFile);
-			throw std::runtime_error("ERROR::SOUND: could not decode OGG bitstream");
-		} else if (bytesRead > 0) {
-			data.insert(data.end(), buffer, buffer + bytesRead);
-		}
-	} while (bytesRead > 0);
-
-	// ov_clear closes the file handle internally, so we don't need to close the FILE*
-	ov_clear(&vorbisFile);
-	Sound sound{numChannels, sampleRate, bitsPerSample, (int)data.size(), data.data()};
-	Sounds.insert(std::make_pair(name, sound));
-	return &Sounds.at(name);
-}
-
-BaseSound *ResourceManager::LoadOggFileStream(std::string name, std::string oggFile) {
-	// first try to open with default path
-	FILE *f;
-	std::string defaultPath = "media/sound/";
-	f = fopen((defaultPath + oggFile).c_str(), "rb");
-	if (!f) {
-		// otherwise assume input is a full path itself and try to open
-		f = fopen(oggFile.c_str(), "rb");
-		if (!f)
-			throw std::invalid_argument("ERROR::SOUND: incorrect file name: " + oggFile);
+	bool useStreaming = false;
+	if (option == AUTOMATIC || option == STREAMING_ON) {
+		// don't use streaming if audio is too small (will produce error otherwise)
+		(size < NUM_BUFFERS * BUFFER_SIZE) ? useStreaming = false : useStreaming = true;
+	} else if (option == STREAMING_OFF) {
+		useStreaming = false;
 	}
 
-	OggVorbis_File vorbisFile;
-	if (ov_open(f, &vorbisFile, NULL, 0) < 0) {
-		throw std::runtime_error("ERROR::SOUND: failed to get OGG stream handle");
+	if (useStreaming) {
+		OggSoundStream sound{numChannels, sampleRate, bitsPerSample, size, vorbisFile};
+		SoundStreams.insert(std::make_pair(name, std::make_unique<OggSoundStream>(sound)));
+		return &*SoundStreams.at(name);
+	} else {
+		std::vector<char> data;
+		const int bufferSize = 4096;  // Read 4KB at a time
+		char buffer[bufferSize];
+		int currentSection;
+		long bytesRead = 0;
+
+		do {
+			bytesRead = ov_read(vorbisFile, buffer, bufferSize, 0, 2, 1, &currentSection);
+			if (bytesRead < 0) {
+				// Error in the stream
+				ov_clear(vorbisFile);
+				delete vorbisFile;
+				throw std::runtime_error("ERROR::SOUND: could not decode OGG bitstream");
+			} else if (bytesRead > 0) {
+				data.insert(data.end(), buffer, buffer + bytesRead);
+			}
+		} while (bytesRead > 0);
+
+		ov_clear(vorbisFile);  // ov_clear closes the file handle internally, so we don't need to close the FILE*
+		delete vorbisFile;
+		Sound sound{numChannels, sampleRate, bitsPerSample, (int)data.size(), data.data()};
+		Sounds.insert(std::make_pair(name, sound));
+		return &Sounds.at(name);
 	}
-	vorbis_info *vorbisInfo = ov_info(&vorbisFile, -1);
-	short bitsPerSample = 16;  // Assuming 16-bit audio, standard for Ogg decoding
-	short numChannels = vorbisInfo->channels;
-	unsigned int sampleRate = vorbisInfo->rate;
-	ov_pcm_seek(&vorbisFile, 0);
-
-	int totalSamples = ov_pcm_total(&vorbisFile, -1);
-	long size = totalSamples * numChannels * bitsPerSample;
-	// FIXME: what are these for???
-	// std::cout << size << "  ";
-	// std::cerr << "ERROR::SOUND: Can't find sound: " << name << "\n";
-
-	OggSoundStream sound{numChannels, sampleRate, bitsPerSample, size, vorbisFile};
-	SoundStreams.insert(std::make_pair(name, std::make_unique<OggSoundStream>(sound)));
-	return &*SoundStreams.at(name);
 }
 
 BaseSound *ResourceManager::GetSound(std::string name) {

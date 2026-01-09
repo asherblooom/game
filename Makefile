@@ -2,8 +2,9 @@ TARGET_EXEC := game
 CXX:=g++
 CC:=gcc
 INC_DIR:=lib
-CXXFLAGS:=-I$(INC_DIR) $(shell pkg-config --cflags freetype2 openal) -march=native -Wall -Wextra -Wno-unused-parameter -std=c++20
-LINKERFLAGS = -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl $(shell pkg-config --libs freetype2 openal) -lvorbisfile -lvorbis -logg
+MEMORY_DEBUG_FLAGS := -fsanitize=address -static-libasan
+CXXFLAGS:=-I$(INC_DIR) $(shell pkg-config --cflags freetype2 openal) -march=native -Wall -Wextra -Wno-unused-parameter -std=c++20 
+LINKERFLAGS = -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl $(shell pkg-config --libs freetype2 openal) -lvorbisfile -lvorbis -logg 
 OBJ_DIR:=./obj
 SRC_DIR:=./src
 

@@ -5,8 +5,7 @@ StateManager::StateManager(unsigned int gameWidth, unsigned int gameHeight)
 	: Width{gameWidth},
 	  Height{gameHeight},
 	  spriteRenderer{gameWidth, gameHeight},
-	  textRenderer{gameWidth, gameHeight},
-	  soundSystem{} {}
+	  textRenderer{gameWidth, gameHeight} {}
 
 void StateManager::Add(States name, std::unique_ptr<StateInterface> state) {
 	states.emplace(name, std::move(state));

@@ -10,7 +10,6 @@
 
 #include "engine/render/sprite_renderer.hpp"
 #include "engine/render/text_renderer.hpp"
-#include "engine/sound/sound_system.hpp"
 #include "states/state_interface.hpp"
 
 enum States {
@@ -26,7 +25,6 @@ public:
 	// used by all states so stored here
 	SpriteRenderer spriteRenderer;
 	TextRenderer textRenderer;
-	SoundSystem soundSystem;
 
 	StateManager(unsigned int gameWidth, unsigned int gameHeight);
 

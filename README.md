@@ -1,8 +1,11 @@
 # A 2D Card Game Engine
 
+![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
+![OpenGL](https://img.shields.io/badge/OpenGL-%23FFFFFF.svg?style=for-the-badge&logo=opengl)
+
 ## Setup instructions
 
-### Linux
+### Linux (with x11)
 
 <details>
 <summary>Prerequisites</summary>

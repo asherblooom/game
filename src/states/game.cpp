@@ -19,10 +19,10 @@ Game::Game(StateManager& manager)
 }
 
 void Game::OnEnter() {
-	// ResourceManager::GetSound("meow")->Blocking = true;
-	// ResourceManager::GetSound("meow")->Play();
-	// ResourceManager::GetSound("countdown")->Blocking = true;
-	ResourceManager::GetSound("countdown")->Play();
+	ResourceManager::GetSound("meow")->Play();
+	auto countdown = ResourceManager::GetSound("countdown");
+	countdown->Looping = true;
+	countdown->Play();
 }
 
 void Game::ProcessInput(float dt) {

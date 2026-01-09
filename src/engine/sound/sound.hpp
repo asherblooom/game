@@ -5,26 +5,34 @@
 #include <AL/alc.h>
 #include <vorbis/vorbisfile.h>
 #include <fstream>
+#include <memory>
 #include <vector>
 
 // constants for streaming sounds
 const int NUM_BUFFERS = 4;
 const int BUFFER_SIZE = 65536;	// 32kb of data in each buffer
 
+enum UseStreaming {
+	AUTOMATIC,
+	STREAMING_ON,
+	STREAMING_OFF
+};
+
 class BaseSound {
 public:
 	virtual void Play() = 0;
+	void Pause();
+	void Resume();
 	void Stop();
 	void FadeOut();
-	ALint State;
 
+	ALint State;
 	// set looping to true if you want sound to loop
 	bool Looping = false;
-	// set blocking to true if you want game to pause until sound has finished
-	bool Blocking = false;
 
 protected:
 	BaseSound(short numChannels, unsigned int sampleRate, short bitsPerSample, long size);
+	virtual ~BaseSound() = default;
 
 	short numChannels;
 	unsigned int sampleRate;
@@ -37,7 +45,6 @@ protected:
 
 class Sound : public BaseSound {
 	friend class ResourceManager;
-	friend class SoundSystem;
 
 public:
 	void Play() override;
@@ -50,7 +57,9 @@ private:
 
 class SoundStream : public BaseSound {
 	friend class ResourceManager;
-	friend class SoundSystem;
+
+public:
+	virtual ~SoundStream() = default;
 
 protected:
 	SoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size);
@@ -63,33 +72,36 @@ protected:
 
 class WaveSoundStream : public SoundStream {
 	friend class ResourceManager;
-	friend class SoundSystem;
 
 public:
 	void Play() override;
 
 private:
-	WaveSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, std::ifstream& file);
-	std::ifstream& file;
+	WaveSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, std::unique_ptr<std::ifstream>& file, std::streampos soundDataStartPos);
+	std::unique_ptr<std::ifstream> file;
+	const std::streampos soundDataStartPos;
 	int cursor;
 
 	void updateStream() override;
-	void closeFile() override { file.close(); }
+	void closeFile() override { file->close(); }
 };
 
 class OggSoundStream : public SoundStream {
 	friend class ResourceManager;
-	friend class SoundSystem;
 
 public:
 	void Play() override;
 
 private:
-	OggSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, OggVorbis_File& streamHandle);
-	OggVorbis_File& vorbisFile;
+	// vorbisFile MUST be heap-allocated
+	OggSoundStream(short numChannels, unsigned int sampleRate, short bitsPerSample, long size, OggVorbis_File* vorbisFile);
+	OggVorbis_File* vorbisFile;
 
 	void updateStream() override;
-	void closeFile() override { ov_clear(&vorbisFile); }
+	void closeFile() override {
+		ov_clear(vorbisFile);
+		delete vorbisFile;
+	}
 };
 
 #endif
