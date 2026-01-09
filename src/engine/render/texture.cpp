@@ -1,5 +1,4 @@
 #include "texture.hpp"
-#include <iostream>
 
 Texture2D::Texture2D() {
 	glGenTextures(1, &ID_);

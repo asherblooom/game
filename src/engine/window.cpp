@@ -1,6 +1,7 @@
 #include "window.hpp"
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <stdexcept>
 #include "input_manager.hpp"
 #include "resource_manager.hpp"
 
@@ -18,20 +19,30 @@ Window::Window(std::string name, unsigned int width, unsigned int height) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+	// Initialise OpenAL
+	device = alcOpenDevice(nullptr);
+	if (!device)
+		throw std::runtime_error("ERROR::SOUNDSYSTEM: Could not find an audio device");
+
+	context = alcCreateContext(device, nullptr);
+	if (!context)
+		throw std::runtime_error("ERROR::SOUNDSYSTEM: Could not create audio context");
+
+	if (!alcMakeContextCurrent(context))
+		throw std::runtime_error("ERROR::SOUNDSYSTEM: Could not make audio context current");
+
 	// create window
 	window = glfwCreateWindow(width, height, name.c_str(), NULL, NULL);
 	if (window == NULL) {
-		std::cout << "Failed to create GLFW window\n";
 		glfwTerminate();
-		throw;
+		throw std::runtime_error("Failed to create GLFW window");
 	}
 	glfwMakeContextCurrent(window);
 
 	// initialise GLAD - manages function pointers for OpenGL
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		std::cout << "Failed to initialize GLAD\n";
 		glfwTerminate();
-		throw;
+		throw std::runtime_error("Failed to initialize GLAD");
 	}
 
 	glEnable(GL_BLEND);
@@ -51,6 +62,10 @@ Window::Window(std::string name, unsigned int width, unsigned int height) {
 Window::~Window() {
 	ResourceManager::Clear();
 	glfwTerminate();
+
+	alcMakeContextCurrent(nullptr);
+	alcDestroyContext(context);
+	alcCloseDevice(device);
 }
 
 bool Window::ShouldClose() {

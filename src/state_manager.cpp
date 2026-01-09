@@ -4,8 +4,8 @@
 StateManager::StateManager(unsigned int gameWidth, unsigned int gameHeight)
 	: Width{gameWidth},
 	  Height{gameHeight},
-	  spriteRenderer{SpriteRenderer(gameWidth, gameHeight)},
-	  textRenderer{TextRenderer(gameWidth, gameHeight)} {}
+	  spriteRenderer{gameWidth, gameHeight},
+	  textRenderer{gameWidth, gameHeight} {}
 
 void StateManager::Add(States name, std::unique_ptr<StateInterface> state) {
 	states.emplace(name, std::move(state));
@@ -21,7 +21,7 @@ void StateManager::PushState(States stateName) {
 void StateManager::PopState() {
 	if (stack.size() <= 1) {
 		std::cerr << "ERROR::STATE_MANAGER: Can't pop from a stack of size " << stack.size() << "\n";
-		throw;
+		return;
 	}
 	stack.back()->OnExit();
 	stack.pop_back();

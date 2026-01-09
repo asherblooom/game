@@ -1,7 +1,9 @@
 #include "game.hpp"
 
+#include <AL/al.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <stdexcept>
 
 #include "../engine/input_manager.hpp"
 #include "../engine/resource_manager.hpp"
@@ -15,6 +17,13 @@ Game::Game(StateManager& manager)
 				  {40, 57},
 				  ResourceManager::GetTexture("pause-button")} {
 	cards.reserve(MAX_CARDS);
+}
+
+void Game::OnEnter() {
+	ResourceManager::GetSound("meow")->Play();
+	auto countdown = ResourceManager::GetSound("countdown");
+	countdown->Looping = true;
+	countdown->Play();
 }
 
 void Game::ProcessInput(float dt) {
@@ -144,6 +153,22 @@ void Game::ProcessInput(float dt) {
 			}
 		}
 	}
+	if (InputManager::Keys[GLFW_KEY_P]) {
+		auto countdown = ResourceManager::GetSound("countdown");
+		if (countdown->State == AL_PLAYING)
+			countdown->Pause();
+		else if (countdown->State == AL_PAUSED)
+			countdown->Resume();
+		InputManager::Keys[GLFW_KEY_P] = false;
+	}
+	if (InputManager::Keys[GLFW_KEY_S]) {
+		ResourceManager::GetSound("countdown")->Stop();
+		InputManager::Keys[GLFW_KEY_S] = false;
+	}
+	if (InputManager::Keys[GLFW_KEY_F]) {
+		ResourceManager::GetSound("countdown")->FadeOut();
+		InputManager::Keys[GLFW_KEY_F] = false;
+	}
 }
 
 void Game::Update(float dt) {
@@ -158,10 +183,9 @@ void Game::Render() {
 }
 
 CardObject& Game::makeCard(CardValue value, CardSuit suit, glm::vec2 pos) {
-	if (cards.size() == MAX_CARDS) {
-		std::cerr << "Card limit reached, cannot create more cards\n";
-		throw;
-	}
+	if (cards.size() == MAX_CARDS)
+		throw std::out_of_range("Card limit reached, cannot create more cards");
+
 	Texture2DArray cardTexArray = ResourceManager::GetTextureArray("cards");
 	int cardIndex = GetCardTextureIndex(value, suit);
 	cards.emplace_back(value, suit, cardTexArray, cardIndex, pos, FACEUP);

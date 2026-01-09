@@ -2,7 +2,9 @@ TARGET_EXEC := game
 CXX:=g++
 CC:=gcc
 INC_DIR:=lib
-CXXFLAGS:=-I$(INC_DIR) -march=native -Wall -Wextra -Wno-unused-parameter -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl $(shell pkg-config --cflags --libs freetype2) -std=c++20
+MEMORY_DEBUG_FLAGS := -fsanitize=address -static-libasan
+CXXFLAGS:=-I$(INC_DIR) $(shell pkg-config --cflags freetype2 openal) -march=native -Wall -Wextra -Wno-unused-parameter -std=c++20 
+LINKERFLAGS = -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl $(shell pkg-config --libs freetype2 openal) -lvorbisfile -lvorbis -logg 
 OBJ_DIR:=./obj
 SRC_DIR:=./src
 
@@ -19,8 +21,9 @@ OBJS := $(_OBJS:%=$(OBJ_DIR)/%)
 
 main: obj $(TARGET_EXEC)
 
+# link object files
 $(TARGET_EXEC): $(OBJS)
-	$(CXX) -o $@ $^ $(CXXFLAGS)
+	$(CXX) -o $@ $^ $(LINKERFLAGS)
 
 # find sources not in base directory
 $(OBJ_DIR)/%.o: $(SRC_DIR)/*/%.cpp

@@ -10,6 +10,7 @@ public:
 	virtual void Render() = 0;
 	// called when state is popped from stack
 	virtual void OnExit() = 0;
+	virtual ~StateInterface() = default;
 };
 
 #endif

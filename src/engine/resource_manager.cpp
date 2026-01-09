@@ -1,13 +1,18 @@
 #include "resource_manager.hpp"
 
 #include <freetype2/ft2build.h>
+#include <ogg/ogg.h>
+#include <vorbis/codec.h>
+#include <vorbis/vorbisenc.h>
+#include <vorbis/vorbisfile.h>
 #include <cstdio>
 #include <cstring>
 #include <exception>
 #include <fstream>
+#include <ios>
 #include <iostream>
 #include <sstream>
-#include "render/texture.hpp"
+#include <stdexcept>
 #include FT_FREETYPE_H
 
 // Instantiate (global) static variables
@@ -16,6 +21,8 @@ std::map<std::string, Texture2D> ResourceManager::Textures;
 std::map<std::string, Texture2DArray> ResourceManager::TextureArrays;
 std::map<std::string, std::map<std::string, int>> ResourceManager::ArrayItemNames;
 std::map<std::string, Font> ResourceManager::Fonts;
+std::map<std::string, Sound> ResourceManager::Sounds;
+std::map<std::string, std::unique_ptr<SoundStream>> ResourceManager::SoundStreams;
 
 Shader &ResourceManager::GetShader(std::string name) {
 	if (!Shaders.contains(name))
@@ -24,15 +31,13 @@ Shader &ResourceManager::GetShader(std::string name) {
 }
 
 Shader &ResourceManager::LoadShader(std::string name, std::string vShaderFile, std::string fShaderFile, std::string gShaderFile) {
-	// 1. retrieve the vertex/fragment source code from files
+	// retrieve the vertex/fragment source code from files
 	std::string vertexCode;
 	std::string fragmentCode;
 	std::string geometryCode;
 	try {
-		if (Shaders.contains(name)) {
-			std::cerr << "ERROR::SHADER: There already exists a shader with name '" << name << "'\n";
-			throw;
-		}
+		if (Shaders.contains(name))
+			throw std::invalid_argument("ERROR::SHADER: There already exists a shader with name '" + name + "'");
 
 		// open files
 		// first try to open with default path
@@ -80,10 +85,10 @@ Shader &ResourceManager::LoadShader(std::string name, std::string vShaderFile, s
 	const char *vShaderCode = vertexCode.c_str();
 	const char *fShaderCode = fragmentCode.c_str();
 	const char *gShaderCode = geometryCode.c_str();
-	// 2. now create shader object from source code
+	// now create shader object from source code
 	Shader shader;
 	shader.Compile(vShaderCode, fShaderCode, gShaderFile != "" ? gShaderCode : nullptr);
-	Shaders[name] = shader;
+	Shaders.insert(std::make_pair(name, shader));
 	return Shaders.at(name);
 }
 
@@ -100,14 +105,20 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, std::string ddsFile
 
 	unsigned char *buffer = 0;
 
+	std::FILE *f;
+
 	// open the DDS file for binary reading and get file size
 	// first try to open with default path
-	std::string defaultPath = "media/textures/";
-	std::FILE *f = std::fopen((defaultPath + ddsFile).c_str(), "rb");
 	try {
 		if (Textures.contains(name))
 			throw("ERROR::TEXTURE: There already exists a texture with name '" + name + "'\n");
 
+		std::string extension = ddsFile.substr(ddsFile.length() - 3, 3);
+		if (extension != "dds")
+			throw("ERROR::TEXTURE: Invalid file extension: " + extension + "\n");
+
+		std::string defaultPath = "media/textures/";
+		f = std::fopen((defaultPath + ddsFile).c_str(), "rb");
 		if (f == nullptr) {
 			// otherwise assume input is a full path itself and try to open
 			f = std::fopen(ddsFile.c_str(), "rb");
@@ -173,7 +184,7 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, std::string ddsFile
 		// now generate texture
 		Texture2D texture;
 		texture.Generate(width, height, format, mipMapCount, blockSize, buffer);
-		Textures[name] = texture;
+		Textures.insert(std::make_pair(name, texture));
 
 		delete[] (buffer);
 		delete[] (header);
@@ -185,7 +196,7 @@ Texture2D &ResourceManager::LoadDDSTexture(std::string name, std::string ddsFile
 		delete[] (header);
 		if (f) fclose(f);
 		std::cerr << e << "\n";
-		throw(e);
+		throw;
 	}
 }
 
@@ -214,6 +225,10 @@ Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string arrayName, std:
 			throw "ERROR::TEXTURE: itemNames must be same size as ddsFiles for texture arrays";
 
 		for (std::size_t i = 0; i < ddsFiles.size(); i++) {
+			std::string extension = ddsFiles.at(i).substr(ddsFiles.at(i).length() - 3, 3);
+			if (extension != "dds")
+				throw("ERROR::TEXTURE: Invalid file extension: " + extension + "\n");
+
 			std::string file = ddsFiles.at(i);
 			// allocate new unsigned char space with 4 (file code) + 124 (header size) bytes
 			header = new unsigned char[128];
@@ -328,8 +343,8 @@ Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string arrayName, std:
 		// now generate texture array
 		Texture2DArray textureArray;
 		textureArray.Generate(width, height, format, mipMapCount, blockSize, data);
-		TextureArrays[arrayName] = textureArray;
-		ArrayItemNames[arrayName] = std::move(indexMap);
+		TextureArrays.insert(std::make_pair(arrayName, textureArray));
+		ArrayItemNames.insert(std::make_pair(arrayName, std::move(indexMap)));
 
 		for (unsigned char *buffer : data)
 			delete[] (buffer);
@@ -341,7 +356,7 @@ Texture2DArray &ResourceManager::LoadDDSTextureArray(std::string arrayName, std:
 		if (header) delete[] (header);
 		if (f) fclose(f);
 		std::cerr << e << "\n";
-		throw(e);
+		throw;
 	}
 }
 
@@ -351,7 +366,7 @@ Texture2DArray &ResourceManager::GetTextureArray(std::string name) {
 	return TextureArrays.at(name);
 }
 
-int ResourceManager::GetArrayItemIndex(std::string arrayName, std::string itemName) {
+int &ResourceManager::GetArrayItemIndex(std::string arrayName, std::string itemName) {
 	if (!TextureArrays.contains(arrayName))
 		std::cerr << "ERROR::TEXTURE: Can't find texture array: " << arrayName << "\n";
 	if (!ArrayItemNames.at(arrayName).contains(itemName))
@@ -360,25 +375,24 @@ int ResourceManager::GetArrayItemIndex(std::string arrayName, std::string itemNa
 }
 
 Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned int defaultFontSize) {
-	if (Fonts.contains(name)) {
-		std::cerr << "ERROR::FONT: There already exists a font with name '" << name << "'\n";
-		throw;
-	}
+	if (Fonts.contains(name))
+		throw std::invalid_argument("ERROR::FONT: There already exists a font with name '" + name + "'");
+	std::string extension = fontFile.substr(fontFile.length() - 3, 3);
+	if (extension != "ttf")
+		throw std::invalid_argument("ERROR::FONT: Invalid file extension: " + extension);
 
 	// initialize and load the FreeType library
 	FT_Library ft;
-	if (FT_Init_FreeType(&ft)) {  // all functions return a value different than 0 whenever an error occurred
-		std::cerr << "ERROR::FREETYPE: Could not init FreeType Library \n";
-	}
+	if (FT_Init_FreeType(&ft))	// all functions return a value different than 0 whenever an error occurred
+		throw std::runtime_error("ERROR::FREETYPE: Could not init FreeType Library");
 	// load font as face
 	FT_Face face;
 	// first try to open with default path
 	std::string defaultPath = "media/fonts/";
 	if (FT_New_Face(ft, (defaultPath + fontFile).c_str(), 0, &face)) {
 		// otherwise assume input is a full path itself and try to open
-		if (FT_New_Face(ft, fontFile.c_str(), 0, &face)) {
-			std::cerr << "ERROR::FREETYPE: Failed to load font \n";
-		}
+		if (FT_New_Face(ft, fontFile.c_str(), 0, &face))
+			throw std::runtime_error("ERROR::FREETYPE: Failed to load font");
 	}
 	FT_Set_Pixel_Sizes(face, 0, defaultFontSize);
 
@@ -413,7 +427,7 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 			glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
 			glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
 			(unsigned int)face->glyph->advance.x};
-		font.Characters[c] = characterData;
+		font.Characters.insert(std::make_pair(c, characterData));
 
 		glTexSubImage2D(GL_TEXTURE_2D, 0, pos, 0, characterData.Size.x,
 						characterData.Size.y, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
@@ -421,7 +435,7 @@ Font &ResourceManager::LoadFont(std::string name, std::string fontFile, unsigned
 		// prevent issues with linear filtering pulling from next character's texture
 		pos += (characterData.Size.x + 1);
 	}
-	Fonts[name] = font;
+	Fonts.insert(std::make_pair(name, font));
 	glBindTexture(GL_TEXTURE_2D, 0);
 	// destroy FreeType once we're finished
 	FT_Done_Face(face);
@@ -435,21 +449,212 @@ Font &ResourceManager::GetFont(std::string name) {
 	return Fonts.at(name);
 }
 
+BaseSound *ResourceManager::LoadSound(std::string name, std::string soundFile, UseStreaming streaming) {
+	if (Sounds.contains(name) || SoundStreams.contains(name))
+		throw std::invalid_argument("ERROR::SOUND: There already exists a sound with name '" + name + "'");
+
+	std::string extension = soundFile.substr(soundFile.length() - 3, 3);
+	if (extension == "wav")
+		return LoadWaveFile(name, soundFile, streaming);
+	else if (extension == "ogg")
+		return LoadOggFile(name, soundFile, streaming);
+	else
+		throw std::invalid_argument("ERROR::SOUND: Invalid file extension: " + extension);
+}
+
+BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, UseStreaming streaming) {
+	// first try to open with default path
+	std::ifstream f;
+	std::string defaultPath = "media/sound/";
+	f.open((defaultPath + wavFile).c_str(), std::ios::in | std::ios::binary);
+	if (!f) {
+		// otherwise assume input is a full path itself and try to open
+		f.open(wavFile.c_str(), std::ios::in | std::ios::binary);
+		if (!f)
+			throw std::invalid_argument("ERROR::SOUND: incorrect file name: " + wavFile);
+	}
+	std::string chunkName;
+	unsigned int chunkSize;
+
+	std::vector<char> data;
+	long size;
+	short audioFormat;
+	short numChannels;
+	unsigned int sampleRate;
+	unsigned int byteRate;
+	short blockAlign;
+	short bitsPerSample;
+	std::streampos soundDataStartPos;
+
+	bool riffRead = false;
+	bool fmtRead = false;
+	bool dataRead = false;
+
+	// keep reading chunks until we have read riff, fmt and data chunks
+	while (!(riffRead && fmtRead && dataRead)) {
+		// load wave chunk info
+		char chunk[4];
+		f.read((char *)&chunk, 4);
+		f.read((char *)&chunkSize, 4);
+		chunkName = std::string(chunk, 4);
+
+		if (f.eof()) break;
+
+		if (chunkName == "RIFF") {
+			f.seekg(4, std::ios_base::cur);
+			riffRead = true;
+		} else if (chunkName == "fmt ") {
+			f.read((char *)&audioFormat, 2);
+			f.read((char *)&numChannels, 2);
+			f.read((char *)&sampleRate, 4);
+			f.read((char *)&byteRate, 4);
+			f.read((char *)&blockAlign, 2);
+			f.read((char *)&bitsPerSample, 2);
+			// skip over any extra bytes
+			if (chunkSize > 16) f.seekg(chunkSize - 16, std::ios_base::cur);
+			fmtRead = true;
+		} else if (chunkName == "data") {
+			size = chunkSize;
+			if (streaming == AUTOMATIC) {
+				// use file size to decide whether to stream
+				(size < NUM_BUFFERS * BUFFER_SIZE) ? streaming = STREAMING_OFF : streaming = STREAMING_ON;
+			}
+			if (streaming == STREAMING_OFF) {
+				// only need to read data if not streaming; if streaming, data is read when needed
+				data.resize(size);
+				f.read(data.data(), chunkSize);
+			} else if (streaming == STREAMING_ON) {
+				soundDataStartPos = f.tellg();
+			}
+			dataRead = true;
+		} else {
+			f.seekg(chunkSize, std::ios_base::cur);
+		}
+	}
+	if (!riffRead || !fmtRead || !dataRead) {
+		f.close();
+		throw std::runtime_error("ERROR::SOUND: Failed to load sound: cannot find correct chunks in WAVE file");
+	}
+	if (streaming == STREAMING_ON) {
+		// move the stack allocated ifstream into a unique pointer to pass to WaveSoundStream constructor
+		std::unique_ptr<std::ifstream> filePtr = std::make_unique<std::ifstream>(std::move(f));
+		WaveSoundStream sound{numChannels, sampleRate, bitsPerSample, size, filePtr, soundDataStartPos};
+		SoundStreams.insert(std::make_pair(name, std::make_unique<WaveSoundStream>(std::move(sound))));
+		return &*SoundStreams.at(name);
+	} else if (streaming == STREAMING_OFF) {
+		f.close();
+		Sound sound{numChannels, sampleRate, bitsPerSample, size, data.data()};
+		Sounds.insert(std::make_pair(name, sound));
+		return &Sounds.at(name);
+	}
+	throw std::invalid_argument("ERROR::SOUND: Streaming option not recognised: " + std::to_string(streaming));
+}
+
+BaseSound *ResourceManager::LoadOggFile(std::string name, std::string oggFile, UseStreaming streaming) {
+	// first try to open with default path
+	FILE *f;
+	std::string defaultPath = "media/sound/";
+	f = fopen((defaultPath + oggFile).c_str(), "rb");
+	if (!f) {
+		// otherwise assume input is a full path itself and try to open
+		f = fopen(oggFile.c_str(), "rb");
+		if (!f)
+			throw std::invalid_argument("ERROR::SOUND: incorrect file name: " + oggFile);
+	}
+	OggVorbis_File *vorbisFile = new OggVorbis_File();
+	if (ov_open(f, vorbisFile, NULL, 0) < 0) {
+		fclose(f);
+		delete vorbisFile;
+		throw std::runtime_error("ERROR::SOUND: failed to open OGG file");
+	}
+
+	vorbis_info *vorbisInfo = ov_info(vorbisFile, -1);
+	short bitsPerSample = 16;
+	short numChannels = vorbisInfo->channels;
+	unsigned int sampleRate = vorbisInfo->rate;
+	int totalSamples = ov_pcm_total(vorbisFile, -1);
+	long size = (totalSamples * numChannels * bitsPerSample) / 8;
+
+	if (streaming == AUTOMATIC) {
+		// use file size to decide whether to stream
+		(size < NUM_BUFFERS * BUFFER_SIZE) ? streaming = STREAMING_OFF : streaming = STREAMING_ON;
+	}
+
+	if (streaming == STREAMING_ON) {
+		OggSoundStream sound{numChannels, sampleRate, bitsPerSample, size, vorbisFile};
+		SoundStreams.insert(std::make_pair(name, std::make_unique<OggSoundStream>(sound)));
+		return &*SoundStreams.at(name);
+	} else if (streaming == STREAMING_OFF) {
+		std::vector<char> data;
+		const int bufferSize = 4096;  // Read 4KB at a time
+		char buffer[bufferSize];
+		int currentSection;
+		long bytesRead = 0;
+
+		do {
+			bytesRead = ov_read(vorbisFile, buffer, bufferSize, 0, 2, 1, &currentSection);
+			if (bytesRead < 0) {
+				// Error in the stream
+				ov_clear(vorbisFile);
+				delete vorbisFile;
+				throw std::runtime_error("ERROR::SOUND: could not decode OGG bitstream");
+			} else if (bytesRead > 0) {
+				data.insert(data.end(), buffer, buffer + bytesRead);
+			}
+		} while (bytesRead > 0);
+
+		ov_clear(vorbisFile);  // ov_clear closes the file handle internally, so we don't need to close the FILE*
+		delete vorbisFile;
+		Sound sound{numChannels, sampleRate, bitsPerSample, (int)data.size(), data.data()};
+		Sounds.insert(std::make_pair(name, sound));
+		return &Sounds.at(name);
+	}
+	throw std::invalid_argument("ERROR::SOUND: Streaming option not recognised: " + std::to_string(streaming));
+}
+
+BaseSound *ResourceManager::GetSound(std::string name) {
+	if (!Sounds.contains(name)) {
+		if (!SoundStreams.contains(name)) {
+			std::cerr << "ERROR::SOUND: Can't find sound: " << name << "\n";
+		}
+		return &*SoundStreams.at(name);
+	}
+	return &Sounds.at(name);
+}
+
+void ResourceManager::updateAllSounds() {
+	for (auto &sound : SoundStreams) {
+		sound.second->updateStream();
+		sound.second->updateState();
+		sound.second->updateVolume();
+	}
+	for (auto &sound : Sounds) {
+		sound.second.updateState();
+		sound.second.updateVolume();
+	}
+}
+
 void ResourceManager::Clear() {
-	// (properly) delete all shaders
+	// (properly) delete all resources
 	for (auto &shader : Shaders) {
 		glDeleteProgram(shader.second.ID());
 	}
-	// (properly) delete all textures
 	for (auto &texture : Textures) {
 		glDeleteTextures(1, &texture.second.ID());
 	}
-	// (properly) delete all texture arrays
 	for (auto &textureArr : TextureArrays) {
 		glDeleteTextures(1, &textureArr.second.ID());
 	}
-	// (properly) delete all font textures
 	for (auto &font : Fonts) {
 		glDeleteTextures(1, &font.second.TextureAtlas);
+	}
+	for (auto &sound : Sounds) {
+		alDeleteSources(1, &sound.second.source);
+		alDeleteBuffers(1, &sound.second.buffer);
+	}
+	for (auto &sound : SoundStreams) {
+		alDeleteSources(1, &sound.second->source);
+		alDeleteBuffers(NUM_BUFFERS, &sound.second->buffers[0]);
+		sound.second->closeFile();
 	}
 }

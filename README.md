@@ -1,24 +1,27 @@
 # A 2D Card Game Engine
 
+![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
+![OpenGL](https://img.shields.io/badge/OpenGL-%23FFFFFF.svg?style=for-the-badge&logo=opengl)
+
 ## Setup instructions
 
-### Linux
+### Linux (with x11)
 
 <details>
 <summary>Prerequisites</summary>
   
-- Ensure the glfw, freetype, openGL, x11, xInput and xrandr development libraries are installed
+- Ensure the glfw, freetype, openGL, openAL soft, ogg, vorbis, x11, xInput and xrandr development libraries are installed
   
   - _on ubuntu you can run_
 
     ```
-    sudo apt install libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev libfreetype6-dev
+    sudo apt install libgl-dev libx11-dev libxi-dev libxrandr-dev libglfw3-dev libfreetype6-dev libopenal-dev libvorbis-dev libogg-dev
     ```
 
   - _on fedora you can run_
 
     ```
-    sudo dnf install libglvnd-devel mesa-libGL-devel libXi-devel libX11-devel libXrandr-devel glfw-devel freetype-devel
+    sudo dnf install libglvnd-devel mesa-libGL-devel libXi-devel libX11-devel libXrandr-devel glfw-devel freetype-devel openal-soft-devel libvorbis-devel libogg-devel
     ```
 
 </details>
@@ -67,6 +70,9 @@ Press:
   - '-' to make it smaller
   - 'd' to delete it
 - 'c' to clear all cards
+- 'p' to pause or resume the countdown
+- 's' to stop the countdown
+- 'f' (while cursor is not over a card) to fade the countdown out
 - 'q' or 'esc' to exit the game
 
 Click and drag cards to move them around

@@ -3,6 +3,7 @@
 
 #include <glad/glad.h>
 
+#include <AL/alc.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <string>
@@ -36,6 +37,9 @@ struct Window {
 	const unsigned int &Height() const { return scrHeight; }
 
 private:
+	ALCdevice *device;
+	ALCcontext *context;
+
 	GLFWwindow *window;
 	static unsigned int scrWidth;
 	static unsigned int scrHeight;
