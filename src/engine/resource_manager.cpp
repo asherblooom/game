@@ -491,7 +491,6 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 	bool riffRead = false;
 	bool fmtRead = false;
 	bool dataRead = false;
-	bool useStreaming = false;
 
 	// keep reading chunks until we have read riff, fmt and data chunks
 	while (!(riffRead && fmtRead && dataRead)) {
@@ -518,22 +517,17 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 			fmtRead = true;
 		} else if (chunkName == "data") {
 			size = chunkSize;
-
-			if (option == AUTOMATIC || option == STREAMING_ON) {
-				// don't use streaming if audio is too small (will produce error otherwise)
-				(size < NUM_BUFFERS * BUFFER_SIZE) ? useStreaming = false : useStreaming = true;
-			} else if (option == STREAMING_OFF) {
-				useStreaming = false;
+			if (option == AUTOMATIC) {
+				// use file size to decide whether to stream
+				(size < NUM_BUFFERS * BUFFER_SIZE) ? option = STREAMING_OFF : option = STREAMING_ON;
 			}
-
-			if (!useStreaming) {
-				// don't need to read any data now if we are streaming as it is read only when needed
+			if (option == STREAMING_OFF) {
+				// only need to read data if not streaming; if streaming, data is read when needed
 				data.resize(size);
 				f.read(data.data(), chunkSize);
-			} else {
+			} else if (option == STREAMING_ON) {
 				soundDataStartPos = f.tellg();
 			}
-
 			dataRead = true;
 		} else {
 			f.seekg(chunkSize, std::ios_base::cur);
@@ -543,18 +537,19 @@ BaseSound *ResourceManager::LoadWaveFile(std::string name, std::string wavFile, 
 		f.close();
 		throw std::runtime_error("ERROR::SOUND: Failed to load sound: cannot find correct chunks in WAVE file");
 	}
-	if (useStreaming) {
+	if (option == STREAMING_ON) {
 		// move the stack allocated ifstream into a unique pointer to pass to WaveSoundStream constructor
 		std::unique_ptr<std::ifstream> filePtr = std::make_unique<std::ifstream>(std::move(f));
 		WaveSoundStream sound{numChannels, sampleRate, bitsPerSample, size, filePtr, soundDataStartPos};
 		SoundStreams.insert(std::make_pair(name, std::make_unique<WaveSoundStream>(std::move(sound))));
 		return &*SoundStreams.at(name);
-	} else {
+	} else if (option == STREAMING_OFF) {
 		f.close();
 		Sound sound{numChannels, sampleRate, bitsPerSample, size, data.data()};
 		Sounds.insert(std::make_pair(name, sound));
 		return &Sounds.at(name);
 	}
+	throw std::invalid_argument("ERROR::SOUND: Streaming option not recognised: " + std::to_string(option));
 }
 
 BaseSound *ResourceManager::LoadOggFile(std::string name, std::string oggFile, UseStreaming option) {
@@ -582,19 +577,16 @@ BaseSound *ResourceManager::LoadOggFile(std::string name, std::string oggFile, U
 	int totalSamples = ov_pcm_total(vorbisFile, -1);
 	long size = (totalSamples * numChannels * bitsPerSample) / 8;
 
-	bool useStreaming = false;
-	if (option == AUTOMATIC || option == STREAMING_ON) {
-		// don't use streaming if audio is too small (will produce error otherwise)
-		(size < NUM_BUFFERS * BUFFER_SIZE) ? useStreaming = false : useStreaming = true;
-	} else if (option == STREAMING_OFF) {
-		useStreaming = false;
+	if (option == AUTOMATIC) {
+		// use file size to decide whether to stream
+		(size < NUM_BUFFERS * BUFFER_SIZE) ? option = STREAMING_OFF : option = STREAMING_ON;
 	}
 
-	if (useStreaming) {
+	if (option == STREAMING_ON) {
 		OggSoundStream sound{numChannels, sampleRate, bitsPerSample, size, vorbisFile};
 		SoundStreams.insert(std::make_pair(name, std::make_unique<OggSoundStream>(sound)));
 		return &*SoundStreams.at(name);
-	} else {
+	} else if (option == STREAMING_OFF) {
 		std::vector<char> data;
 		const int bufferSize = 4096;  // Read 4KB at a time
 		char buffer[bufferSize];
@@ -619,6 +611,7 @@ BaseSound *ResourceManager::LoadOggFile(std::string name, std::string oggFile, U
 		Sounds.insert(std::make_pair(name, sound));
 		return &Sounds.at(name);
 	}
+	throw std::invalid_argument("ERROR::SOUND: Streaming option not recognised: " + std::to_string(option));
 }
 
 BaseSound *ResourceManager::GetSound(std::string name) {
