@@ -34,7 +34,7 @@ public:
 	static BaseSound *GetSound(std::string name);
 	// Updates the buffers of all SoundStreams, and the State member variable of all BaseSounds.
 	// Must be called in main.cpp inside the game loop (i.e. every frame).
-	static void updateAllSounds();
+	static void updateAllSounds(float dt);
 
 	// properly de-allocates all loaded resources
 	static void Clear();
@@ -69,6 +69,8 @@ private:
 	// helper functions for loading each type of sound file
 	static BaseSound *LoadWaveFile(std::string name, std::string wavFile, UseStreaming streaming);
 	static BaseSound *LoadOggFile(std::string name, std::string oggFile, UseStreaming streaming);
+	// unit is seconds; used to limit sound updates to roughly 10 per second
+	static float timeSinceLastSoundUpdate;
 };
 
 #endif

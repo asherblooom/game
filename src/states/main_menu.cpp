@@ -10,7 +10,6 @@ MainMenu::MainMenu(StateManager& manager)
 											   ResourceManager::GetTexture("play-button"));
 }
 
-void MainMenu::ProcessInput(float dt) {}
 void MainMenu::Update(float dt) {
 	for (auto& pair : buttons) {
 		auto& button = pair.second;

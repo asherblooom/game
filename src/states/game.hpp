@@ -16,7 +16,6 @@ class Game : public StateInterface {
 public:
 	Game(StateManager& manager);
 
-	void ProcessInput(float dt) override;
 	void Update(float dt) override;
 	void Render() override;
 

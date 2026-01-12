@@ -24,6 +24,7 @@ public:
 	void Pause();
 	void Resume();
 	void Stop();
+	// Fades sound out over roughly 1 second
 	void FadeOut();
 
 	ALint State;

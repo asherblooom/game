@@ -26,7 +26,7 @@ void Game::OnEnter() {
 	countdown->Play();
 }
 
-void Game::ProcessInput(float dt) {
+void Game::Update(float dt) {
 	pauseButton.Update();
 	if (pauseButton.State == ACTIVE) {
 		manager.PushState(PAUSE_MENU);
@@ -153,6 +153,7 @@ void Game::ProcessInput(float dt) {
 			}
 		}
 	}
+	// pause/resume music
 	if (InputManager::Keys[GLFW_KEY_P]) {
 		auto countdown = ResourceManager::GetSound("countdown");
 		if (countdown->State == AL_PLAYING)
@@ -161,17 +162,20 @@ void Game::ProcessInput(float dt) {
 			countdown->Resume();
 		InputManager::Keys[GLFW_KEY_P] = false;
 	}
+	// stop music
 	if (InputManager::Keys[GLFW_KEY_S]) {
 		ResourceManager::GetSound("countdown")->Stop();
 		InputManager::Keys[GLFW_KEY_S] = false;
 	}
+	// fade music out
 	if (InputManager::Keys[GLFW_KEY_F]) {
 		ResourceManager::GetSound("countdown")->FadeOut();
 		InputManager::Keys[GLFW_KEY_F] = false;
 	}
-}
-
-void Game::Update(float dt) {
+	// run each card's animation update for this frame
+	for (CardObject& card : cards) {
+		card.Animate(dt);
+	}
 }
 
 void Game::Render() {

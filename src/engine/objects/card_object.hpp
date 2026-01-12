@@ -50,7 +50,10 @@ public:
 			   glm::vec3 color = glm::vec3(1.0f),
 			   glm::vec2 size = {200, 280});
 
+	// Add a Flip animation onto the animation stack.
+	// Will flip to whichever side is face-down when the animation is added to the stack
 	void Flip(float speed = 20);
+	// Add a FlipTo animation onto the animation stack
 	void FlipTo(CardSide side, float speed = 20);
 
 private:

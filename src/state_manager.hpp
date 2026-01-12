@@ -35,7 +35,6 @@ public:
 	void PushState(States stateName);
 	void PopState();
 
-	void ProcessInput(float dt);
 	void Update(float dt);
 	void Render();
 

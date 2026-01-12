@@ -34,14 +34,12 @@ int main() {
 			// so we must give InputManager the size of our game world and the size of the screen/window,
 			// and ask it to convert between the two and update its MousePos variable
 			InputManager::UpdateWorldMousePos(GAME_WIDTH, GAME_HEIGHT, window.XStart(), window.YStart(), window.Width(), window.Height());
-			manager.ProcessInput(dt);
-
+			ResourceManager::updateAllSounds(dt);
 			manager.Update(dt);
 
 			window.SetBackground(0, 0, 0);
 			manager.Render();
 
-			ResourceManager::updateAllSounds();
 			window.SwapBuffers();
 		}
 	} catch (std::exception& e) {

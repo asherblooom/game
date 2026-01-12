@@ -28,10 +28,6 @@ void StateManager::PopState() {
 	currentState = stack.back();
 }
 
-void StateManager::ProcessInput(float dt) {
-	currentState->ProcessInput(dt);
-}
-
 void StateManager::Update(float dt) {
 	currentState->Update(dt);
 }

@@ -24,6 +24,8 @@ std::map<std::string, Font> ResourceManager::Fonts;
 std::map<std::string, Sound> ResourceManager::Sounds;
 std::map<std::string, std::unique_ptr<SoundStream>> ResourceManager::SoundStreams;
 
+float ResourceManager::timeSinceLastSoundUpdate = 0;
+
 Shader &ResourceManager::GetShader(std::string name) {
 	if (!Shaders.contains(name))
 		std::cerr << "ERROR::SHADER: Can't find shader: " << name << "\n";
@@ -622,15 +624,20 @@ BaseSound *ResourceManager::GetSound(std::string name) {
 	return &Sounds.at(name);
 }
 
-void ResourceManager::updateAllSounds() {
-	for (auto &sound : SoundStreams) {
-		sound.second->updateStream();
-		sound.second->updateState();
-		sound.second->updateVolume();
-	}
-	for (auto &sound : Sounds) {
-		sound.second.updateState();
-		sound.second.updateVolume();
+void ResourceManager::updateAllSounds(float dt) {
+	// limit sound updates to roughly 10 per second
+	timeSinceLastSoundUpdate += dt;
+	if (timeSinceLastSoundUpdate > 0.1) {
+		for (auto &sound : SoundStreams) {
+			sound.second->updateStream();
+			sound.second->updateState();
+			sound.second->updateVolume();
+		}
+		for (auto &sound : Sounds) {
+			sound.second.updateState();
+			sound.second.updateVolume();
+		}
+		timeSinceLastSoundUpdate = 0;
 	}
 }
 

@@ -35,14 +35,15 @@ void GameObject::Rotate(int degrees, float speed, Direction direction) {
 		animations[ROTATE] = std::make_unique<RotateAnimation>(Rotation, Rotation - degrees, speed, direction);
 }
 
-void GameObject::Animate() {
+void GameObject::Animate(float dt) {
+	// if animation is finished, delete from stack, otherwise run it for this frame
 	for (auto iter = animations.begin(), nextIter = iter; iter != animations.end(); iter = nextIter) {
 		++nextIter;
 		auto& animation = iter->second;
 		if (animation->Finished)
 			animations.erase(iter);
 		else
-			animation->Run();
+			animation->Run(dt);
 	}
 }
 

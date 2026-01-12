@@ -44,8 +44,8 @@ void BaseSound::updateVolume() {
 	if (fadeOut) {
 		float currentGain;
 		alGetSourcef(source, AL_GAIN, &currentGain);
-		if (currentGain > 0.01)
-			alSourcef(source, AL_GAIN, currentGain - 0.01);	 // Fade out over roughly 1 second (assuming 60fps)
+		if (currentGain > 0.1)
+			alSourcef(source, AL_GAIN, currentGain - 0.1);	// Fade out over roughly 1 second (assuming 10 updates per second)
 		else {
 			alSourceStop(source);
 			fadeOut = false;

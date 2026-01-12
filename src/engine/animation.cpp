@@ -11,15 +11,16 @@ MoveToAnimation::MoveToAnimation(glm::vec2& position, glm::vec2& size, glm::vec2
 	}
 }
 
-void MoveToAnimation::Run() {
+void MoveToAnimation::Run(float dt) {
 	bool finishX = false, finishY = false;
+	float dtAdjustedSpeed = speed * dt;	 // Keep constant speed regardless of framerate
 	// If size has changed since MoveTo was started, change nextPos
 	// so that it is where the top left of the object would be if the card had original size.
 	// This is so that objects end up centered on the target location if their size is smaller than original,
 	// instead of aligned on the top left corner.
 	// This is done to prevent issues with this animation interacting with flipping animation
-	glm::vec2 nextPos = position - (originalSize - size) / glm::vec2(2) + speed * direction;
-	glm::vec2 toMove = position + speed * direction;
+	glm::vec2 nextPos = position - (originalSize - size) / glm::vec2(2) + dtAdjustedSpeed * direction;
+	glm::vec2 toMove = position + dtAdjustedSpeed * direction;
 
 	if (direction.x <= 0) {
 		if (nextPos.x <= targetLocation.x) finishX = true;
@@ -49,13 +50,14 @@ void MoveToAnimation::Run() {
 FlipAnimation::FlipAnimation(glm::vec2& position, glm::vec2& size, int& textureIndex, int cardTexIndex, int backTexIndex, float speed)
 	: position{position}, size{size}, textureIndex{textureIndex}, originalSize{size}, cardTexIndex{cardTexIndex}, backTexIndex{backTexIndex}, speed{speed} {}
 
-void FlipAnimation::Run() {
+void FlipAnimation::Run(float dt) {
+	float dtAdjustedSpeed = speed * dt;	 // Keep constant speed regardless of framerate
 	if (size.x > 0 && size.x <= originalSize.x) {
 		// decrease/increase size (depending on sign) until we get to 0 or original size
-		size.x += sign * speed;
+		size.x += sign * dtAdjustedSpeed;
 		// modify position so that object looks like it is turning around its center rather than its left side
 		// (as positions describe the top left coordinate of an object)
-		position.x -= (sign * speed) / 2;
+		position.x -= (sign * dtAdjustedSpeed) / 2;
 	} else if (size.x <= 0) {
 		// when we get to 0, reverse direction, and change texture
 		sign = 1;
@@ -85,10 +87,11 @@ RotateAnimation::RotateAnimation(float& rotation, int targetRotation, float spee
 	}
 }
 
-void RotateAnimation::Run() {
+void RotateAnimation::Run(float dt) {
+	float dtAdjustedSpeed = speed * dt;	 // Keep constant speed regardless of framerate
 	float newRotation = 0;
 	if (direction == CLOCKWISE) {
-		newRotation = rotation + speed;
+		newRotation = rotation + dtAdjustedSpeed;
 		if (newRotation >= targetRotation) {
 			// we use modulo 360 as targetRotation might be greater than 360
 			rotation = (int)targetRotation % 360;
@@ -96,7 +99,7 @@ void RotateAnimation::Run() {
 			return;
 		}
 	} else if (direction == ANTICLOCKWISE) {
-		newRotation = rotation - speed;
+		newRotation = rotation - dtAdjustedSpeed;
 		if (newRotation <= targetRotation) {
 			rotation = (int)targetRotation % 360;
 			Finished = true;
