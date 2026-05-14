@@ -77,12 +77,18 @@ Press:
 
 Click and drag cards to move them around
 
-## Debugging
+------------------------
+
+<details>
+<summary><h3>Debugging</h3></summary>
 
 The [RenderDoc](https://renderdoc.org/) program can be _very_ helpful in debugging issues with shaders, opengl api calls, etc.
+</details>
 
-## Learning OpenGL and C++
 
+<details>
+<summary><h3>Learning OpenGL and C++</h3></summary>
+  
 ### OpenGL
 
 - [This website](https://www.learnopengl.com/) teaches OpenGl ver. 3 (but is still very good and widely recommended) \
@@ -98,7 +104,6 @@ you to the **6th edition** e-book. You can access the **7th edition** (most rece
 but covers some topics in a slightly different order
 
 ### C++
-
 - The book **"A Tour of C++" by Bjarne Stroustrup** (2nd or 3rd edition are good)
 is good as a quick reference guide to C++ compared
 to the more indepth website linked below \
@@ -107,3 +112,6 @@ online or access an ebook from the library website)
 
 - [Here](https://www.learncpp.com/) is a good website to learn C++\
 Just note it is _very_ detailed and sometimes in a strange order
+
+</details>
+
